@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/gdamore/tcell/v2"
@@ -92,32 +93,8 @@ func (j *JsonViewer) setupFuzzySearch() {
 	})
 	j.searchFuzzyField.SetDoneFunc(func(key tcell.Key) {
 		switch key {
-		case tcell.KeyEnter:
-			res := j.jsonRenderer.SearchTraversalSetup(j.searchFuzzyField.GetText())
-			j.searchInfo.SetText(fmt.Sprintf(SearchMatch,
-				res.CurrentPosition,
-				res.TotalPositions))
-			j.focusDelegator.SetFocus(j.jsonRenderer)
-			j.jsonRenderer.SetDoneFunc(func(key tcell.Key) {
-				if j.jsonRenderer.isSearching {
-					switch key {
-					case tcell.KeyEnter, tcell.KeyTab:
-						res := j.jsonRenderer.SearchTraverseNext()
-						j.searchInfo.SetText(fmt.Sprintf(SearchMatch,
-							res.CurrentPosition,
-							res.TotalPositions))
-					case tcell.KeyBacktab:
-						res := j.jsonRenderer.SearchTraversePrev()
-						j.searchInfo.SetText(fmt.Sprintf(SearchMatch,
-							res.CurrentPosition,
-							res.TotalPositions))
-					case tcell.KeyEsc:
-						j.searchFuzzyField.SetText("")
-						j.ResetUI()
-						j.jsonRenderer.SearchTraversalReset()
-					}
-				}
-			})
+		//case tcell.KeyEnter:
+		//	j.searchTraversalSetup()
 		case tcell.KeyEsc:
 			j.searchFuzzyField.SetText("")
 			j.ResetUI()
@@ -125,6 +102,27 @@ func (j *JsonViewer) setupFuzzySearch() {
 		}
 
 	})
+}
+
+func (j *JsonViewer) searchTraversalSetup() {
+	res := j.jsonRenderer.SearchTraversalSetup(j.searchFuzzyField.GetText())
+	j.searchInfo.SetText(fmt.Sprintf(SearchMatch,
+		res.CurrentPosition,
+		res.TotalPositions))
+	j.focusDelegator.SetFocus(j.jsonRenderer)
+	j.jsonRenderer.SetDoneFunc(func(key tcell.Key) {
+		if j.jsonRenderer.isSearching {
+			switch key {
+			case tcell.KeyEsc:
+				j.searchFuzzyField.SetText("")
+				j.ResetUI()
+				j.jsonRenderer.SearchTraversalReset()
+			}
+		}
+	})
+	//j.focusDelegator.QueueUpdateDraw(func() {
+	//
+	//})
 }
 
 func (j *JsonViewer) ResetUI() {
@@ -156,7 +154,7 @@ func (j *JsonViewer) ResetHotKeysUI() *tview.TextView {
 	w.WriteString(fmt.Sprintf(HelpText, "g", "  Start Of File\n"))
 	w.WriteString(fmt.Sprintf(HelpText, "G", "  End Of File\n"))
 	w.WriteString(fmt.Sprintf(HelpText, "↓", "  Scroll Down\n"))
-	w.WriteString(fmt.Sprintf(HelpText, "↑", "  Scroll Up\nG"))
+	w.WriteString(fmt.Sprintf(HelpText, "↑", "  Scroll Up\n"))
 	return j.hotKeys.SetText(w.String())
 }
 
@@ -181,9 +179,8 @@ func (j *JsonViewer) SearchFuzzySearchUI() {
 	w := strings.Builder{}
 	w.WriteString("\n")
 	w.WriteString(fmt.Sprintf(HelpText, "↲", "  Select Match (Enter)\n"))
-	w.WriteString(fmt.Sprintf(HelpText, "↲", "  Next Result (Enter)\n"))
-	w.WriteString(fmt.Sprintf(HelpText, "⇥", "  Next Result (Tab)\n"))
-	w.WriteString(fmt.Sprintf(HelpText, "⇪[white::]+[yellow::b]⇥", "Prev Result (Shit+Tab)\n"))
+	w.WriteString(fmt.Sprintf(HelpText, "→", "  Next Result (Right)\n"))
+	w.WriteString(fmt.Sprintf(HelpText, "←", "  Previous Result (Left)\n"))
 	w.WriteString(fmt.Sprintf(HelpText, "ESC", "Quit Search"))
 	j.hotKeys.SetText(w.String())
 
@@ -207,8 +204,27 @@ func (j *JsonViewer) HandleShortcuts(event *tcell.EventKey) *tcell.EventKey {
 	if !j.searchFuzzyField.HasFocus() && (k == 'f') {
 		j.SearchFuzzySearchUI()
 		return nil
+	} else if j.searchFuzzyField.HasFocus() {
+		switch event.Key() {
+		case tcell.KeyEnter:
+			go func() {
+				time.Sleep(100 * time.Millisecond)
+				j.focusDelegator.QueueUpdateDraw(j.searchTraversalSetup)
+			}()
+		}
 	} else if j.jsonRenderer.isSearching {
-		//return nil
+		switch event.Key() {
+		case tcell.KeyRight:
+			res := j.jsonRenderer.SearchTraverseNext()
+			j.searchInfo.SetText(fmt.Sprintf(SearchMatch,
+				res.CurrentPosition,
+				res.TotalPositions))
+		case tcell.KeyLeft:
+			res := j.jsonRenderer.SearchTraversePrev()
+			j.searchInfo.SetText(fmt.Sprintf(SearchMatch,
+				res.CurrentPosition,
+				res.TotalPositions))
+		}
 	}
 
 	return event

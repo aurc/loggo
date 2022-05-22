@@ -49,11 +49,6 @@ func NewJsonRenderer() *JsonRenderer {
 	return jv
 }
 
-func (j *JsonRenderer) TagSection(text string) {
-	t := j.GetText(true)
-	fmt.Println(t)
-}
-
 func (j *JsonRenderer) SearchFuzzy(text string) []string {
 	ranks := fuzzy.RankFind(text, j.tagValues)
 	sort.Sort(ranks)
@@ -70,12 +65,10 @@ type SearchTraversalState struct {
 }
 
 func (j *JsonRenderer) SearchTraversalSetup(text string) *SearchTraversalState {
-	json := j.GetText(true)
+	jText := j.GetText(true)
 	j.Clear().SetDynamicColors(true).
 		SetRegions(true)
-	j.setJson([]byte(json), text)
-	//ff := j.GetText(false)
-	//fmt.Println(ff)
+	j.setJson([]byte(jText), text)
 	j.searchWord = text
 	regions := j.tagValToKey[j.searchWord]
 	j.searchWord = text
@@ -194,9 +187,9 @@ func (j *JsonRenderer) handleShortcuts(event *tcell.EventKey) *tcell.EventKey {
 
 func (j *JsonRenderer) processNode(k, v interface{}, indent string, text *strings.Builder, last bool,
 	withTag string) {
-	cap := j.captureWordSection(k, withTag)
-	if cap != "" {
-		k = cap
+	word := j.captureWordSection(k, withTag)
+	if word != "" {
+		k = word
 	}
 	key := fmt.Sprintf(`%s%s"%v[""]"%s: `, indent, clField, k, clWhite)
 	text.WriteString(key)
@@ -253,8 +246,8 @@ func (j *JsonRenderer) processString(text *strings.Builder, v interface{}, inden
 	val := fmt.Sprintf(`%v`, v)
 	val = strings.ReplaceAll(val, "\"", "\\\"")
 	val = strings.ReplaceAll(val, "\n", "\\n")
-	if cap := j.captureWordSection(v, withTag); len(cap) > 0 {
-		val = cap
+	if word := j.captureWordSection(v, withTag); len(word) > 0 {
+		val = word
 	}
 	text.WriteString(clString)
 	text.WriteString(fmt.Sprintf(`%s"%v"`, j.computeIndent(indent), val))
@@ -262,8 +255,8 @@ func (j *JsonRenderer) processString(text *strings.Builder, v interface{}, inden
 }
 
 func (j *JsonRenderer) processNumeric(text *strings.Builder, v interface{}, indent string, withTag string) {
-	if cap := j.captureWordSection(v, withTag); len(cap) > 0 {
-		v = cap
+	if word := j.captureWordSection(v, withTag); len(word) > 0 {
+		v = word
 	}
 	text.WriteString(clNumeric)
 	text.WriteString(fmt.Sprintf("%s%v", j.computeIndent(indent), v))
@@ -333,10 +326,6 @@ func (j *JsonRenderer) captureWordSection(text interface{}, withTag string) stri
 		j.fuzzyTags[val] = true
 	}
 	return sel
-}
-
-func (j *JsonRenderer) tagWith(text string) {
-
 }
 
 //func (j *JsonRenderer) captureWordSection(text interface{}) string {
