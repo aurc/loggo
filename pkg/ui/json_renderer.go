@@ -18,6 +18,19 @@ const (
 	clString  = "[#6A9F59]"
 )
 
+type JsonRenderer struct {
+	tview.TextView
+	jMap           map[string]interface{}
+	viewerConfig   *viewerConfig
+	selectionCount int
+	tagValToKey    map[string][]string
+	fuzzyTags      map[string]bool
+	tagValues      []string
+	searchWord     string
+	searchWordIdx  int
+	isSearching    bool
+}
+
 // NewJsonRenderer returns a new json view.
 func NewJsonRenderer() *JsonRenderer {
 	jv := &JsonRenderer{
@@ -36,7 +49,12 @@ func NewJsonRenderer() *JsonRenderer {
 	return jv
 }
 
-func (j *JsonRenderer) Search(text string) []string {
+func (j *JsonRenderer) TagSection(text string) {
+	t := j.GetText(true)
+	fmt.Println(t)
+}
+
+func (j *JsonRenderer) SearchFuzzy(text string) []string {
 	ranks := fuzzy.RankFind(text, j.tagValues)
 	sort.Sort(ranks)
 	var results []string
@@ -52,6 +70,13 @@ type SearchTraversalState struct {
 }
 
 func (j *JsonRenderer) SearchTraversalSetup(text string) *SearchTraversalState {
+	json := j.GetText(true)
+	j.Clear().SetDynamicColors(true).
+		SetRegions(true)
+	j.setJson([]byte(json), text)
+	//ff := j.GetText(false)
+	//fmt.Println(ff)
+	j.searchWord = text
 	regions := j.tagValToKey[j.searchWord]
 	j.searchWord = text
 	j.searchWordIdx = len(regions) - 1
@@ -95,7 +120,13 @@ func (j *JsonRenderer) SetJsonConfigIndent(ordering Ordering, indent string) *Js
 
 // SetJson sets a JSON and colourise accordingly, replacing any existing content.
 func (j *JsonRenderer) SetJson(jText []byte) *JsonRenderer {
+	j.selectionCount = 0
+	return j.setJson(jText, "")
+}
+
+func (j *JsonRenderer) setJson(jText []byte, withTag string) *JsonRenderer {
 	j.jMap = make(map[string]interface{})
+	j.fuzzyTags = make(map[string]bool)
 	if err := json.Unmarshal(jText, &j.jMap); err != nil {
 		//j.SetText("[yellow]")
 		panic(err)
@@ -110,7 +141,7 @@ func (j *JsonRenderer) SetJson(jText []byte) *JsonRenderer {
 		keys := j.extractKeys(j.jMap)
 		for _, k := range keys {
 			v := j.jMap[k]
-			j.processNode(k, v, cfg.indent, text, i+1 == kc)
+			j.processNode(k, v, cfg.indent, text, i+1 == kc, strings.ToLower(withTag))
 			text.WriteString(j.newLine())
 			i++
 		}
@@ -122,6 +153,9 @@ func (j *JsonRenderer) SetJson(jText []byte) *JsonRenderer {
 	}
 
 	j.tagValues = []string{}
+	for k := range j.fuzzyTags {
+		j.tagValues = append(j.tagValues, k)
+	}
 	for k := range j.tagValToKey {
 		j.tagValues = append(j.tagValues, k)
 	}
@@ -158,42 +192,48 @@ func (j *JsonRenderer) handleShortcuts(event *tcell.EventKey) *tcell.EventKey {
 	return event
 }
 
-func (j *JsonRenderer) processNode(k, v interface{}, indent string, text *strings.Builder, last bool) {
-	key := fmt.Sprintf(`%s%s"%v[""]"%s: `, indent, clField, j.wrapSection(k), clWhite)
+func (j *JsonRenderer) processNode(k, v interface{}, indent string, text *strings.Builder, last bool,
+	withTag string) {
+	cap := j.captureWordSection(k, withTag)
+	if cap != "" {
+		k = cap
+	}
+	key := fmt.Sprintf(`%s%s"%v[""]"%s: `, indent, clField, k, clWhite)
 	text.WriteString(key)
 	cfg := j.viewerConfig
 	switch tp := v.(type) {
 	case int,
 		float64,
 		bool:
-		j.processNumeric(text, v, "", cfg)
+		j.processNumeric(text, v, "", withTag)
 	case string:
-		j.processString(text, v, "", cfg)
+		j.processString(text, v, "", withTag)
 	case map[string]interface{}:
-		j.processObject(text, v, cfg.indent+indent, cfg)
+		j.processObject(text, v, cfg.indent+indent, withTag)
 	case []interface{}:
-		j.processArray(text, tp, cfg.indent+indent, cfg)
+		j.processArray(text, tp, cfg.indent+indent, withTag)
 	}
 	if !last {
 		text.WriteString(",")
 	}
 }
 
-func (j *JsonRenderer) processArray(text *strings.Builder, tp []interface{}, indent string, cfg *viewerConfig) {
+func (j *JsonRenderer) processArray(text *strings.Builder, tp []interface{}, indent, withTag string) {
 	text.WriteString("[" + j.newLine())
 	kc := len(tp)
 	i := 0
 	for _, n := range tp {
-		j.processArrayItem(n, indent+cfg.indent, text, i+1 == kc)
+		j.processArrayItem(n, indent+j.viewerConfig.indent, text, i+1 == kc, withTag)
 		text.WriteString(j.newLine())
 		i++
 	}
-	text.WriteString(j.computeIndent(indent[len(cfg.indent):]) + "]")
+	text.WriteString(j.computeIndent(indent[len(j.viewerConfig.indent):]) + "]")
 }
 
-func (j *JsonRenderer) processObject(text *strings.Builder, val interface{}, indent string, cfg *viewerConfig) {
+func (j *JsonRenderer) processObject(text *strings.Builder, val interface{}, indent, withTag string) {
 	text.WriteString(clString)
 	text.WriteString(fmt.Sprintf(`{%s`, j.newLine()))
+	cfg := j.viewerConfig
 
 	vmap := val.(map[string]interface{})
 	kc := len(vmap)
@@ -202,41 +242,46 @@ func (j *JsonRenderer) processObject(text *strings.Builder, val interface{}, ind
 	keys := j.extractKeys(vmap)
 	for _, k := range keys {
 		v := vmap[k]
-		j.processNode(k, v, indent+cfg.indent, text, i+1 == kc)
+		j.processNode(k, v, indent+j.viewerConfig.indent, text, i+1 == kc, withTag)
 		text.WriteString(j.newLine())
 		i++
 	}
 	text.WriteString(indent[len(cfg.indent):] + `}`)
 }
 
-func (j *JsonRenderer) processString(text *strings.Builder, v interface{}, indent string, cfg *viewerConfig) {
+func (j *JsonRenderer) processString(text *strings.Builder, v interface{}, indent, withTag string) {
 	val := fmt.Sprintf(`%v`, v)
 	val = strings.ReplaceAll(val, "\"", "\\\"")
 	val = strings.ReplaceAll(val, "\n", "\\n")
+	if cap := j.captureWordSection(v, withTag); len(cap) > 0 {
+		val = cap
+	}
 	text.WriteString(clString)
-	text.WriteString(fmt.Sprintf(`%s"%s"`, j.computeIndent(indent), j.wrapSection(val)))
+	text.WriteString(fmt.Sprintf(`%s"%v"`, j.computeIndent(indent), val))
 	text.WriteString(clWhite)
 }
 
-func (j *JsonRenderer) processNumeric(text *strings.Builder, v interface{}, indent string, cfg *viewerConfig) {
+func (j *JsonRenderer) processNumeric(text *strings.Builder, v interface{}, indent string, withTag string) {
+	if cap := j.captureWordSection(v, withTag); len(cap) > 0 {
+		v = cap
+	}
 	text.WriteString(clNumeric)
-	text.WriteString(fmt.Sprintf("%s%v", j.computeIndent(indent), j.wrapSection(v)))
+	text.WriteString(fmt.Sprintf("%s%v", j.computeIndent(indent), v))
 	text.WriteString(clWhite)
 }
 
-func (j *JsonRenderer) processArrayItem(v interface{}, indent string, text *strings.Builder, last bool) {
-	cfg := j.viewerConfig
+func (j *JsonRenderer) processArrayItem(v interface{}, indent string, text *strings.Builder, last bool, withTag string) {
 	switch tp := v.(type) {
 	case int,
 		float64,
 		bool:
-		j.processNumeric(text, v, indent, cfg)
+		j.processNumeric(text, v, indent, withTag)
 	case string:
-		j.processString(text, v, indent, cfg)
+		j.processString(text, v, indent, withTag)
 	case map[string]interface{}:
-		j.processObject(text, v, indent, cfg)
+		j.processObject(text, v, indent, withTag)
 	case []interface{}:
-		j.processArray(text, tp, indent, cfg)
+		j.processArray(text, tp, indent, withTag)
 	}
 	if !last {
 		text.WriteString(",")
@@ -270,30 +315,42 @@ func (j *JsonRenderer) newLine() string {
 	return ""
 }
 
-func (j *JsonRenderer) wrapSection(text interface{}) string {
-	tagID := fmt.Sprintf("%d", j.selectionCount)
+func (j *JsonRenderer) captureWordSection(text interface{}, withTag string) string {
 	val := fmt.Sprintf("%v", text)
-	if _, ok := j.tagValToKey[val]; !ok {
-		j.tagValToKey[val] = []string{tagID}
-	} else {
-		j.tagValToKey[val] = append(j.tagValToKey[val], tagID)
+	tagged := len(withTag) > 0
+	sel := ""
+	if tagged && strings.ToLower(val) == withTag {
+		tagID := fmt.Sprintf("%d", j.selectionCount)
+		if _, ok := j.tagValToKey[val]; !ok {
+			j.tagValToKey[val] = []string{tagID}
+		} else {
+			j.tagValToKey[val] = append(j.tagValToKey[val], tagID)
+		}
+		sel = fmt.Sprintf(`["%s"]%v[""]`, tagID, text)
+		j.selectionCount++
 	}
-	sel := fmt.Sprintf(`["%s"]%v[""]`, tagID, text)
-	j.selectionCount++
+	if _, ok := j.fuzzyTags[val]; !ok {
+		j.fuzzyTags[val] = true
+	}
 	return sel
 }
 
-type JsonRenderer struct {
-	tview.TextView
-	jMap           map[string]interface{}
-	viewerConfig   *viewerConfig
-	selectionCount int
-	tagValToKey    map[string][]string
-	tagValues      []string
-	searchWord     string
-	searchWordIdx  int
-	isSearching    bool
+func (j *JsonRenderer) tagWith(text string) {
+
 }
+
+//func (j *JsonRenderer) captureWordSection(text interface{}) string {
+//	tagID := fmt.Sprintf("%d", j.selectionCount)
+//	val := fmt.Sprintf("%v", text)
+//	if _, ok := j.tagValToKey[val]; !ok {
+//		j.tagValToKey[val] = []string{tagID}
+//	} else {
+//		j.tagValToKey[val] = append(j.tagValToKey[val], tagID)
+//	}
+//	sel := fmt.Sprintf(`["%s"]%v[""]`, tagID, text)
+//	j.selectionCount++
+//	return sel
+//}
 
 type Ordering string
 
