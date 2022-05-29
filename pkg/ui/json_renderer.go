@@ -36,7 +36,8 @@ func NewJsonRenderer() *JsonRenderer {
 	jv := &JsonRenderer{
 		TextView: *tview.NewTextView().
 			SetDynamicColors(true).
-			SetRegions(true),
+			SetRegions(true).
+			SetWrap(false),
 		viewerConfig: &viewerConfig{
 			renderType:   RenderJSON,
 			shouldIndent: false,
@@ -225,7 +226,7 @@ func (j *JsonRenderer) processArray(text *strings.Builder, tp []interface{}, ind
 
 func (j *JsonRenderer) processObject(text *strings.Builder, val interface{}, indent, withTag string) {
 	text.WriteString(clString)
-	text.WriteString(fmt.Sprintf(`{%s`, j.newLine()))
+	text.WriteString(fmt.Sprintf(`[white::]{%s`, j.newLine()))
 	cfg := j.viewerConfig
 
 	vmap := val.(map[string]interface{})

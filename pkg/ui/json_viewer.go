@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"strings"
 	"time"
 	"unicode"
 
@@ -43,8 +42,9 @@ type JsonViewer struct {
 	searchPane       *tview.Flex
 	searchFuzzyField *tview.InputField
 	searchInfo       *tview.TextView
-	hotKeys          *tview.TextView
-	focusDelegator   FocusDelegator
+	//hotKeys          *tview.TextView
+	keyList        *tview.List
+	focusDelegator FocusDelegator
 }
 
 func MakeJsonViewer(focusDelegator FocusDelegator) *JsonViewer {
@@ -57,10 +57,11 @@ func MakeJsonViewer(focusDelegator FocusDelegator) *JsonViewer {
 			SetTextAlign(tview.AlignCenter).
 			SetText(SearchNoResults).
 			SetDynamicColors(true),
-		hotKeys: tview.NewTextView().
-			SetTextAlign(tview.AlignLeft).
-			SetRegions(false).
-			SetDynamicColors(true),
+		keyList: tview.NewList(),
+		//hotKeys: tview.NewTextView().
+		//	SetTextAlign(tview.AlignLeft).
+		//	SetRegions(false).
+		//	SetDynamicColors(true),
 		focusDelegator: focusDelegator,
 	}
 	jv.ResetUI()
@@ -142,20 +143,32 @@ func (j *JsonViewer) ResetUI() {
 	}()
 }
 
-func (j *JsonViewer) ResetHotKeysUI() *tview.TextView {
-	j.hotKeys.Clear()
-	j.hotKeys.SetBorder(true).SetTitle(" Hot Keys ")
-	w := strings.Builder{}
-	w.WriteString("\n")
-	w.WriteString(fmt.Sprintf(HelpText, "f", "  Fuzzy Word Search\n"))
-	w.WriteString(fmt.Sprintf(HelpText, "s", "  Word Search\n"))
-	w.WriteString(fmt.Sprintf(HelpText, "r", "  Regulat Expression Search\n"))
-	w.WriteString(fmt.Sprintf(HelpText, "c", "  Copy All Clipboard\n"))
-	w.WriteString(fmt.Sprintf(HelpText, "g", "  Start Of File\n"))
-	w.WriteString(fmt.Sprintf(HelpText, "G", "  End Of File\n"))
-	w.WriteString(fmt.Sprintf(HelpText, "↓", "  Scroll Down\n"))
-	w.WriteString(fmt.Sprintf(HelpText, "↑", "  Scroll Up\n"))
-	return j.hotKeys.SetText(w.String())
+func (j *JsonViewer) ResetHotKeysUI() *tview.List {
+	j.keyList.Clear()
+	j.keyList.
+		SetBorderPadding(1, 0, 1, 1).
+		SetBorder(true).
+		SetTitle("Hot Keys")
+
+	return j.keyList.ShowSecondaryText(false).
+		AddItem("Fuzzy Word Search", "", 'f', j.SearchFuzzySearchUI).
+		AddItem("Start of File", "", 'g', func() {}).
+		AddItem("End of File", "", 'G', func() {}).
+		AddItem("Scroll Down", "", '↓', func() {}).
+		AddItem("Scroll Up", "", '↑', func() {})
+	//j.hotKeys.Clear()
+	//j.hotKeys.SetBorder(true).SetTitle(" Hot Keys ")
+	//w := strings.Builder{}
+	//w.WriteString("\n")
+	//w.WriteString(fmt.Sprintf(HelpText, "f", "  Fuzzy Word Search\n"))
+	//w.WriteString(fmt.Sprintf(HelpText, "s", "  Word Search\n"))
+	//w.WriteString(fmt.Sprintf(HelpText, "r", "  Regulat Expression Search\n"))
+	//w.WriteString(fmt.Sprintf(HelpText, "c", "  Copy All Clipboard\n"))
+	//w.WriteString(fmt.Sprintf(HelpText, "g", "  Start Of File\n"))
+	//w.WriteString(fmt.Sprintf(HelpText, "G", "  End Of File\n"))
+	//w.WriteString(fmt.Sprintf(HelpText, "↓", "  Scroll Down\n"))
+	//w.WriteString(fmt.Sprintf(HelpText, "↑", "  Scroll Up\n"))
+	//return j.hotKeys.SetText(w.String())
 }
 
 func (j *JsonViewer) SearchFuzzySearchUI() {
@@ -174,15 +187,31 @@ func (j *JsonViewer) SearchFuzzySearchUI() {
 		AddItem(rowMain, 0, 2, false).
 		AddItem(j.ResetHotKeysUI(), 35, 0, false)
 
-	j.hotKeys.Clear()
-	j.hotKeys.SetBorder(true).SetTitle(" Hot Keys ")
-	w := strings.Builder{}
-	w.WriteString("\n")
-	w.WriteString(fmt.Sprintf(HelpText, "↲", "  Select Match (Enter)\n"))
-	w.WriteString(fmt.Sprintf(HelpText, "→", "  Next Result (Right)\n"))
-	w.WriteString(fmt.Sprintf(HelpText, "←", "  Previous Result (Left)\n"))
-	w.WriteString(fmt.Sprintf(HelpText, "ESC", "Quit Search"))
-	j.hotKeys.SetText(w.String())
+	j.keyList.Clear()
+	j.keyList.
+		SetBorderPadding(1, 0, 1, 1).
+		SetBorder(true).
+		SetTitle("Hot Keys")
+
+	j.keyList.ShowSecondaryText(false).
+		AddItem("Select Match (Enter)", "", '↲', func() {}).
+		AddItem("Next Result (Right)", "", '→', func() {
+			j.traverse(j.jsonRenderer.SearchTraverseNext)
+		}).
+		AddItem("Previous Result (Left)", "", '←', func() {
+			j.traverse(j.jsonRenderer.SearchTraversePrev)
+		}).
+		AddItem("Clear Search", "", 'q', func() {})
+
+	//j.hotKeys.Clear()
+	//j.hotKeys.SetBorder(true).SetTitle(" Hot Keys ")
+	//w := strings.Builder{}
+	//w.WriteString("\n")
+	//w.WriteString(fmt.Sprintf(HelpText, "↲", "  Select Match (Enter)\n"))
+	//w.WriteString(fmt.Sprintf(HelpText, "→", "  Next Result (Right)\n"))
+	//w.WriteString(fmt.Sprintf(HelpText, "←", "  Previous Result (Left)\n"))
+	//w.WriteString(fmt.Sprintf(HelpText, "ESC", "Quit Search"))
+	//j.hotKeys.SetText(w.String())
 
 	go func() {
 		j.focusDelegator.SetFocus(j.searchFuzzyField)
@@ -215,17 +244,18 @@ func (j *JsonViewer) HandleShortcuts(event *tcell.EventKey) *tcell.EventKey {
 	} else if j.jsonRenderer.isSearching {
 		switch event.Key() {
 		case tcell.KeyRight:
-			res := j.jsonRenderer.SearchTraverseNext()
-			j.searchInfo.SetText(fmt.Sprintf(SearchMatch,
-				res.CurrentPosition,
-				res.TotalPositions))
+			j.traverse(j.jsonRenderer.SearchTraverseNext)
 		case tcell.KeyLeft:
-			res := j.jsonRenderer.SearchTraversePrev()
-			j.searchInfo.SetText(fmt.Sprintf(SearchMatch,
-				res.CurrentPosition,
-				res.TotalPositions))
+			j.traverse(j.jsonRenderer.SearchTraversePrev)
 		}
 	}
 
 	return event
+}
+
+func (j *JsonViewer) traverse(f func() *SearchTraversalState) {
+	res := f()
+	j.searchInfo.SetText(fmt.Sprintf(SearchMatch,
+		res.CurrentPosition,
+		res.TotalPositions))
 }
