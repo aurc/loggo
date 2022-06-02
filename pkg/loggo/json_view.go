@@ -6,35 +6,41 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/aurc/loggo/internal/colour"
+	"github.com/aurc/loggo/internal/search"
 	"github.com/gdamore/tcell/v2"
-
 	"github.com/rivo/tview"
 )
 
 type JsonView struct {
 	tview.Flex
-	app            *tview.Application
-	textView       *tview.TextView
-	searchInput    *tview.InputField
-	searchType     *tview.DropDown
-	statusBar      *tview.TextView
-	contextMenu    *tview.List
-	jMap           map[string]interface{}
-	jText          []byte
-	tagValToKey    map[string][]string
-	tagValues      []string
-	searchWord     string
-	isSearching    bool
-	indent         string
-	searchStrategy Searchable
-	withSearchTag  string
+	app                      *LoggoApp
+	textView                 *tview.TextView
+	searchInput              *tview.InputField
+	searchType               *tview.DropDown
+	statusBar                *tview.TextView
+	contextMenu              *tview.List
+	jText                    []byte
+	searchWord               string
+	isSearching              bool
+	indent                   string
+	searchStrategy           search.Searchable
+	withSearchTag            string
+	wordWrap                 bool
+	showQuit                 bool
+	toggleFullScreenCallback func()
+	closeCallback            func()
 }
 
-func NewJsonView(app *tview.Application) *JsonView {
+func NewJsonView(app *LoggoApp, showQuit bool,
+	toggleFullScreenCallback, closeCallback func()) *JsonView {
 	v := &JsonView{
-		Flex:   *tview.NewFlex(),
-		app:    app,
-		indent: "  ",
+		Flex:                     *tview.NewFlex(),
+		app:                      app,
+		indent:                   "  ",
+		showQuit:                 showQuit,
+		toggleFullScreenCallback: toggleFullScreenCallback,
+		closeCallback:            closeCallback,
 	}
 	v.makeUIComponents()
 	v.makeLayouts(false)
@@ -42,25 +48,69 @@ func NewJsonView(app *tview.Application) *JsonView {
 	return v
 }
 
+// SetJson sets a JSON and colourise accordingly, replacing any existing content. If it
+// fails to parse the json, it displays the text as plain text.
+func (j *JsonView) SetJson(jText []byte) *JsonView {
+	j.jText = jText
+	return j.setJson()
+}
+
 func (j *JsonView) makeUIComponents() {
 	j.textView = tview.NewTextView().
 		SetTextAlign(tview.AlignLeft).
 		SetRegions(true).
-		SetDynamicColors(true).SetWrap(false)
+		SetDynamicColors(true).
+		SetWrap(j.wordWrap)
 	j.textView.
-		SetBackgroundColor(ColourBackgroundField).
+		SetBackgroundColor(colour.ColourBackgroundField).
 		SetBorderPadding(0, 0, 1, 1).
-		SetBorder(true).SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if !j.isSearching {
+		SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+			if j.isSearching {
+				switch event.Rune() {
+				case 'n', 'N':
+					j.next()
+					return nil
+				case 'p', 'P':
+					j.prev()
+					return nil
+				case 'c', 'C':
+					j.clearSearch()
+					return nil
+				}
+				switch event.Key() {
+				case tcell.KeyEsc:
+					j.clearSearch()
+					return nil
+				case tcell.KeyTAB, tcell.KeyEnter:
+					j.next()
+					return nil
+				}
+			}
 			switch event.Rune() {
+			case 'f', 'F':
+				if j.toggleFullScreenCallback != nil {
+					j.toggleFullScreenCallback()
+					return nil
+				}
 			case 's', 'S':
 				j.prepareCaseInsensitiveSearch()
 				return nil
 			case 'r', 'R':
 				j.prepareRegexSearch()
 				return nil
+			case 'x', 'X':
+				if j.closeCallback != nil {
+					j.closeCallback()
+					return nil
+				}
 			case 'q':
-				j.app.Stop()
+				if j.showQuit {
+					j.app.Stop()
+					return nil
+				}
+			case 'w', 'W':
+				j.wordWrap = !j.wordWrap
+				j.textView.SetWrap(j.wordWrap)
 				return nil
 			}
 			switch event.Key() {
@@ -68,43 +118,21 @@ func (j *JsonView) makeUIComponents() {
 				j.clearSearch()
 				return nil
 			}
-		} else {
-			switch event.Rune() {
-			case 'n', 'N':
-				j.Next()
-				return nil
-			case 'p', 'P':
-				j.Prev()
-				return nil
-			case 'c', 'C':
-				j.clearSearch()
-				return nil
-			}
-			switch event.Key() {
-			case tcell.KeyEsc:
-				j.clearSearch()
-				return nil
-			case tcell.KeyTAB, tcell.KeyEnter:
-				j.Next()
-				return nil
-			}
-		}
-		return event
-	})
+			return event
+		})
 
 	j.contextMenu = tview.NewList()
 	j.contextMenu.
 		SetBorder(true).
-		//SetBorderPadding(0, 0, 1, 1).
 		SetTitle("Context Menu").
-		SetBackgroundColor(ColourBackgroundField)
+		SetBackgroundColor(colour.ColourBackgroundField)
 
 	j.searchInput = tview.NewInputField()
-	j.searchInput.SetFieldStyle(FieldStyle).
+	j.searchInput.SetFieldStyle(colour.FieldStyle).
 		SetBorder(true).
-		SetBackgroundColor(ColourBackgroundField)
+		SetBackgroundColor(colour.ColourBackgroundField)
 	j.searchInput.SetChangedFunc(func(text string) {
-		j.Search(text)
+		j.search(text)
 	})
 	j.searchInput.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
@@ -114,7 +142,7 @@ func (j *JsonView) makeUIComponents() {
 		case tcell.KeyEnter:
 			if len(j.searchInput.GetText()) > 0 {
 				j.app.SetFocus(j.contextMenu)
-				j.Next()
+				j.next()
 				return nil
 			} else {
 				j.clearSearch()
@@ -125,85 +153,104 @@ func (j *JsonView) makeUIComponents() {
 	})
 
 	j.statusBar = tview.NewTextView()
-	j.statusBar.SetBackgroundColor(ColourSecondaryBorder)
+	j.statusBar.SetBackgroundColor(colour.ColourBackgroundField).SetBorder(true)
 }
 
 func (j *JsonView) makeLayouts(search bool) {
-	var rightMenuLayout *tview.Flex
-	if !search {
-		rightMenuLayout = tview.NewFlex().
-			SetDirection(tview.FlexRow).
-			AddItem(j.contextMenu, 0, 2, false)
-	} else {
-		rightMenuLayout = tview.NewFlex().
-			SetDirection(tview.FlexRow).
-			AddItem(j.searchInput, 3, 1, false).
-			AddItem(j.contextMenu, 0, 2, false)
-	}
 	mainContent := tview.NewFlex().
 		SetDirection(tview.FlexColumn).
-		AddItem(j.textView, 0, 2, false).
-		AddItem(rightMenuLayout, 40, 1, false)
-	j.Flex.Clear().SetDirection(tview.FlexRow).
-		AddItem(mainContent, 0, 2, false).
-		AddItem(j.statusBar.Clear(), 1, 1, false)
+		AddItem(j.contextMenu, 30, 1, false).
+		AddItem(j.textView, 0, 2, false)
+
+	j.Flex.Clear().SetDirection(tview.FlexRow)
+	j.Flex.AddItem(mainContent, 0, 2, false)
+	if search {
+		j.Flex.AddItem(tview.NewFlex().
+			SetDirection(tview.FlexColumn).
+			AddItem(j.searchInput, 30, 1, false).
+			AddItem(j.statusBar.Clear(), 0, 1, false),
+			3, 1, false,
+		)
+	}
 }
 
 func (j *JsonView) makeContextMenu() {
+	j.contextMenu.Clear().ShowSecondaryText(false).SetBorderPadding(0, 0, 1, 1)
 	if j.isSearching {
-		j.contextMenu.Clear().
-			ShowSecondaryText(false).
+		j.contextMenu.
 			AddItem("Next Result", "", 'n', func() {
-				j.Next()
+				j.next()
 			}).
 			AddItem("Previous Result", "", 'p', func() {
-				j.Prev()
+				j.prev()
 			}).
 			AddItem("Clear Search", "", 'c', func() {
 				j.clearSearch()
-			}).
-			SetBorderPadding(1, 1, 1, 1)
-	} else {
-		j.contextMenu.Clear().
-			ShowSecondaryText(false).
-			AddItem("Search Word", "", 's', func() {
-				j.prepareCaseInsensitiveSearch()
-			}).
-			AddItem("Search Regex", "", 'r', func() {
-				j.prepareRegexSearch()
-			}).
-			AddItem("Quit", "", 'q', func() {
-				j.app.Stop()
-			}).
-			SetBorderPadding(1, 1, 1, 1)
+			})
+	}
+	j.contextMenu.
+		ShowSecondaryText(false)
+	if j.toggleFullScreenCallback != nil {
+		j.contextMenu.AddItem("Toggle Full Screen", "", 'f', func() {
+			j.toggleFullScreenCallback()
+		})
+	}
+	j.contextMenu.
+		AddItem("Search Word", "", 's', func() {
+			j.prepareCaseInsensitiveSearch()
+		}).
+		AddItem("Search Regex", "", 'r', func() {
+			j.prepareRegexSearch()
+		}).
+		AddItem("Go to Top", "", 'g', func() {
+			j.textView.ScrollToBeginning()
+		}).
+		AddItem("Go to Bottom", "", 'G', func() {
+			j.textView.ScrollToEnd()
+		}).
+		AddItem("Toggle word wrap", "", 'w', func() {
+			j.wordWrap = !j.wordWrap
+			j.textView.SetWrap(j.wordWrap)
+		})
+	if j.closeCallback != nil {
+		j.contextMenu.AddItem("Close", "", 'x', func() {
+			j.closeCallback()
+		})
+	}
+	if j.showQuit {
+		j.contextMenu.AddItem("Quit", "", 'q', func() {
+			j.app.Stop()
+		})
 	}
 }
 
 func (j *JsonView) prepareCaseInsensitiveSearch() {
-	j.searchStrategy = MakeCaseInsensitiveSearch(j.statusBar)
+	if j.searchStrategy != nil {
+		j.searchStrategy.Clear()
+	}
+	j.searchStrategy = search.MakeCaseInsensitiveSearch(j.statusBar)
 	j.makeLayouts(true)
 	j.searchInput.SetTitle("Search Word")
 	j.app.SetFocus(j.searchInput)
+	if len(j.searchInput.GetText()) > 0 {
+		j.search(j.searchInput.GetText())
+	}
 }
 
 func (j *JsonView) prepareRegexSearch() {
-	j.searchStrategy = MakeRegexSearch(j.statusBar)
+	if j.searchStrategy != nil {
+		j.searchStrategy.Clear()
+	}
+	j.searchStrategy = search.MakeRegexSearch(j.statusBar)
 	j.makeLayouts(true)
 	j.searchInput.SetTitle("Search Regex")
 	j.app.SetFocus(j.searchInput)
+	if len(j.searchInput.GetText()) > 0 {
+		j.search(j.searchInput.GetText())
+	}
 }
 
-func (j *JsonView) clearSearch() {
-	j.app.SetFocus(j.textView)
-	j.searchInput.SetText("")
-	j.isSearching = false
-	j.withSearchTag = ""
-	j.setJson()
-	j.makeLayouts(false)
-	j.makeContextMenu()
-}
-
-func (j *JsonView) Search(word string) []int {
+func (j *JsonView) search(word string) []int {
 	j.isSearching = true
 	j.makeContextMenu()
 	j.searchStrategy.Clear()
@@ -217,7 +264,7 @@ func (j *JsonView) Search(word string) []int {
 	return nil
 }
 
-func (j *JsonView) Next() {
+func (j *JsonView) next() {
 	j.searchStrategy.Next()
 	j.textView.
 		Highlight(fmt.Sprintf(`%d`, j.searchStrategy.GetSearchPosition()-1)).
@@ -225,7 +272,8 @@ func (j *JsonView) Next() {
 
 	j.searchStrategy.SetCurrentStatus()
 }
-func (j *JsonView) Prev() {
+
+func (j *JsonView) prev() {
 	j.searchStrategy.Prev()
 	j.textView.
 		Highlight(fmt.Sprintf(`%d`, j.searchStrategy.GetSearchPosition()-1)).
@@ -234,25 +282,41 @@ func (j *JsonView) Prev() {
 	j.searchStrategy.SetCurrentStatus()
 }
 
-// SetJson sets a JSON and colourise accordingly, replacing any existing content.
-func (j *JsonView) SetJson(jText []byte) *JsonView {
-	j.jText = jText
-	return j.setJson()
+func (j *JsonView) clearSearch() {
+	j.app.SetFocus(j.textView)
+	j.searchInput.SetText("")
+	j.isSearching = false
+	j.withSearchTag = ""
+	j.setJson()
+	j.makeLayouts(false)
+	j.makeContextMenu()
 }
 
 func (j *JsonView) setJson() *JsonView {
-	j.jMap = make(map[string]interface{})
-	if err := json.Unmarshal(j.jText, &j.jMap); err != nil {
-		//j.SetText("[yellow]")
-		panic(err)
+	jMap := make(map[string]interface{})
+	if err := json.Unmarshal(j.jText, &jMap); err != nil {
+		tex := string(j.jText)
+		sb := strings.Builder{}
+		wordList := strings.Split(tex, " ")
+		for i, w := range wordList {
+			if word := j.captureWordSection(w, j.withSearchTag); len(word) > 0 {
+				sb.WriteString(word)
+			} else {
+				sb.WriteString(w)
+			}
+			if i < len(wordList)-1 {
+				sb.WriteString(" ")
+			}
+		}
+		j.textView.SetText(sb.String())
 	} else {
 		text := &strings.Builder{}
 		text.WriteString("{" + j.newLine())
-		kc := len(j.jMap)
+		kc := len(jMap)
 		i := 0
-		keys := j.extractKeys(j.jMap)
+		keys := j.extractKeys(jMap)
 		for _, k := range keys {
-			v := j.jMap[k]
+			v := jMap[k]
 			j.processNode(k, v, j.indent, text, i+1 == kc)
 			text.WriteString(j.newLine())
 			i++
@@ -260,11 +324,6 @@ func (j *JsonView) setJson() *JsonView {
 		text.WriteString("}" + j.newLine())
 		markedText := text.String()
 		j.textView.SetText(markedText)
-	}
-
-	j.tagValues = []string{}
-	for k := range j.tagValToKey {
-		j.tagValues = append(j.tagValues, k)
 	}
 
 	return j
@@ -275,7 +334,7 @@ func (j *JsonView) processNode(k, v interface{}, indent string, text *strings.Bu
 	if word != "" {
 		k = word
 	}
-	key := fmt.Sprintf(`%s%s"%v"%s: `, indent, clField, k, clWhite)
+	key := fmt.Sprintf(`%s%s"%v"%s: `, indent, colour.ClField, k, colour.ClWhite)
 	text.WriteString(key)
 	switch tp := v.(type) {
 	case int,
@@ -307,7 +366,7 @@ func (j *JsonView) processArray(text *strings.Builder, tp []interface{}, indent 
 }
 
 func (j *JsonView) processObject(text *strings.Builder, val interface{}, indent string) {
-	text.WriteString(clString)
+	text.WriteString(colour.ClString)
 	text.WriteString(fmt.Sprintf(`[white::]{%s`, j.newLine()))
 
 	vmap := val.(map[string]interface{})
@@ -331,18 +390,18 @@ func (j *JsonView) processString(text *strings.Builder, v interface{}, indent st
 	if word := j.captureWordSection(v, j.withSearchTag); len(word) > 0 {
 		val = word
 	}
-	text.WriteString(clString)
+	text.WriteString(colour.ClString)
 	text.WriteString(fmt.Sprintf(`%s"%v"`, j.computeIndent(indent), val))
-	text.WriteString(clWhite)
+	text.WriteString(colour.ClWhite)
 }
 
 func (j *JsonView) processNumeric(text *strings.Builder, v interface{}, indent string) {
 	if word := j.captureWordSection(v, j.withSearchTag); len(word) > 0 {
 		v = word
 	}
-	text.WriteString(clNumeric)
+	text.WriteString(colour.ClNumeric)
 	text.WriteString(fmt.Sprintf("%s%v", j.computeIndent(indent), v))
-	text.WriteString(clWhite)
+	text.WriteString(colour.ClWhite)
 }
 
 func (j *JsonView) processArrayItem(v interface{}, indent string, text *strings.Builder, last bool) {

@@ -1,9 +1,10 @@
-package loggo
+package colour
 
 import "github.com/gdamore/tcell/v2"
 
 const (
-	ColourBackgroundField    = tcell.Color236
+	//ColourBackgroundField    = tcell.Color236
+	ColourBackgroundField    = tcell.ColorBlack
 	ColourForegroundField    = tcell.ColorWhite
 	ColourSelectedBackground = tcell.Color69
 	ColourSelectedForeground = tcell.ColorWhite
@@ -20,8 +21,8 @@ var (
 )
 
 const (
-	clField   = "[#ffaf00::b]"
-	clWhite   = "[#ffffff::-]"
-	clNumeric = "[#00afff]"
-	clString  = "[#6A9F59]"
+	ClField   = "[#ffaf00::b]"
+	ClWhite   = "[#ffffff::-]"
+	ClNumeric = "[#00afff]"
+	ClString  = "[#6A9F59]"
 )

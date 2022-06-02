@@ -1,8 +1,9 @@
 # github.com/davecgh/go-spew v1.1.0
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/epiclabs-io/winman v0.0.0-20210113192526-493c730b8c71
+# github.com/fsnotify/fsnotify v1.4.9
 ## explicit; go 1.13
+github.com/fsnotify/fsnotify
 # github.com/gdamore/encoding v1.0.0
 ## explicit; go 1.9
 github.com/gdamore/encoding
@@ -47,6 +48,9 @@ github.com/gdamore/tcell/v2/terminfo/x/xfce
 github.com/gdamore/tcell/v2/terminfo/x/xterm
 github.com/gdamore/tcell/v2/terminfo/x/xterm_kitty
 github.com/gdamore/tcell/v2/terminfo/x/xterm_termite
+# github.com/google/uuid v1.3.0
+## explicit
+github.com/google/uuid
 # github.com/lithammer/fuzzysearch v1.1.5
 ## explicit; go 1.15
 github.com/lithammer/fuzzysearch/fuzzy
@@ -56,6 +60,13 @@ github.com/lucasb-eyer/go-colorful
 # github.com/mattn/go-runewidth v0.0.13
 ## explicit; go 1.9
 github.com/mattn/go-runewidth
+# github.com/nxadm/tail v1.4.8
+## explicit; go 1.13
+github.com/nxadm/tail
+github.com/nxadm/tail/ratelimiter
+github.com/nxadm/tail/util
+github.com/nxadm/tail/watch
+github.com/nxadm/tail/winfile
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
@@ -68,6 +79,31 @@ github.com/rivo/uniseg
 # github.com/stretchr/testify v1.7.1
 ## explicit; go 1.13
 github.com/stretchr/testify/assert
+# github.com/tidwall/btree v1.3.1
+## explicit; go 1.18
+github.com/tidwall/btree
+# github.com/tidwall/buntdb v1.2.9
+## explicit; go 1.16
+github.com/tidwall/buntdb
+# github.com/tidwall/gjson v1.14.1
+## explicit; go 1.12
+github.com/tidwall/gjson
+# github.com/tidwall/grect v0.1.4
+## explicit; go 1.15
+github.com/tidwall/grect
+# github.com/tidwall/match v1.1.1
+## explicit; go 1.15
+github.com/tidwall/match
+# github.com/tidwall/pretty v1.2.0
+## explicit; go 1.16
+github.com/tidwall/pretty
+# github.com/tidwall/rtred v0.1.2
+## explicit; go 1.15
+github.com/tidwall/rtred
+github.com/tidwall/rtred/base
+# github.com/tidwall/tinyqueue v0.1.1
+## explicit; go 1.15
+github.com/tidwall/tinyqueue
 # golang.org/x/sys v0.0.0-20220318055525-2edf467146b5
 ## explicit; go 1.17
 golang.org/x/sys/internal/unsafeheader
@@ -84,6 +120,9 @@ golang.org/x/text/encoding/internal/identifier
 golang.org/x/text/runes
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
-# gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
+# gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7
+## explicit
+gopkg.in/tomb.v1
+# gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3

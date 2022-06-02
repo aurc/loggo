@@ -1,4 +1,4 @@
-package loggo
+package search
 
 import (
 	"fmt"

@@ -1,4 +1,4 @@
-package loggo
+package search
 
 import (
 	"fmt"
@@ -6,11 +6,6 @@ import (
 
 	"github.com/rivo/tview"
 )
-
-type SearchTraversalState struct {
-	CurrentPosition int
-	TotalPositions  int
-}
 
 type search struct {
 	startIndexes   [][]int
