@@ -43,10 +43,24 @@ func (t *TemplateView) makeUIComponents() {
 		SetContent(t.data)
 	t.table.
 		SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+			selected := false
+			if r, _ := t.table.GetSelection(); r > 0 {
+				selected = true
+			}
 			switch event.Rune() {
 			case 'f', 'F':
 				if t.toggleFullScreenCallback != nil {
 					t.toggleFullScreenCallback()
+					return nil
+				}
+			case 'u', 'U':
+				if selected {
+					t.moveUp()
+					return nil
+				}
+			case 'd', 'D':
+				if selected {
+					t.moveDown()
 					return nil
 				}
 			case 'x', 'X':
@@ -54,8 +68,8 @@ func (t *TemplateView) makeUIComponents() {
 					t.closeCallback()
 					return nil
 				}
-			case 'd', 'D':
-				if r, _ := t.table.GetSelection(); r > 0 {
+			case 'r', 'R':
+				if selected {
 					t.confirmDelete()
 					return nil
 				}
@@ -92,7 +106,13 @@ func (t *TemplateView) makeContextMenu() {
 		})
 	}
 	if r, _ := t.table.GetSelection(); r > 0 {
-		t.contextMenu.AddItem("Delete Item", "", 'd', func() {
+		t.contextMenu.AddItem("Move Up", "", 'u', func() {
+			t.moveUp()
+		})
+		t.contextMenu.AddItem("Move Down", "", 'd', func() {
+			t.moveDown()
+		})
+		t.contextMenu.AddItem("Remove Item", "", 'r', func() {
 			t.confirmDelete()
 		})
 	}
@@ -101,6 +121,42 @@ func (t *TemplateView) makeContextMenu() {
 			t.closeCallback()
 		})
 	}
+}
+
+func (t *TemplateView) moveUp() {
+	r, _ := t.table.GetSelection()
+	finalRow := r
+	r = r - 1
+	keys := t.config.Keys
+	if r > 0 {
+		curr := keys[r]
+		keys[r] = keys[r-1]
+		keys[r-1] = curr
+		finalRow = r
+	} else if len(keys) > 1 {
+		t.config.Keys = append(keys[1:], keys[r])
+		finalRow = len(t.config.Keys)
+	}
+	t.makeLayouts()
+	t.table.Select(finalRow, 0)
+}
+
+func (t *TemplateView) moveDown() {
+	r, _ := t.table.GetSelection()
+	finalRow := r
+	r = r - 1
+	keys := t.config.Keys
+	if r < len(keys)-1 {
+		curr := keys[r]
+		keys[r] = keys[r+1]
+		keys[r+1] = curr
+		finalRow = r + 2
+	} else if len(keys) > 1 {
+		t.config.Keys = append([]config.Key{keys[r]}, keys[:len(keys)-1]...)
+		finalRow = 1
+	}
+	t.makeLayouts()
+	t.table.Select(finalRow, 0)
 }
 
 func (t *TemplateView) confirmDelete() {
