@@ -63,7 +63,7 @@ func (l *LogView) read() {
 }
 
 func (l *LogView) makeUIComponents() {
-	l.templateView = NewTemplateView(l.app, l.config, func() {
+	l.templateView = NewTemplateView(l.app, func() {
 		// Toggle full screen func
 		l.templateFullScreen = !l.templateFullScreen
 		l.makeLayoutsWithTemplateView()

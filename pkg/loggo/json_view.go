@@ -14,7 +14,7 @@ import (
 
 type JsonView struct {
 	tview.Flex
-	app                      *LoggoApp
+	app                      Loggo
 	textView                 *tview.TextView
 	searchInput              *tview.InputField
 	searchType               *tview.DropDown
@@ -32,7 +32,7 @@ type JsonView struct {
 	closeCallback            func()
 }
 
-func NewJsonView(app *LoggoApp, showQuit bool,
+func NewJsonView(app Loggo, showQuit bool,
 	toggleFullScreenCallback, closeCallback func()) *JsonView {
 	v := &JsonView{
 		Flex:                     *tview.NewFlex(),

@@ -6,67 +6,55 @@ import (
 	"github.com/rivo/tview"
 )
 
-type LoggoApp struct {
-	app     *tview.Application
-	input   <-chan string
-	logView *LogView
-	config  *config.Config
-	pages   *tview.Pages
-	modal   *tview.Flex
+type appScaffold struct {
+	app    *tview.Application
+	config *config.Config
+	pages  *tview.Pages
+	modal  *tview.Flex
 }
 
-type Loggo interface {
-	Draw()
-	SetInputCapture(cap func(event *tcell.EventKey) *tcell.EventKey)
+type App interface {
 	Stop()
-	SetFocus(primitive tview.Primitive)
-	ShowPrefabModal(text string, width, height int, buttons ...*tview.Button)
-	ShowModal(p tview.Primitive, width, height int)
-	DismissModal()
-	Config() *config.Config
+	Run(p tview.Primitive)
 }
 
-func NewLoggoApp(input <-chan string, configFile string) *LoggoApp {
+func NewApp(configFile string) *appScaffold {
+	scaffold := &appScaffold{}
 	cfg, err := config.MakeConfig(configFile)
 	if err != nil {
 		panic(err)
 	}
 	app := tview.NewApplication()
-	lapp := &LoggoApp{
-		app:    app,
-		input:  input,
-		config: cfg,
-	}
 
-	lapp.logView = NewLogReader(lapp, input, cfg)
+	scaffold.app = app
+	scaffold.config = cfg
 
-	lapp.pages = tview.NewPages().
-		AddPage("background", lapp.logView, true, true)
+	scaffold.pages = tview.NewPages()
 
-	return lapp
+	return scaffold
 }
 
-func (a *LoggoApp) Config() *config.Config {
+func (a *appScaffold) Config() *config.Config {
 	return a.config
 }
 
-func (a *LoggoApp) Draw() {
+func (a *appScaffold) Draw() {
 	a.app.Draw()
 }
 
-func (a *LoggoApp) SetInputCapture(cap func(event *tcell.EventKey) *tcell.EventKey) {
+func (a *appScaffold) SetInputCapture(cap func(event *tcell.EventKey) *tcell.EventKey) {
 	a.app.SetInputCapture(cap)
 }
 
-func (a *LoggoApp) Stop() {
+func (a *appScaffold) Stop() {
 	a.app.Stop()
 }
 
-func (a *LoggoApp) SetFocus(primitive tview.Primitive) {
+func (a *appScaffold) SetFocus(primitive tview.Primitive) {
 	a.app.SetFocus(primitive)
 }
 
-func (a *LoggoApp) ShowPrefabModal(text string, width, height int, buttons ...*tview.Button) {
+func (a *appScaffold) ShowPrefabModal(text string, width, height int, buttons ...*tview.Button) {
 	modal := tview.NewFlex().SetDirection(tview.FlexRow)
 	modal.SetBackgroundColor(tcell.ColorDarkBlue)
 	mainContent := tview.NewTextView().
@@ -87,7 +75,7 @@ func (a *LoggoApp) ShowPrefabModal(text string, width, height int, buttons ...*t
 	a.ShowModal(modal, width, height)
 }
 
-func (a *LoggoApp) ShowModal(p tview.Primitive, width, height int) {
+func (a *appScaffold) ShowModal(p tview.Primitive, width, height int) {
 	modContainer := tview.NewFlex().AddItem(p, 0, 1, false)
 	modContainer.SetBorder(true).SetBackgroundColor(tcell.ColorDarkBlue)
 	a.modal = tview.NewFlex().
@@ -100,11 +88,12 @@ func (a *LoggoApp) ShowModal(p tview.Primitive, width, height int) {
 	a.pages.AddPage("modal", a.modal, true, true)
 }
 
-func (a *LoggoApp) DismissModal() {
+func (a *appScaffold) DismissModal() {
 	a.pages.RemovePage("modal")
 }
 
-func (a *LoggoApp) Run() {
+func (a *appScaffold) Run(p tview.Primitive) {
+	a.pages.AddPage("background", p, true, true)
 	if err := a.app.
 		SetRoot(a.pages, true).
 		EnableMouse(true).

@@ -11,7 +11,7 @@ import (
 
 type TemplateView struct {
 	tview.Flex
-	app                      *LoggoApp
+	app                      Loggo
 	config                   *config.Config
 	table                    *tview.Table
 	data                     *TemplateData
@@ -20,12 +20,11 @@ type TemplateView struct {
 	closeCallback            func()
 }
 
-func NewTemplateView(app *LoggoApp, config *config.Config,
-	toggleFullScreenCallback, closeCallback func()) *TemplateView {
+func NewTemplateView(app Loggo, toggleFullScreenCallback, closeCallback func()) *TemplateView {
 	tv := &TemplateView{
 		Flex:                     *tview.NewFlex(),
 		app:                      app,
-		config:                   config,
+		config:                   app.Config(),
 		toggleFullScreenCallback: toggleFullScreenCallback,
 		closeCallback:            closeCallback,
 	}
