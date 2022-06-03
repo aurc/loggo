@@ -65,6 +65,8 @@ func (a *appScaffold) ShowPrefabModal(text string, width, height int, buttons ..
 
 	buts := tview.NewFlex().SetDirection(tview.FlexColumn)
 	for _, b := range buttons {
+		b.SetBackgroundColor(tcell.ColorWhite)
+		b.SetLabelColor(tcell.ColorBlack)
 		buts.AddItem(tview.NewBox().SetBackgroundColor(tcell.ColorDarkBlue), 2, 1, false)
 		buts.AddItem(b, 0, 1, false)
 	}

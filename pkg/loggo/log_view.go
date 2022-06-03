@@ -26,11 +26,11 @@ type LogView struct {
 	inSlice            []map[string]interface{}
 }
 
-func NewLogReader(app *LoggoApp, input <-chan string, config *config.Config) *LogView {
+func NewLogReader(app *LoggoApp, input <-chan string) *LogView {
 	lv := &LogView{
 		Flex:   *tview.NewFlex(),
 		app:    app,
-		config: config,
+		config: app.Config(),
 		input:  input,
 	}
 	lv.makeUIComponents()
