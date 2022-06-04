@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 
+	"github.com/aurc/loggo/internal/loggo"
 	"github.com/aurc/loggo/internal/reader"
 	"github.com/aurc/loggo/internal/uitest/helper"
-	"github.com/aurc/loggo/pkg/loggo"
 )
 
 func main() {

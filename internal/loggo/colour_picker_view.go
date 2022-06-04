@@ -1,0 +1,172 @@
+package loggo
+
+import (
+	"fmt"
+	"sort"
+
+	"github.com/aurc/loggo/internal/colour"
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
+)
+
+type ColourPickerView struct {
+	tview.Flex
+	app                      Loggo
+	contextMenu              *tview.List
+	onSelect                 func(color string)
+	toggleFullScreenCallback func()
+	closeCallback            func()
+	table                    *tview.Table
+	data                     *ColorPickerData
+	colors                   [][]string
+	title                    string
+}
+
+func NewColourPickerView(app Loggo, title string, onSelect func(string),
+	toggleFullScreenCallback, closeCallback func()) *ColourPickerView {
+	tv := &ColourPickerView{
+		Flex:                     *tview.NewFlex(),
+		app:                      app,
+		onSelect:                 onSelect,
+		toggleFullScreenCallback: toggleFullScreenCallback,
+		closeCallback:            closeCallback,
+		title:                    title,
+	}
+	tv.makeColorTable()
+	tv.makeUIComponents()
+	tv.makeLayouts()
+	return tv
+}
+
+func (t *ColourPickerView) makeColorTable() {
+	const columns = 5
+	col := 0
+	row := 0
+	var currRow []string
+	t.colors = [][]string{}
+	var sortedCols []string
+	for c := range tcell.ColorNames {
+		sortedCols = append(sortedCols, c)
+	}
+	sort.Strings(sortedCols)
+	for _, c := range sortedCols {
+		if col < columns {
+			currRow = append(currRow, c)
+			col++
+			if col == columns {
+				t.colors = append(t.colors, currRow)
+				currRow = []string{}
+				col = 0
+				row++
+			}
+		}
+	}
+	if col > 0 && col < columns {
+		t.colors = append(t.colors, currRow)
+	}
+}
+
+func (t *ColourPickerView) makeUIComponents() {
+	t.data = &ColorPickerData{
+		colourPickerView: t,
+	}
+	t.contextMenu = tview.NewList()
+	t.contextMenu.
+		SetBorder(true).
+		SetTitle("Context Menu").
+		SetBackgroundColor(colour.ColourBackgroundField)
+
+	t.table = tview.NewTable().
+		SetSelectable(true, true).
+		SetSeparator(tview.Borders.Vertical).
+		SetContent(t.data)
+
+	t.table.SetSelectionChangedFunc(func(row, column int) {
+		t.makeContextMenu()
+	})
+
+	t.table.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if (event.Key() == tcell.KeyEnter ||
+			event.Rune() == 's' ||
+			event.Rune() == 'S') && t.onSelect != nil {
+			r, c := t.table.GetSelection()
+			col := t.colors[r][c]
+			t.onSelect(col)
+			return nil
+		}
+		switch event.Rune() {
+		case 'x', 'X':
+			if t.closeCallback != nil {
+				t.closeCallback()
+			}
+		case 'f', 'F':
+			if t.toggleFullScreenCallback != nil {
+				t.toggleFullScreenCallback()
+			}
+		}
+		return event
+	})
+}
+
+func (t *ColourPickerView) makeLayouts() {
+	t.makeContextMenu()
+	t.Flex.Clear().SetDirection(tview.FlexColumn).
+		AddItem(t.contextMenu, 30, 1, false).
+		AddItem(t.table, 0, 2, true).
+		SetBackgroundColor(colour.ColourBackgroundField).
+		SetBorder(true).
+		SetTitle(t.title)
+}
+
+func (t *ColourPickerView) makeContextMenu() {
+	t.contextMenu.Clear().ShowSecondaryText(false).SetBorderPadding(0, 0, 1, 1)
+	t.contextMenu.
+		ShowSecondaryText(false)
+	if t.toggleFullScreenCallback != nil {
+		t.contextMenu.AddItem("Toggle Full Screen", "", 'f', func() {
+			t.toggleFullScreenCallback()
+		})
+	}
+	if t.onSelect != nil {
+		t.contextMenu.AddItem("/ [yellow::](ENTER)[-::-] Select Color", "", 's', func() {
+			r, c := t.table.GetSelection()
+			col := t.colors[r][c]
+			t.onSelect(col)
+		})
+	}
+	if t.closeCallback != nil {
+		t.contextMenu.AddItem("Close", "", 'x', func() {
+			t.closeCallback()
+		})
+	}
+}
+
+type ColorPickerData struct {
+	tview.TableContentReadOnly
+	colourPickerView *ColourPickerView
+}
+
+func (d *ColorPickerData) GetCell(row, column int) *tview.TableCell {
+	if column+1 <= len(d.colourPickerView.colors[row]) {
+		c := d.colourPickerView.colors[row][column]
+		label := fmt.Sprintf(` [%s] ■ [-] %s `, c, c)
+		return tview.NewTableCell(label).
+			SetAlign(tview.AlignLeft).
+			SetBackgroundColor(tcell.ColorBlack)
+	}
+	return nil
+}
+
+func (d *ColorPickerData) GetRowCount() int {
+	if d.colourPickerView.colors == nil {
+		return 0
+	}
+	return len(d.colourPickerView.colors)
+}
+
+func (d *ColorPickerData) GetColumnCount() int {
+	if d.colourPickerView.colors == nil {
+		return 0
+	}
+	return len(d.colourPickerView.colors[0])
+}

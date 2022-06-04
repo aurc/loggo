@@ -115,6 +115,9 @@ const defaultConfig = `keys:
   - name: timestamp
     type: datetime
     layout: 2006-01-02T15:04:05-0700
+    color:
+      foreground: purple
+      background: black
   - name: severity
     type: string
     color:
@@ -139,7 +142,16 @@ const defaultConfig = `keys:
           background: black
   - name: resource/labels/container_name
     type: string
+    color:
+      foreground: darkgreen
+      background: black
   - name: trace
     type: string
+    color:
+      foreground: white
+      background: black
   - name: jsonPayload/message
-    type: string`
+    type: string
+    color:
+      foreground: white
+      background: black`

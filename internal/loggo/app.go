@@ -1,7 +1,7 @@
 package loggo
 
 import (
-	"github.com/aurc/loggo/pkg/config"
+	"github.com/aurc/loggo/internal/config"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )

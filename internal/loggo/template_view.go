@@ -1,10 +1,12 @@
 package loggo
 
 import (
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/aurc/loggo/internal/colour"
-	"github.com/aurc/loggo/pkg/config"
+	"github.com/aurc/loggo/internal/config"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -30,6 +32,13 @@ func NewTemplateView(app Loggo, toggleFullScreenCallback, closeCallback func()) 
 	}
 	tv.makeUIComponents()
 	tv.makeLayouts()
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		if len(tv.config.Keys) > 0 {
+			tv.table.Select(1, 0)
+			tv.app.Draw()
+		}
+	}()
 	return tv
 }
 
@@ -214,11 +223,15 @@ func (d *TemplateData) GetCell(row, column int) *tview.TableCell {
 		cell = tview.NewTableCell(" " + k.Layout + " ").
 			SetAlign(tview.AlignCenter)
 	case 3:
-		cell = tview.NewTableCell(" " + k.Color.SetTextTagColor(k.Color.Foreground) + " ").
-			SetAlign(tview.AlignCenter)
+		fg := k.Color.Foreground
+		cell = tview.NewTableCell(
+			fmt.Sprintf(` [%s] ■ [-] │ %s `, fg, fg)).
+			SetAlign(tview.AlignLeft)
 	case 4:
-		cell = tview.NewTableCell(" " + k.Color.SetTextTagColor(k.Color.Background) + " ").
-			SetAlign(tview.AlignCenter)
+		bg := k.Color.Background
+		cell = tview.NewTableCell(
+			fmt.Sprintf(` [%s] ■ [-] │ %s `, bg, bg)).
+			SetAlign(tview.AlignLeft)
 	case 5:
 		caseWhen := strings.Builder{}
 		caseWhen.WriteString(" ")

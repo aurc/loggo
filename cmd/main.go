@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/aurc/loggo/internal/loggo"
 	"github.com/aurc/loggo/internal/reader"
-	"github.com/aurc/loggo/pkg/loggo"
 	"github.com/google/uuid"
 )
 
