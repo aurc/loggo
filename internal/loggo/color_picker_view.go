@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/aurc/loggo/internal/colour"
+	"github.com/aurc/loggo/internal/color"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
-type ColourPickerView struct {
+type ColorPickerView struct {
 	tview.Flex
 	app                      Loggo
 	contextMenu              *tview.List
@@ -20,11 +20,12 @@ type ColourPickerView struct {
 	data                     *ColorPickerData
 	colors                   [][]string
 	title                    string
+	colorToCell              map[string][]int
 }
 
-func NewColourPickerView(app Loggo, title string, onSelect func(string),
-	toggleFullScreenCallback, closeCallback func()) *ColourPickerView {
-	tv := &ColourPickerView{
+func NewColorPickerView(app Loggo, title string, onSelect func(string),
+	toggleFullScreenCallback, closeCallback func()) *ColorPickerView {
+	tv := &ColorPickerView{
 		Flex:                     *tview.NewFlex(),
 		app:                      app,
 		onSelect:                 onSelect,
@@ -38,8 +39,15 @@ func NewColourPickerView(app Loggo, title string, onSelect func(string),
 	return tv
 }
 
-func (t *ColourPickerView) makeColorTable() {
+func (t *ColorPickerView) SelectColor(color string) {
+	if rc, ok := t.colorToCell[color]; ok {
+		t.table.Select(rc[0], rc[1])
+	}
+}
+
+func (t *ColorPickerView) makeColorTable() {
 	const columns = 5
+	t.colorToCell = make(map[string][]int)
 	col := 0
 	row := 0
 	var currRow []string
@@ -52,6 +60,7 @@ func (t *ColourPickerView) makeColorTable() {
 	for _, c := range sortedCols {
 		if col < columns {
 			currRow = append(currRow, c)
+			t.colorToCell[c] = []int{row, col}
 			col++
 			if col == columns {
 				t.colors = append(t.colors, currRow)
@@ -66,7 +75,7 @@ func (t *ColourPickerView) makeColorTable() {
 	}
 }
 
-func (t *ColourPickerView) makeUIComponents() {
+func (t *ColorPickerView) makeUIComponents() {
 	t.data = &ColorPickerData{
 		colourPickerView: t,
 	}
@@ -74,7 +83,7 @@ func (t *ColourPickerView) makeUIComponents() {
 	t.contextMenu.
 		SetBorder(true).
 		SetTitle("Context Menu").
-		SetBackgroundColor(colour.ColourBackgroundField)
+		SetBackgroundColor(color.ColorBackgroundField)
 
 	t.table = tview.NewTable().
 		SetSelectable(true, true).
@@ -108,17 +117,17 @@ func (t *ColourPickerView) makeUIComponents() {
 	})
 }
 
-func (t *ColourPickerView) makeLayouts() {
+func (t *ColorPickerView) makeLayouts() {
 	t.makeContextMenu()
 	t.Flex.Clear().SetDirection(tview.FlexColumn).
 		AddItem(t.contextMenu, 30, 1, false).
 		AddItem(t.table, 0, 2, true).
-		SetBackgroundColor(colour.ColourBackgroundField).
+		SetBackgroundColor(color.ColorBackgroundField).
 		SetBorder(true).
 		SetTitle(t.title)
 }
 
-func (t *ColourPickerView) makeContextMenu() {
+func (t *ColorPickerView) makeContextMenu() {
 	t.contextMenu.Clear().ShowSecondaryText(false).SetBorderPadding(0, 0, 1, 1)
 	t.contextMenu.
 		ShowSecondaryText(false)
@@ -143,7 +152,7 @@ func (t *ColourPickerView) makeContextMenu() {
 
 type ColorPickerData struct {
 	tview.TableContentReadOnly
-	colourPickerView *ColourPickerView
+	colourPickerView *ColorPickerView
 }
 
 func (d *ColorPickerData) GetCell(row, column int) *tview.TableCell {

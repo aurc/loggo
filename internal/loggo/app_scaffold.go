@@ -1,16 +1,19 @@
 package loggo
 
 import (
+	"fmt"
+
 	"github.com/aurc/loggo/internal/config"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
 type appScaffold struct {
-	app    *tview.Application
-	config *config.Config
-	pages  *tview.Pages
-	modal  *tview.Flex
+	app        *tview.Application
+	config     *config.Config
+	pages      *tview.Pages
+	modal      *tview.Flex
+	stackPages []tview.Primitive
 }
 
 type App interface {
@@ -28,7 +31,7 @@ func NewApp(configFile string) *appScaffold {
 
 	scaffold.app = app
 	scaffold.config = cfg
-
+	scaffold.stackPages = []tview.Primitive{}
 	scaffold.pages = tview.NewPages()
 
 	return scaffold
@@ -52,6 +55,16 @@ func (a *appScaffold) Stop() {
 
 func (a *appScaffold) SetFocus(primitive tview.Primitive) {
 	a.app.SetFocus(primitive)
+}
+
+func (a *appScaffold) StackView(p tview.Primitive) {
+	a.stackPages = append(a.stackPages, p)
+	a.pages.AddPage(fmt.Sprintf(`_%d`, len(a.stackPages)), p, true, true)
+}
+
+func (a *appScaffold) PopView() {
+	a.pages.RemovePage(fmt.Sprintf(`_%d`, len(a.stackPages)))
+	a.stackPages = a.stackPages[:len(a.stackPages)-1]
 }
 
 func (a *appScaffold) ShowPrefabModal(text string, width, height int, buttons ...*tview.Button) {

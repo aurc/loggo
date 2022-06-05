@@ -1,14 +1,11 @@
 package loggo
 
 import (
-	"fmt"
-	"sort"
 	"strings"
 
-	"github.com/aurc/loggo/internal/colour"
+	"github.com/aurc/loggo/internal/color"
 	"github.com/aurc/loggo/internal/config"
 	"github.com/gdamore/tcell/v2"
-	"github.com/lithammer/fuzzysearch/fuzzy"
 	"github.com/rivo/tview"
 )
 
@@ -19,12 +16,14 @@ type TemplateItemView struct {
 	form                     *tview.Form
 	toggleFullScreenCallback func()
 	closeCallback            func()
+	key                      *config.Key
 }
 
-func NewTemplateItemView(app Loggo, toggleFullScreenCallback, closeCallback func()) *TemplateItemView {
+func NewTemplateItemView(app Loggo, key *config.Key, toggleFullScreenCallback, closeCallback func()) *TemplateItemView {
 	tv := &TemplateItemView{
 		Flex:                     *tview.NewFlex(),
 		app:                      app,
+		key:                      key,
 		toggleFullScreenCallback: toggleFullScreenCallback,
 		closeCallback:            closeCallback,
 	}
@@ -38,53 +37,46 @@ func (t *TemplateItemView) makeUIComponents() {
 	t.contextMenu.
 		SetBorder(true).
 		SetTitle("Context Menu").
-		SetBackgroundColor(colour.ColourBackgroundField)
+		SetBackgroundColor(color.ColorBackgroundField)
+	//selectType
 	typeDD := tview.NewDropDown().
 		SetLabel("Type").
-		SetListStyles(colour.FieldStyle, colour.SelectStyle).
+		SetListStyles(color.FieldStyle, color.SelectStyle).
 		AddOption(config.TypeString+"  ", nil).
 		AddOption(config.TypeDateTime+"  ", nil).
 		AddOption(config.TypeBool+"  ", nil).
-		AddOption(config.TypeNumber+"  ", nil)
-	//colorDD := tview.NewDropDown().
-	//	SetLabel("Text Colour").
-	//	SetListStyles(colour.FieldStyle, colour.SelectStyle)
-	var cols []string
-	for col := range tcell.ColorNames {
-		label := fmt.Sprintf(` [%s] ■ [-] %s `, col, col)
-		cols = append(cols, label)
-	}
-	colorDD := tview.NewInputField().SetFieldStyle(colour.FieldStyle).
-		SetLabel("Text Colour").
-		SetAutocompleteStyles(tcell.Color236, colour.FieldStyle, colour.SelectStyle)
-	colorDD.
-		SetAutocompleteFunc(func(currentText string) (entries []string) {
-			if len(currentText) == 0 {
-				return
-			}
-			ranks := fuzzy.RankFind(currentText, cols)
-			sort.Sort(ranks)
-			var results []string
-			for _, r := range ranks {
-				results = append(results, r.Target)
-			}
-			return results
-		}).SetChangedFunc(func(text string) {
-		nt := strings.TrimSpace(text)
-		idx := strings.LastIndex(nt, " ")
-		if idx != -1 {
-			nt = nt[idx+1:]
-			colorDD.SetText(nt)
-		}
+		AddOption(config.TypeNumber+"  ", nil).SetSelectedFunc(func(text string, index int) {
+		t.key.Type = config.Type(strings.TrimSpace(text))
 	})
+	currOpt := 0
+	switch t.key.Type {
+	case config.TypeString:
+		currOpt = 0
+	case config.TypeDateTime:
+		currOpt = 1
+	case config.TypeBool:
+		currOpt = 2
+	case config.TypeNumber:
+		currOpt = 3
+	}
+	typeDD.SetCurrentOption(currOpt)
+
 	t.form = tview.NewForm().
 		SetFieldBackgroundColor(tcell.ColorDarkGray).
 		SetFieldTextColor(tcell.ColorBlack).
-		AddInputField("Key", "", 40, nil, nil).
+		AddInputField("Key", t.key.Name, 40, nil, func(text string) {
+			t.key.Name = strings.TrimSpace(text)
+		}).
 		AddFormItem(typeDD).
-		AddInputField("Layout", "", 40, nil, nil).
-		AddFormItem(colorDD).
-		AddInputField("Background Colour", "", 40, nil, nil)
+		AddInputField("Layout", t.key.Layout, 40, nil, func(text string) {
+			t.key.Layout = strings.TrimSpace(text)
+		}).
+		AddFormItem(NewColorPickerButton(t.app, "Text Color", t.key.Color.Foreground, 40, func(text string) {
+			t.key.Color.Foreground = strings.TrimSpace(text)
+		})).
+		AddFormItem(NewColorPickerButton(t.app, "Background Color", t.key.Color.Background, 40, func(text string) {
+			t.key.Color.Background = strings.TrimSpace(text)
+		}))
 }
 
 func (t *TemplateItemView) makeLayouts() {
@@ -92,7 +84,7 @@ func (t *TemplateItemView) makeLayouts() {
 	t.Flex.Clear().SetDirection(tview.FlexColumn).
 		AddItem(t.contextMenu, 30, 1, false).
 		AddItem(t.form, 0, 2, true).
-		SetBackgroundColor(colour.ColourBackgroundField)
+		SetBackgroundColor(color.ColorBackgroundField)
 }
 
 func (t *TemplateItemView) makeContextMenu() {

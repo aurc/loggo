@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/aurc/loggo/internal/colour"
+	"github.com/aurc/loggo/internal/color"
 	"github.com/aurc/loggo/internal/search"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -62,7 +62,7 @@ func (j *JsonView) makeUIComponents() {
 		SetDynamicColors(true).
 		SetWrap(j.wordWrap)
 	j.textView.
-		SetBackgroundColor(colour.ColourBackgroundField).
+		SetBackgroundColor(color.ColorBackgroundField).
 		SetBorderPadding(0, 0, 1, 1).
 		SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 			if j.isSearching {
@@ -125,12 +125,12 @@ func (j *JsonView) makeUIComponents() {
 	j.contextMenu.
 		SetBorder(true).
 		SetTitle("Context Menu").
-		SetBackgroundColor(colour.ColourBackgroundField)
+		SetBackgroundColor(color.ColorBackgroundField)
 
 	j.searchInput = tview.NewInputField()
-	j.searchInput.SetFieldStyle(colour.FieldStyle).
+	j.searchInput.SetFieldStyle(color.FieldStyle).
 		SetBorder(true).
-		SetBackgroundColor(colour.ColourBackgroundField)
+		SetBackgroundColor(color.ColorBackgroundField)
 	j.searchInput.SetChangedFunc(func(text string) {
 		j.search(text)
 	})
@@ -153,7 +153,7 @@ func (j *JsonView) makeUIComponents() {
 	})
 
 	j.statusBar = tview.NewTextView()
-	j.statusBar.SetBackgroundColor(colour.ColourBackgroundField).SetBorder(true)
+	j.statusBar.SetBackgroundColor(color.ColorBackgroundField).SetBorder(true)
 }
 
 func (j *JsonView) makeLayouts(search bool) {
@@ -334,7 +334,7 @@ func (j *JsonView) processNode(k, v interface{}, indent string, text *strings.Bu
 	if word != "" {
 		k = word
 	}
-	key := fmt.Sprintf(`%s%s"%v"%s: `, indent, colour.ClField, k, colour.ClWhite)
+	key := fmt.Sprintf(`%s%s"%v"%s: `, indent, color.ClField, k, color.ClWhite)
 	text.WriteString(key)
 	switch tp := v.(type) {
 	case int,
@@ -366,7 +366,7 @@ func (j *JsonView) processArray(text *strings.Builder, tp []interface{}, indent 
 }
 
 func (j *JsonView) processObject(text *strings.Builder, val interface{}, indent string) {
-	text.WriteString(colour.ClString)
+	text.WriteString(color.ClString)
 	text.WriteString(fmt.Sprintf(`[white::]{%s`, j.newLine()))
 
 	vmap := val.(map[string]interface{})
@@ -390,18 +390,18 @@ func (j *JsonView) processString(text *strings.Builder, v interface{}, indent st
 	if word := j.captureWordSection(v, j.withSearchTag); len(word) > 0 {
 		val = word
 	}
-	text.WriteString(colour.ClString)
+	text.WriteString(color.ClString)
 	text.WriteString(fmt.Sprintf(`%s"%v"`, j.computeIndent(indent), val))
-	text.WriteString(colour.ClWhite)
+	text.WriteString(color.ClWhite)
 }
 
 func (j *JsonView) processNumeric(text *strings.Builder, v interface{}, indent string) {
 	if word := j.captureWordSection(v, j.withSearchTag); len(word) > 0 {
 		v = word
 	}
-	text.WriteString(colour.ClNumeric)
+	text.WriteString(color.ClNumeric)
 	text.WriteString(fmt.Sprintf("%s%v", j.computeIndent(indent), v))
-	text.WriteString(colour.ClWhite)
+	text.WriteString(color.ClWhite)
 }
 
 func (j *JsonView) processArrayItem(v interface{}, indent string, text *strings.Builder, last bool) {

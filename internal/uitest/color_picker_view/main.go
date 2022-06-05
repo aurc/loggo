@@ -4,7 +4,7 @@ import "github.com/aurc/loggo/internal/loggo"
 
 func main() {
 	app := loggo.NewApp("")
-	view := loggo.NewColourPickerView(app, "Select Color",
+	view := loggo.NewColorPickerView(app, "Select Color",
 		func(c string) {
 		}, func() {
 			app.Stop()

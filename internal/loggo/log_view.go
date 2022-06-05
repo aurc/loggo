@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/aurc/loggo/internal/colour"
+	"github.com/aurc/loggo/internal/color"
 	"github.com/aurc/loggo/internal/config"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -94,7 +94,7 @@ func (l *LogView) makeUIComponents() {
 		SetSeparator(tview.Borders.Vertical).
 		SetContent(l.data)
 	l.table.SetSelectedFunc(selection).
-		SetBackgroundColor(colour.ColourBackgroundField)
+		SetBackgroundColor(color.ColorBackgroundField)
 	l.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyF1:
@@ -106,7 +106,7 @@ func (l *LogView) makeUIComponents() {
 
 	l.mainMenu = tview.NewFlex().SetDirection(tview.FlexColumn)
 	l.mainMenu.
-		SetBackgroundColor(colour.ColourBackgroundField).SetTitleAlign(tview.AlignCenter)
+		SetBackgroundColor(color.ColorBackgroundField).SetTitleAlign(tview.AlignCenter)
 	l.mainMenu.
 		AddItem(tview.NewTextView().
 			SetDynamicColors(true).
@@ -126,7 +126,7 @@ func (l *LogView) makeLayouts() {
 	l.Flex.Clear().SetDirection(tview.FlexRow).
 		AddItem(l.table, 0, 2, true).
 		AddItem(l.mainMenu, 1, 1, false).
-		SetBackgroundColor(colour.ColourBackgroundField)
+		SetBackgroundColor(color.ColorBackgroundField)
 	l.app.SetFocus(l.table)
 }
 
@@ -176,26 +176,26 @@ func (d *LogData) GetCell(row, column int) *tview.TableCell {
 	}
 	// Set Body Cells
 	cellValue := k.ExtractValue(d.logView.inSlice[row-1])
-	var bgColour, fgColour tcell.Color
+	var bgColor, fgColor tcell.Color
 	if len(k.Color.Foreground) == 0 {
-		fgColour = k.Type.GetColor()
+		fgColor = k.Type.GetColor()
 	} else {
-		fgColour = k.Color.GetForegroundColor()
+		fgColor = k.Color.GetForegroundColor()
 	}
-	bgColour = k.Color.GetBackgroundColor()
+	bgColor = k.Color.GetBackgroundColor()
 	if len(k.ColorWhen) > 0 {
 	OUT:
 		for _, kv := range k.ColorWhen {
 			if cellValue == kv.MatchValue {
-				bgColour = kv.Color.GetBackgroundColor()
-				fgColour = kv.Color.GetForegroundColor()
+				bgColor = kv.Color.GetBackgroundColor()
+				fgColor = kv.Color.GetForegroundColor()
 				break OUT
 			}
 		}
 	}
 	return tc.
-		SetBackgroundColor(bgColour).
-		SetTextColor(fgColour).
+		SetBackgroundColor(bgColor).
+		SetTextColor(fgColor).
 		SetText(fmt.Sprintf("%s", cellValue))
 }
 

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aurc/loggo/internal/colour"
+	"github.com/aurc/loggo/internal/color"
 	"github.com/aurc/loggo/internal/config"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -93,7 +93,7 @@ func (t *TemplateView) makeUIComponents() {
 	t.contextMenu.
 		SetBorder(true).
 		SetTitle("Context Menu").
-		SetBackgroundColor(colour.ColourBackgroundField)
+		SetBackgroundColor(color.ColorBackgroundField)
 }
 
 func (t *TemplateView) makeLayouts() {
@@ -101,7 +101,7 @@ func (t *TemplateView) makeLayouts() {
 	t.Flex.Clear().SetDirection(tview.FlexColumn).
 		AddItem(t.contextMenu, 30, 1, false).
 		AddItem(t.table, 0, 2, true).
-		SetBackgroundColor(colour.ColourBackgroundField)
+		SetBackgroundColor(color.ColorBackgroundField)
 	t.app.SetFocus(t.table)
 }
 
@@ -114,14 +114,20 @@ func (t *TemplateView) makeContextMenu() {
 			t.toggleFullScreenCallback()
 		})
 	}
+	t.contextMenu.AddItem("Add New", "", 'a', func() {
+		t.addEntry()
+	})
 	if r, _ := t.table.GetSelection(); r > 0 {
+		t.contextMenu.AddItem("Edit", "", 'e', func() {
+			t.editEntry()
+		})
 		t.contextMenu.AddItem("Move Up", "", 'u', func() {
 			t.moveUp()
 		})
 		t.contextMenu.AddItem("Move Down", "", 'd', func() {
 			t.moveDown()
 		})
-		t.contextMenu.AddItem("Remove Item", "", 'r', func() {
+		t.contextMenu.AddItem("Remove", "", 'r', func() {
 			t.confirmDelete()
 		})
 	}
@@ -130,6 +136,32 @@ func (t *TemplateView) makeContextMenu() {
 			t.closeCallback()
 		})
 	}
+}
+
+func (t *TemplateView) addEntry() {
+	v := &config.Key{
+		Type: config.TypeString,
+		Color: config.Color{
+			Foreground: "white",
+			Background: "black",
+		},
+	}
+	t.app.StackView(NewTemplateItemView(t.app, v, nil, func() {
+		t.app.PopView()
+		kn := strings.TrimSpace(v.Name)
+		if len(kn) > 0 {
+			v.Name = kn
+			t.config.Keys = append(t.config.Keys, *v)
+			t.table.Select(len(t.config.Keys), 0)
+		}
+	}))
+}
+
+func (t *TemplateView) editEntry() {
+	r, _ := t.table.GetSelection()
+	t.app.StackView(NewTemplateItemView(t.app, &t.config.Keys[r-1], nil, func() {
+		t.app.PopView()
+	}))
 }
 
 func (t *TemplateView) moveUp() {

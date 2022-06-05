@@ -21,6 +21,8 @@ type Loggo interface {
 	ShowModal(p tview.Primitive, width, height int)
 	DismissModal()
 	Config() *config.Config
+	StackView(p tview.Primitive)
+	PopView()
 }
 
 func NewLoggoApp(input <-chan string, configFile string) *LoggoApp {
