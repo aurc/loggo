@@ -2,6 +2,7 @@ package loggo
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -62,6 +63,17 @@ func (t *TemplateView) makeUIComponents() {
 					t.toggleFullScreenCallback()
 					return nil
 				}
+			case 'a', 'A':
+				t.addEntry()
+				return nil
+			case 's', 'S':
+				t.saveForm()
+				return nil
+			case 'e', 'E':
+				if selected {
+					t.editEntry()
+					return nil
+				}
 			case 'u', 'U':
 				if selected {
 					t.moveUp()
@@ -105,6 +117,54 @@ func (t *TemplateView) makeLayouts() {
 	t.app.SetFocus(t.table)
 }
 
+func (t *TemplateView) makeSaveLayouts() {
+	bar, input := t.makeSaveUI()
+	t.Flex.Clear().SetDirection(tview.FlexRow).
+		AddItem(bar, 3, 1, false).
+		AddItem(t.table, 0, 1, false)
+	t.app.SetFocus(input)
+}
+
+func (t *TemplateView) makeSaveUI() (*tview.Flex, *tview.InputField) {
+	dirName, _ := os.UserHomeDir()
+	if len(t.config.LastSavedName) > 0 {
+		dirName = t.config.LastSavedName
+	} else {
+		dirName = fmt.Sprintf(`%s%c`, dirName, os.PathSeparator)
+	}
+	saveBar := tview.NewFlex().SetDirection(tview.FlexColumn)
+	saveBar.SetBackgroundColor(color.ColorBackgroundField).SetBorder(true).SetTitle("Save Template As...")
+
+	saveInput := tview.NewInputField().SetText(dirName)
+	saveInput.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyEnter:
+			t.save(saveInput.GetText())
+			t.makeLayouts()
+		case tcell.KeyEscape:
+			t.makeLayouts()
+		}
+		return event
+	})
+	buttonSave := tview.NewButton("Save").SetSelectedFunc(func() {
+		// Save
+		t.save(saveInput.GetText())
+		t.makeLayouts()
+	})
+	buttonCancel := tview.NewButton("Cancel").SetSelectedFunc(func() {
+		// Cancel
+		t.makeLayouts()
+	})
+	saveBar.AddItem(tview.NewBox(), 1, 1, false).
+		AddItem(saveInput, 0, 1, true).
+		AddItem(tview.NewBox(), 1, 1, false).
+		AddItem(buttonSave, 6, 1, false).
+		AddItem(tview.NewBox(), 1, 1, false).
+		AddItem(buttonCancel, 6, 1, false).
+		AddItem(tview.NewBox(), 1, 1, false)
+	return saveBar, saveInput
+}
+
 func (t *TemplateView) makeContextMenu() {
 	t.contextMenu.Clear().ShowSecondaryText(false).SetBorderPadding(0, 0, 1, 1)
 	t.contextMenu.
@@ -136,6 +196,29 @@ func (t *TemplateView) makeContextMenu() {
 			t.closeCallback()
 		})
 	}
+	t.contextMenu.AddItem("Save", "", 's', func() {
+		t.saveForm()
+	})
+}
+
+func (t *TemplateView) save(fileName string) {
+	if err := t.config.Save(fileName); err != nil {
+		t.app.ShowPrefabModal(
+			fmt.Sprintf(`Failed to save! Error: %v`, err), 40, 10,
+			tview.NewButton("Ok").SetSelectedFunc(func() {
+				t.app.DismissModal()
+			}))
+	} else {
+		t.app.ShowPrefabModal(
+			fmt.Sprintf(`File %v saved successfully!`, fileName), 40, 10,
+			tview.NewButton("Ok").SetSelectedFunc(func() {
+				t.app.DismissModal()
+			}))
+	}
+}
+
+func (t *TemplateView) saveForm() {
+	t.makeSaveLayouts()
 }
 
 func (t *TemplateView) addEntry() {

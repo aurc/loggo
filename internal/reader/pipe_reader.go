@@ -18,18 +18,18 @@ func (s *readPipeStream) StreamInto(strChan chan<- string) error {
 		panic(err)
 	}
 	if info.Mode()&os.ModeCharDevice != 0 || info.Size() <= 0 {
-		fmt.Errorf("nothing in input stream")
+		return fmt.Errorf("nothing in input stream")
 	}
 
 	reader := bufio.NewReader(os.Stdin)
 
 	go func() {
 		for !s.stop {
-			str, err := reader.ReadString('\n')
+			str, _, err := reader.ReadLine()
 			if err != nil {
 				panic(err)
 			}
-			strChan <- str
+			strChan <- string(str)
 		}
 	}()
 	return nil

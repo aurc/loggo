@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -11,7 +12,24 @@ import (
 )
 
 type Config struct {
-	Keys []Key `json:"keys"`
+	Keys          []Key  `json:"keys" yaml:"keys"`
+	LastSavedName string `json:"-" yaml:"-"`
+}
+
+func (c *Config) Save(fileName string) error {
+	b, err := yaml.Marshal(c)
+	if err != nil {
+		return err
+	}
+	f, err := os.Create(fileName)
+	if err != nil {
+		return err
+	}
+	if _, err := f.Write(b); err != nil {
+		return err
+	}
+	c.LastSavedName = fileName
+	return nil
 }
 
 type Color struct {
@@ -39,24 +57,30 @@ func (c *Color) SetTextTagColor(text string) string {
 }
 
 type Match struct {
-	Value string `json:"value" yaml:"value"`
-	Color Color  `json:"color" yaml:"color"`
+	Value string `json:"value" yaml:"value,omitempty"`
+	Color Color  `json:"color" yaml:"color,omitempty"`
 }
 
 type ColorWhen struct {
-	MatchValue string `json:"match-value" yaml:"match-value"`
-	Color      Color  `json:"color" yaml:"color"`
+	MatchValue string `json:"match-value" yaml:"match-value,omitempty"`
+	Color      Color  `json:"color" yaml:"color,omitempty"`
 }
 
 type Key struct {
 	Name      string      `json:"name" yaml:"name"`
 	Type      Type        `json:"type" yaml:"type"`
-	Layout    string      `json:"layout,omitempty" yaml:"layout"`
-	Color     Color       `json:"color,omitempty" yaml:"color"`
-	ColorWhen []ColorWhen `json:"color-when,omitempty" yaml:"color-when"`
+	Layout    string      `json:"layout,omitempty" yaml:"layout,omitempty"`
+	Color     Color       `json:"color,omitempty" yaml:"color,omitempty"`
+	ColorWhen []ColorWhen `json:"color-when,omitempty" yaml:"color-when,omitempty"`
 }
 
 func (k *Key) ExtractValue(m map[string]interface{}) string {
+	go func() {
+		r := recover()
+		if r != nil {
+			log.Fatalf(`failed to process %v with val %v`, r, m)
+		}
+	}()
 	kList := strings.Split(k.Name, "/")
 	var val string
 	level := m
