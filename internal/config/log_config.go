@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
@@ -75,17 +74,14 @@ type Key struct {
 }
 
 func (k *Key) ExtractValue(m map[string]interface{}) string {
-	go func() {
-		r := recover()
-		if r != nil {
-			log.Fatalf(`failed to process %v with val %v`, r, m)
-		}
-	}()
 	kList := strings.Split(k.Name, "/")
 	var val string
 	level := m
 	for i, levelKey := range kList {
 		lv := level[levelKey]
+		if lv == nil {
+			return val
+		}
 		if i == len(kList)-1 {
 			return fmt.Sprintf("%v", lv)
 		}

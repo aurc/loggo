@@ -3,6 +3,7 @@ package loggo
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/aurc/loggo/internal/color"
 	"github.com/aurc/loggo/internal/config"
@@ -21,9 +22,11 @@ type LogView struct {
 	layout             *tview.Flex
 	config             *config.Config
 	mainMenu           *tview.Flex
+	linesView          *tview.TextView
 	logFullScreen      bool
 	templateFullScreen bool
 	inSlice            []map[string]interface{}
+	globalCount        int64
 }
 
 func NewLogReader(app *LoggoApp, input <-chan string) *LogView {
@@ -46,20 +49,37 @@ const (
 
 func (l *LogView) read() {
 	go func() {
+		var sampling []map[string]interface{}
+		samplingCount := 0
+		if len(l.config.LastSavedName) == 0 {
+			samplingCount = 50
+		}
 		for {
 			t := <-l.input
 			if len(t) > 0 {
+				l.globalCount++
 				m := make(map[string]interface{})
 				err := json.Unmarshal([]byte(t), &m)
 				if err != nil {
 					m[parseErr] = err.Error()
 					m[textPayload] = t
 				}
+				if l.globalCount <= int64(samplingCount) {
+					sampling = append(sampling, m)
+				} else if len(sampling) <= samplingCount {
+					l.processSampleForConfig(sampling)
+				}
 				l.inSlice = append(l.inSlice, m)
+				l.updateLineView()
 				l.app.Draw()
 			}
 		}
 	}()
+}
+
+func (l *LogView) processSampleForConfig(sampling []map[string]interface{}) {
+	l.config = config.MakeConfigFromSample(sampling)
+	l.app.config = l.config
 }
 
 func (l *LogView) makeUIComponents() {
@@ -95,6 +115,13 @@ func (l *LogView) makeUIComponents() {
 		SetContent(l.data)
 	l.table.SetSelectedFunc(selection).
 		SetBackgroundColor(color.ColorBackgroundField)
+	l.table.SetSelectionChangedFunc(func(row, column int) {
+		// stop scrolling!
+		r, c := l.table.GetOffset()
+		l.updateLineView()
+		l.table.SetOffset(r, c)
+	})
+
 	l.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyF1:
@@ -104,22 +131,48 @@ func (l *LogView) makeUIComponents() {
 		return event
 	})
 
+	l.linesView = tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignRight)
 	l.mainMenu = tview.NewFlex().SetDirection(tview.FlexColumn)
 	l.mainMenu.
 		SetBackgroundColor(color.ColorBackgroundField).SetTitleAlign(tview.AlignCenter)
 	l.mainMenu.
 		AddItem(tview.NewTextView().
 			SetDynamicColors(true).
-			SetText("[yellow::b](ENTER)[-::-] Display selected"), 0, 1, false).
+			SetText("[yellow::b](↲)[-::-] View"), 0, 1, false).
 		AddItem(tview.NewTextView().
 			SetDynamicColors(true).
 			SetText("[yellow::b](↓ ↑ ← →)[-::-] Navigate"), 0, 1, false).
 		AddItem(tview.NewTextView().
 			SetDynamicColors(true).
-			SetText("[yellow::b](F1)[-::-] Edit Template"), 0, 1, false).
+			SetText("[yellow::b](g/G)[-::-] Top/Bottom"), 0, 1, false).
 		AddItem(tview.NewTextView().
 			SetDynamicColors(true).
-			SetText("[yellow::b](CTRL-C)[-::-] Quit"), 0, 1, false)
+			SetText("[yellow::b](^f/^b)[-::-] Page Up/Down"), 0, 1, false).
+		AddItem(tview.NewTextView().
+			SetDynamicColors(true).
+			SetText("[yellow::b](F1)[-::-] Template"), 0, 1, false).
+		AddItem(tview.NewTextView().
+			SetDynamicColors(true).
+			SetText("[yellow::b](^C)[-::-] Quit"), 0, 1, false).
+		AddItem(l.linesView, 0, 1, false)
+	l.updateLineView()
+}
+
+func (l *LogView) updateLineView() {
+	r, _ := l.table.GetSelection()
+	if r > 0 {
+		l.linesView.SetText(
+			fmt.
+				Sprintf(`[yellow::]Line [green::b]%d[yellow::-] ([green::b]%d[yellow::-] lines)`,
+					r,
+					l.globalCount))
+	} else {
+		l.linesView.SetText(
+			fmt.
+				Sprintf(`[green::b]%d[yellow::-] lines`,
+					l.globalCount))
+	}
+
 }
 
 func (l *LogView) makeLayouts() {
@@ -147,6 +200,7 @@ func (l *LogView) makeLayoutsWithTemplateView() {
 	if !l.templateFullScreen {
 		l.Flex.AddItem(l.table, 0, 1, false)
 	}
+	l.templateView.config = l.config
 	l.Flex.
 		AddItem(l.templateView, 0, 2, false).
 		AddItem(l.mainMenu, 1, 1, false)
@@ -165,7 +219,7 @@ func (d *LogData) GetCell(row, column int) *tview.TableCell {
 	}
 	c := d.logView.config
 	k := c.Keys[column]
-	tc := tview.NewTableCell(k.Name)
+	tc := tview.NewTableCell(" " + k.Name + " ")
 	// Set Headers
 	if row == 0 {
 		tc.SetTextColor(tcell.ColorYellow).
@@ -186,13 +240,18 @@ func (d *LogData) GetCell(row, column int) *tview.TableCell {
 	if len(k.ColorWhen) > 0 {
 	OUT:
 		for _, kv := range k.ColorWhen {
-			if cellValue == kv.MatchValue {
+			if strings.ToLower(cellValue) == strings.ToLower(kv.MatchValue) {
 				bgColor = kv.Color.GetBackgroundColor()
 				fgColor = kv.Color.GetForegroundColor()
 				break OUT
 			}
 		}
 	}
+	switch k.Type {
+	case config.TypeNumber, config.TypeBool:
+		tc.SetAlign(tview.AlignRight)
+	}
+
 	return tc.
 		SetBackgroundColor(bgColor).
 		SetTextColor(fgColor).

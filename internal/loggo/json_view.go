@@ -115,7 +115,13 @@ func (j *JsonView) makeUIComponents() {
 			}
 			switch event.Key() {
 			case tcell.KeyEsc:
-				j.clearSearch()
+				if j.closeCallback != nil {
+					j.closeCallback()
+					return nil
+				} else if j.isSearching {
+					j.clearSearch()
+					return nil
+				}
 				return nil
 			}
 			return event
@@ -132,6 +138,9 @@ func (j *JsonView) makeUIComponents() {
 		SetBorder(true).
 		SetBackgroundColor(color.ColorBackgroundField)
 	j.searchInput.SetChangedFunc(func(text string) {
+		if len(text) == 0 {
+			return
+		}
 		j.search(text)
 	})
 	j.searchInput.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {

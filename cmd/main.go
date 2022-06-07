@@ -6,8 +6,8 @@ import (
 )
 
 func main() {
-	inputChan := make(chan string, 1000)
-	reader := reader.MakeReader("")
+	inputChan := make(chan string, 1)
+	reader := reader.MakeReader("testdata/log3.txt")
 
 	reader.StreamInto(inputChan)
 	app := loggo.NewLoggoApp(inputChan, "")

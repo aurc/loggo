@@ -25,11 +25,11 @@ func (s *readPipeStream) StreamInto(strChan chan<- string) error {
 
 	go func() {
 		for !s.stop {
-			str, _, err := reader.ReadLine()
+			str, err := reader.ReadString('\n')
 			if err != nil {
 				panic(err)
 			}
-			strChan <- string(str)
+			strChan <- str
 		}
 	}()
 	return nil
