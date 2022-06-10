@@ -394,8 +394,8 @@ func (j *JsonView) processObject(text *strings.Builder, val interface{}, indent 
 
 func (j *JsonView) processString(text *strings.Builder, v interface{}, indent string) {
 	val := fmt.Sprintf(`%v`, v)
-	val = strings.ReplaceAll(val, "\"", "\\\"")
-	val = strings.ReplaceAll(val, "\n", "\\n")
+	//val = strings.ReplaceAll(val, "\"", "\\\"")
+	//val = strings.ReplaceAll(val, "\n", "\\n")
 	if word := j.captureWordSection(v, j.withSearchTag); len(word) > 0 {
 		val = word
 	}

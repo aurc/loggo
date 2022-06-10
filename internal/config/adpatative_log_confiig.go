@@ -78,6 +78,7 @@ func MakeConfigFromSample(sample []map[string]interface{}) *Config {
 					Foreground: "white",
 					Background: "black",
 				},
+				MaxWidth: 25,
 			}
 			continue
 		}

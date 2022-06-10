@@ -220,6 +220,10 @@ func (d *LogData) GetCell(row, column int) *tview.TableCell {
 	c := d.logView.config
 	k := c.Keys[column]
 	tc := tview.NewTableCell(" " + k.Name + " ")
+	if k.MaxWidth > 0 && k.MaxWidth-len(k.Name) >= len(k.Name) {
+		spaces := strings.Repeat(" ", k.MaxWidth-len(k.Name))
+		tc.SetText(" " + k.Name + spaces)
+	}
 	// Set Headers
 	if row == 0 {
 		tc.SetTextColor(tcell.ColorYellow).
@@ -250,6 +254,9 @@ func (d *LogData) GetCell(row, column int) *tview.TableCell {
 	switch k.Type {
 	case config.TypeNumber, config.TypeBool:
 		tc.SetAlign(tview.AlignRight)
+	}
+	if k.MaxWidth > 0 {
+		tc.MaxWidth = k.MaxWidth
 	}
 
 	return tc.

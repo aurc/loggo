@@ -29,7 +29,7 @@ func NewColorPickerButton(app Loggo, label, value string, fieldWidth int, change
 		input:       tview.NewInputField().SetText(value),
 		button:      tview.NewButton("Choose"),
 		label:       label,
-		labelText:   tview.NewTextView().SetText(label),
+		labelText:   tview.NewTextView().SetDynamicColors(true).SetText(label),
 		colorLabel:  tview.NewTextView().SetText(" ■ "),
 		changedFunc: changedFunc,
 		fieldWidth:  fieldWidth,
@@ -67,6 +67,12 @@ func (c *ColorPickerButton) makeLayout() {
 	c.input.SetFieldTextColor(c.fieldTextColor)
 	c.input.SetChangedFunc(c.changedFunc)
 	c.colorLabel.SetTextColor(tcell.GetColor(c.input.GetText()))
+}
+
+func (c *ColorPickerButton) SetText(text string) *ColorPickerButton {
+	c.input.SetText(text)
+	c.makeLayout()
+	return c
 }
 
 func (c *ColorPickerButton) Focus(delegate func(p tview.Primitive)) {

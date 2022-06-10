@@ -70,7 +70,24 @@ type Key struct {
 	Type      Type        `json:"type" yaml:"type"`
 	Layout    string      `json:"layout,omitempty" yaml:"layout,omitempty"`
 	Color     Color       `json:"color,omitempty" yaml:"color,omitempty"`
+	MaxWidth  int         `json:"max-width,omitempty" yaml:"max-width"`
 	ColorWhen []ColorWhen `json:"color-when,omitempty" yaml:"color-when,omitempty"`
+}
+
+func GetForegroundColorName(colorable func() *Color, colorIfNone string) string {
+	k := colorable()
+	if k == nil || len(k.Foreground) < 0 {
+		return colorIfNone
+	}
+	return k.Foreground
+}
+
+func GetBackgroundColorName(colorable func() *Color, colorIfNone string) string {
+	k := colorable()
+	if k == nil || len(k.Background) < 0 {
+		return colorIfNone
+	}
+	return k.Background
 }
 
 func (k *Key) ExtractValue(m map[string]interface{}) string {
@@ -110,18 +127,22 @@ func MakeConfig(file string) (*Config, error) {
 
 type Type string
 
-func (t Type) GetColor() tcell.Color {
+func (t Type) GetColorName() string {
 	switch t {
 	case TypeString:
-		return tcell.ColorWhite
+		return "white"
 	case TypeNumber:
-		return tcell.ColorBlue
+		return "blue"
 	case TypeBool:
-		return tcell.ColorOrange
+		return "orange"
 	case TypeDateTime:
-		return tcell.ColorPurple
+		return "purple"
 	}
-	return tcell.ColorWhite
+	return "lightgray"
+}
+
+func (t Type) GetColor() tcell.Color {
+	return tcell.GetColor(t.GetColorName())
 }
 
 const (
