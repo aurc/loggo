@@ -1,3 +1,25 @@
+/*
+Copyright © 2022 Aurelio Calegari
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 package loggo
 
 import (
@@ -71,7 +93,7 @@ func (t *TemplateItemView) makeUIComponents() {
 		})
 	//selectType
 	typeDD := tview.NewDropDown().
-		SetLabel("Type").
+		SetLabel("Type [red]*").
 		SetListStyles(color.FieldStyle, color.SelectStyle).
 		AddOption(config.TypeString+"  ", nil).
 		AddOption(config.TypeDateTime+"  ", nil).
@@ -100,7 +122,7 @@ func (t *TemplateItemView) makeUIComponents() {
 	t.form = tview.NewForm().
 		SetFieldBackgroundColor(tcell.ColorDarkGray).
 		SetFieldTextColor(tcell.ColorBlack).
-		AddInputField("Key", t.key.Name, maxFieldWidth, nil, func(text string) {
+		AddInputField("Key [red]*", t.key.Name, maxFieldWidth, nil, func(text string) {
 			t.key.Name = strings.TrimSpace(text)
 		}).
 		AddFormItem(typeDD).
@@ -190,12 +212,15 @@ func (t *TemplateItemView) makeLayouts() {
 		AddItem(t.caseWhenForm, 9, 1, false).
 		AddItem(t.caseWhenTable, 0, 1, false)
 
+	mainForm := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(t.contextMenu, 3, 1, false).
+		AddItem(t.form, 0, 1, false)
 	formLayout := tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(t.form, maxFieldWidth+20, 1, false).
+		AddItem(mainForm, maxFieldWidth+20, 1, false).
 		AddItem(t.caseWhenLayout, 0, 1, false)
 
 	t.Flex.Clear().SetDirection(tview.FlexRow).
-		AddItem(t.contextMenu, 3, 1, false).
+		//AddItem(t.contextMenu, 3, 1, false).
 		AddItem(formLayout, 0, 2, true).
 		SetBackgroundColor(color.ColorBackgroundField)
 

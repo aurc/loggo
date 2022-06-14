@@ -20,23 +20,44 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-package main
+package cmd
 
 import (
-	"os"
-
 	"github.com/aurc/loggo/internal/loggo"
+	"github.com/aurc/loggo/internal/reader"
+	"github.com/spf13/cobra"
+	"log"
 )
 
-func main() {
-	app := loggo.NewApp("")
-	view := loggo.NewJsonView(app, true, nil, nil)
+// streamCmd represents the stream command
+var streamCmd = &cobra.Command{
+	Use:   "stream",
+	Short: "Continuously stream log input source",
+	Long: `Continuously stream log entries from an input stream such
+as the standard input (through pipe) or a input file. Note that
+if it's reading from a file, it automatically detects file 
+rotation and continue to stream. For example:
 
-	b, err := os.ReadFile("testdata/test1.json")
-	if err != nil {
-		panic(err)
-	}
-	view.SetJson(b)
+	loggo stream --file <file-path>
+	loggo stream | <some arbitrary input>`,
+	Run: func(cmd *cobra.Command, args []string) {
+		fileName := cmd.Flag("file").Value.String()
+		templateFile := cmd.Flag("template").Value.String()
+		inputChan := make(chan string, 1)
+		reader := reader.MakeReader(fileName)
 
-	app.Run(view)
+		if err := reader.StreamInto(inputChan); err != nil {
+			log.Fatalf("unable to start app %v", err)
+		}
+		app := loggo.NewLoggoApp(inputChan, templateFile)
+		app.Run()
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(streamCmd)
+	streamCmd.Flags().
+		StringP("file", "f", "", "Input Log File")
+	streamCmd.Flags().
+		StringP("template", "t", "", "Rendering Template")
 }
