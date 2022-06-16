@@ -32,6 +32,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	ParseErr    = "$_parseErr"
+	TextPayload = "Raw Log Entry"
+)
+
 type Config struct {
 	Keys          []Key  `json:"keys" yaml:"keys"`
 	LastSavedName string `json:"-" yaml:"-"`

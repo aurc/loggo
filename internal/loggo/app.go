@@ -40,7 +40,7 @@ type Loggo interface {
 	Stop()
 	SetFocus(primitive tview.Primitive)
 	ShowPrefabModal(text string, width, height int, buttons ...*tview.Button)
-	ShowModal(p tview.Primitive, width, height int)
+	ShowModal(p tview.Primitive, width, height int, bgColor tcell.Color)
 	DismissModal()
 	Config() *config.Config
 	StackView(p tview.Primitive)

@@ -113,12 +113,12 @@ func (a *appScaffold) ShowPrefabModal(text string, width, height int, buttons ..
 
 	modal.AddItem(mainContent, 0, 1, false)
 	modal.AddItem(buts, 1, 1, false)
-	a.ShowModal(modal, width, height)
+	a.ShowModal(modal, width, height, tcell.ColorDarkBlue)
 }
 
-func (a *appScaffold) ShowModal(p tview.Primitive, width, height int) {
+func (a *appScaffold) ShowModal(p tview.Primitive, width, height int, bgColor tcell.Color) {
 	modContainer := tview.NewFlex().AddItem(p, 0, 1, false)
-	modContainer.SetBorder(true).SetBackgroundColor(tcell.ColorDarkBlue)
+	modContainer.SetBorder(true).SetBackgroundColor(bgColor)
 	a.modal = tview.NewFlex().
 		AddItem(nil, 0, 1, false).
 		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).

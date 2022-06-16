@@ -40,8 +40,14 @@ func JsonGenerator(writer io.Writer) {
 	}
 	jm := make(map[string]interface{})
 	_ = json.Unmarshal(b, &jm)
-
+	i := 0
 	for {
+		if i%13 == 0 {
+			_, _ = fmt.Fprintln(writer, "bad json")
+			i++
+			continue
+		}
+		i++
 		uid1 := uuid.New().String()
 		uid2 := uuid.New().String()
 		id3 := rand.Intn(30)
@@ -52,6 +58,6 @@ func JsonGenerator(writer io.Writer) {
 		jm["timestamp"] = time.Now().Format("2006-01-02T15:04:05-0700")
 		b, _ = json.Marshal(jm)
 		_, _ = fmt.Fprintln(writer, string(b))
-		time.Sleep(time.Second)
+		time.Sleep(time.Millisecond * 250)
 	}
 }

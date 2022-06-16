@@ -36,7 +36,7 @@ func MakeConfigFromSample(sample []map[string]interface{}) *Config {
 			if _, ok := keyMap[k]; ok {
 				continue
 			}
-			if strings.Index(k, "/") != -1 {
+			if strings.Index(k, "/") != -1 || k == ParseErr || k == TextPayload {
 				continue
 			}
 			if k == cTimestamp {
@@ -75,7 +75,7 @@ func MakeConfigFromSample(sample []map[string]interface{}) *Config {
 						{
 							MatchValue: "(?i)warn",
 							Color: Color{
-								Foreground: "white",
+								Foreground: "black",
 								Background: "yellow",
 							},
 						},
