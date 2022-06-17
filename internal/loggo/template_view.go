@@ -251,6 +251,12 @@ func (t *TemplateView) save(fileName string) {
 	}
 }
 
+func (t *TemplateView) Close() {
+	if t.closeCallback != nil {
+		t.closeCallback()
+	}
+}
+
 func (t *TemplateView) saveForm() {
 	t.makeSaveLayouts()
 }

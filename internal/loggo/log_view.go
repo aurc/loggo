@@ -74,6 +74,10 @@ func NewLogReader(app *LoggoApp, input <-chan string) *LogView {
 		lv.app.DismissModal()
 		lv.app.Draw()
 	}()
+	go func() {
+		time.Sleep(10 * time.Millisecond)
+		lv.isFollowing = true
+	}()
 	return lv
 }
 
@@ -97,9 +101,11 @@ func (l *LogView) read() {
 				}
 				if l.globalCount <= int64(samplingCount) {
 					sampling = append(sampling, m)
-				} else if len(sampling) <= samplingCount {
-					l.processSampleForConfig(sampling)
 				}
+				// TODO: Review at some stage if sampling gets to accumulate
+				//} else if len(sampling) <= samplingCount {
+				l.processSampleForConfig(sampling)
+				//}
 				l.inSlice = append(l.inSlice, m)
 				l.updateLineView()
 				now := time.Now()
@@ -221,48 +227,59 @@ func (l *LogView) makeUIComponents() {
 	l.navMenu.
 		AddItem(tview.NewTextView().
 			SetDynamicColors(true).
-			SetText("[yellow::b](↲)[-::-] View"), 0, 1, false).
+			SetText("[yellow::b](↲)[-::-] View"), 0, 2, false).
 		AddItem(tview.NewTextView().
 			SetDynamicColors(true).
-			SetText("[yellow::b](↓ ↑ ← →)[-::-] Navigate"), 0, 1, false).
+			SetText("[yellow::b](↓ ↑ ← →)[-::-] Navigate"), 0, 3, false).
 		AddItem(l.textViewMenuControl(tview.NewTextView().
 			SetDynamicColors(true).SetRegions(true).
-			SetText(`[yellow::b](g)[-::-] ["1"]Top[""]`), func() {
+			SetText(`[yellow::b](g) [-::u]["1"]Top[""]`), func() {
 			l.isFollowing = false
 			l.table.ScrollToBeginning()
+			if len(l.inSlice) > 1 {
+				go l.table.Select(1, 0)
+			}
 		}), 0, 1, false).
 		AddItem(l.textViewMenuControl(tview.NewTextView().
 			SetDynamicColors(true).SetRegions(true).
-			SetText(`[yellow::b](G)[-::-] ["1"]Bottom[""]`), func() {
+			SetText(`[yellow::b](G) [-::u]["1"]Bottom[""]`), func() {
 			l.isFollowing = false
 			l.table.ScrollToEnd()
-		}), 0, 1, false).
+			go l.table.Select(len(l.inSlice), 0)
+		}), 0, 2, false).
 		AddItem(l.textViewMenuControl(tview.NewTextView().
 			SetDynamicColors(true).SetRegions(true).
-			SetText(`[yellow::b](^f)[-::-] ["1"]Pg Up[""]`), func() {
+			SetText(`[yellow::b](^f) [-::u]["1"]Pg Up[""]`), func() {
 			l.isFollowing = false
 			l.table.InputHandler()(tcell.NewEventKey(tcell.KeyPgUp, '0', 0), func(p tview.Primitive) {})
-		}), 0, 1, false).
+		}), 0, 2, false).
 		AddItem(l.textViewMenuControl(tview.NewTextView().
 			SetDynamicColors(true).SetRegions(true).
-			SetText(`[yellow::b](^b)[-::-] ["1"]Pg Down[""]`), func() {
+			SetText(`[yellow::b](^b) [-::-]["1"]Pg Down[""]`), func() {
 			l.isFollowing = false
 			l.table.InputHandler()(tcell.NewEventKey(tcell.KeyPgDn, '0', 0), func(p tview.Primitive) {})
-		}), 0, 1, false)
+		}), 0, 2, false)
 	l.mainMenu = tview.NewFlex().SetDirection(tview.FlexColumn)
 	l.mainMenu.
 		SetBackgroundColor(color.ColorBackgroundField).SetTitleAlign(tview.AlignCenter)
 	l.mainMenu.
-		AddItem(tview.NewTextView().
-			SetDynamicColors(true).
-			SetText("[yellow::b](F1)[-::-] Template"), 0, 1, false).
-		AddItem(l.followingView, 0, 1, false).
+		AddItem(l.textViewMenuControl(tview.NewTextView().
+			SetDynamicColors(true).SetRegions(true).
+			SetText(`[yellow::b](F1) [-::u]["1"]Template[""]`), func() {
+			if l.Flex.GetItemCount() > 0 && l.Flex.GetItem(0) == l.templateView ||
+				l.Flex.GetItemCount() > 1 && l.Flex.GetItem(1) == l.templateView {
+				// TODO: Find a reliable way to respond to external closure
+			} else {
+				l.makeLayoutsWithTemplateView()
+			}
+		}), 0, 2, false).
+		AddItem(l.followingView, 0, 5, false).
 		AddItem(l.textViewMenuControl(tview.NewTextView().SetRegions(true).
 			SetDynamicColors(true).
-			SetText(`[yellow::b](^C)[-::-] ["1"]Quit[""]`), func() {
+			SetText(`[yellow::b](^C) [-::u]["1"]Quit[""]`), func() {
 			l.app.Stop()
 		}), 0, 1, false).
-		AddItem(l.linesView, 0, 1, false)
+		AddItem(l.linesView, 0, 3, false)
 	l.updateLineView()
 }
 
@@ -286,9 +303,9 @@ func (l *LogView) updateLineView() {
 					l.globalCount))
 	}
 	if l.isFollowing {
-		l.followingView.SetText(`[yellow::b](F2)[-::-] ["1"]Toggle Auto-Scroll[""] ([green::bu]ON[-::-])`)
+		l.followingView.SetText(`[yellow::b](F2) [-::u]["1"]Toggle Auto-Scroll[""][::-] ([green::bi]ON[-::-])`)
 	} else {
-		l.followingView.SetText(`[yellow::b](F2)[-::-] ["1"]Toggle Auto-Scroll[""] ([red::bu]OFF[-::-])`)
+		l.followingView.SetText(`[yellow::b](F2) [-::u]["1"]Toggle Auto-Scroll[""][::-] ([red::bi]OFF[-::-])`)
 	}
 }
 
@@ -314,6 +331,7 @@ func (l *LogView) makeLayoutsWithJsonView() {
 }
 
 func (l *LogView) makeLayoutsWithTemplateView() {
+	l.isFollowing = false
 	l.Flex.Clear().SetDirection(tview.FlexRow)
 	if !l.templateFullScreen {
 		l.Flex.AddItem(l.table, 0, 1, false)

@@ -61,8 +61,8 @@ func MakeConfigFromSample(sample []map[string]interface{}) *Config {
 						{
 							MatchValue: "(?i)error",
 							Color: Color{
-								Foreground: "white",
-								Background: "red",
+								Foreground: "red",
+								Background: "black",
 							},
 						},
 						{
@@ -75,15 +75,15 @@ func MakeConfigFromSample(sample []map[string]interface{}) *Config {
 						{
 							MatchValue: "(?i)warn",
 							Color: Color{
-								Foreground: "black",
-								Background: "yellow",
+								Foreground: "orange",
+								Background: "black",
 							},
 						},
 						{
 							MatchValue: "(?i)debug",
 							Color: Color{
-								Foreground: "white",
-								Background: "blue",
+								Foreground: "blue",
+								Background: "black",
 							},
 						},
 					},
