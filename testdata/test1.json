@@ -1,0 +1,62 @@
+{
+  "insertId": "ndyx9iq3y54919jm",
+  "jsonPayload": {
+    "component": "httpclient",
+    "durationMillis": 47,
+    "response": {
+      "status": 200,
+      "requestUrl": "http://service.dev-features.svc.cluster.local:80/api/internal/triggers/events-expiry/state",
+      "responseHeader": {
+        "Server": "envoy",
+        "Cache-Control": "no-store",
+        "Content-Length": "175",
+        "Pragma": "no-cache",
+        "X-Envoy-Upstream-Service-Time": "32",
+        "Content-Type": "application/json; charset=utf-8",
+        "Date": "Thu, 19 May 2022 03:20:06 GMT"
+      },
+      "responseBody": "{\"triggerName\":\"events-expiry\",\"lastSuccessDate\":\"2022-03-31T00:00:00Z\",\"lastRuntimeData\":{\"from\":\"2022-03-31\",\"to\":\"2022-03-31\",\"type\":\"secondary-users-expiry\"}}\n"
+    },
+    "context": {
+      "appId": "serv-expiry",
+      "operation": "POST_/api/internal/notification-events",
+      "parentSpanId": "ba1094f278654cde",
+      "requestId": "2e495c28-943e-4ec6-ad49-464e9bd954a8",
+      "serviceVersion": "v2.9.0-rc57",
+      "spanId": "98201175ac4fe3dd",
+      "service": "authorisation-service",
+      "sampled": "0",
+      "traceId": "0000000000000000ba1094f278654cde"
+    },
+    "timestamp": "2022-05-19 03:20:06.506",
+    "message": "rq-end"
+  },
+  "resource": {
+    "type": "k8s_container",
+    "labels": {
+      "location": "australia-southeast1",
+      "cluster_name": "cluster-np-gke",
+      "container_name": "internal-service",
+      "project_id": "someproject-4bbfa",
+      "pod_name": "pod-service-abc440fe-r7t4g",
+      "namespace_name": "dev-features"
+    }
+  },
+  "timestamp": "2022-05-19T03:20:06.507273679Z",
+  "severity": "INFO",
+  "labels": {
+    "compute.googleapis.com/resource_name": "gke-dev-bs-so-np-gk-dev-pool-dfac62fc-g05g",
+    "k8s-pod/app": "authorisation-service",
+    "k8s-pod/version": "v2.9.0-rc57",
+    "k8s-pod/ci_group": "Feature-Engineering",
+    "k8s-pod/security_istio_io/tlsMode": "istio",
+    "k8s-pod/service_istio_io/canonical-name": "dev-service",
+    "k8s-pod/service_istio_io/canonical-revision": "v2.9.0-rc57",
+    "k8s-pod/pod-template-hash": "abc440fe",
+    "k8s-pod/ci_name": "Service-Management"
+  },
+  "logName": "projects/dev-bs-so-np-4bbfa/logs/stdout",
+  "trace": "projects/dev-bs-so-np-4bbfa/traces/0000000000000000ba1094f278654cde",
+  "receiveTimestamp": "2022-05-19T03:20:07.089863099Z",
+  "spanId": "98201175ac4fe3dd"
+}
