@@ -108,6 +108,7 @@ need to stream logs. This is convenient if you want to craft
 templates prior using the loggo command.
 
 **Blank Canvas:**
+
 ![](mov/template.gif)
 ````
 loggo template
