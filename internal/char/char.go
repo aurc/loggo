@@ -50,7 +50,7 @@ func (c *Char) GetWidth() int {
 	return maxWidth
 }
 
-var LoggoLogo = []Char{CharacterL, CharacterApostrophe, CharacterO, CharacterG, CharacterRevG, CharacterO}
+var LoggoLogo = []Char{CharacterL, CharacterApostrophe, CharacterO, CharacterRevG, CharacterG, CharacterO}
 
 /*
  012345678

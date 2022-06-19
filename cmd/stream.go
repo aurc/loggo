@@ -43,7 +43,7 @@ rotation and continue to stream. For example:
 	Run: func(cmd *cobra.Command, args []string) {
 		fileName := cmd.Flag("file").Value.String()
 		templateFile := cmd.Flag("template").Value.String()
-		inputChan := make(chan string, 1)
+		inputChan := make(chan string, 1000)
 		reader := reader.MakeReader(fileName)
 
 		if err := reader.StreamInto(inputChan); err != nil {

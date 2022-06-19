@@ -149,6 +149,7 @@ func MakeConfig(file string) (*Config, error) {
 	if err := yaml.Unmarshal(yamlBytes, &config); err != nil {
 		return nil, err
 	}
+	config.LastSavedName = file
 	return &config, nil
 }
 

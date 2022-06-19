@@ -42,7 +42,7 @@ func JsonGenerator(writer io.Writer) {
 	_ = json.Unmarshal(b, &jm)
 	i := 0
 	for {
-		if i%13 == 0 {
+		if i != 0 && i%(rand.Intn(27)+1) == 0 {
 			_, _ = fmt.Fprintln(writer, "bad json")
 			i++
 			continue
@@ -58,6 +58,6 @@ func JsonGenerator(writer io.Writer) {
 		jm["timestamp"] = time.Now().Format("2006-01-02T15:04:05-0700")
 		b, _ = json.Marshal(jm)
 		_, _ = fmt.Fprintln(writer, string(b))
-		time.Sleep(time.Millisecond * 250)
+		time.Sleep(time.Millisecond * time.Duration(rand.Intn(250)))
 	}
 }

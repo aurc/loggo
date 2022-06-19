@@ -6,6 +6,8 @@
 *.dylib
 main
 .idea
+loggo
+testdata/log.txt
 # Test binary, built with `go test -c`
 *.test
 

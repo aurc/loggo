@@ -101,10 +101,11 @@ func (l *LogView) read() {
 				}
 				if l.globalCount <= int64(samplingCount) {
 					sampling = append(sampling, m)
+					l.processSampleForConfig(sampling)
 				}
 				// TODO: Review at some stage if sampling gets to accumulate
 				//} else if len(sampling) <= samplingCount {
-				l.processSampleForConfig(sampling)
+				// l.processSampleForConfig(sampling)
 				//}
 				l.inSlice = append(l.inSlice, m)
 				l.updateLineView()
@@ -120,6 +121,9 @@ func (l *LogView) read() {
 }
 
 func (l *LogView) processSampleForConfig(sampling []map[string]interface{}) {
+	if len(l.config.LastSavedName) > 0 || l.isTemplateViewShown() {
+		return
+	}
 	l.config = config.MakeConfigFromSample(sampling)
 	l.app.config = l.config
 }
@@ -266,8 +270,7 @@ func (l *LogView) makeUIComponents() {
 		AddItem(l.textViewMenuControl(tview.NewTextView().
 			SetDynamicColors(true).SetRegions(true).
 			SetText(`[yellow::b](F1) [-::u]["1"]Template[""]`), func() {
-			if l.Flex.GetItemCount() > 0 && l.Flex.GetItem(0) == l.templateView ||
-				l.Flex.GetItemCount() > 1 && l.Flex.GetItem(1) == l.templateView {
+			if l.isTemplateViewShown() {
 				// TODO: Find a reliable way to respond to external closure
 			} else {
 				l.makeLayoutsWithTemplateView()
@@ -281,6 +284,11 @@ func (l *LogView) makeUIComponents() {
 		}), 0, 1, false).
 		AddItem(l.linesView, 0, 3, false)
 	l.updateLineView()
+}
+
+func (l *LogView) isTemplateViewShown() bool {
+	return l.Flex.GetItemCount() > 0 && l.Flex.GetItem(0) == l.templateView ||
+		l.Flex.GetItemCount() > 1 && l.Flex.GetItem(1) == l.templateView
 }
 
 func (l *LogView) toggledFollowing() {
