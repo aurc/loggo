@@ -42,7 +42,8 @@ The easiest way is to utilise [Homebrew](https://brew.sh/) package management sy
 installed simply issue the following command:
 
 ````
-brew install loggo
+brew tap aurc/loggo
+brew install aurc/loggo/loggo
 ````
 
 ### Build from Source:
