@@ -31,7 +31,7 @@ brews:
       name: homebrew-loggo
       branch: main
     #      # Optionally a token can be provided, if it differs from the token provided to GoReleaser
-    #      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    #      token: "{{ .Env.HOMEBREW_LOGGO_GITHUB_TOKEN }}"
 
     url_template: "https://github.com/aurc/loggo/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
 
