@@ -1,0 +1,37 @@
+name: Feature_CI
+
+on:
+  push:
+    branches:
+    - feature/*
+  pull_request:
+    branches:
+    - feature/*
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.18
+
+    - name: Build
+      run: go build -v ./...
+
+    - name: Test
+      run: go test -v ./...
+      
+    - name: Tags
+      run: |
+        git fetch --prune --unshallow
+        git describe --tags
+        CURV=$(git describe --tags --abbrev=0)
+        IFS='.' read -ra VR <<< "$CURV"
+        INC=`expr ${VR[2]} + 1`
+        FV="${VR[0]}.${VR[1]}.$INC"
+      shell: bash  

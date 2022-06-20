@@ -61,6 +61,7 @@ func TestMakeConfig(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			test.wants.LastSavedName = test.givenFile
 			c, err := MakeConfig(test.givenFile)
 			if test.wantsError {
 				assert.Error(t, err)
@@ -121,6 +122,10 @@ var defConfig = Config{
 			Name:   "timestamp",
 			Type:   TypeDateTime,
 			Layout: "2006-01-02T15:04:05-0700",
+			Color: Color{
+				Foreground: "purple",
+				Background: "black",
+			},
 		},
 		{
 			Name: "severity",
@@ -140,22 +145,22 @@ var defConfig = Config{
 				{
 					MatchValue: "INFO",
 					Color: Color{
-						Foreground: "white",
+						Foreground: "green",
 						Background: "black",
 					},
 				},
 				{
 					MatchValue: "WARN",
 					Color: Color{
-						Foreground: "red",
-						Background: "yellow",
+						Foreground: "yellow",
+						Background: "black",
 					},
 				},
 				{
 					MatchValue: "DEBUG",
 					Color: Color{
-						Foreground: "white",
-						Background: "blue",
+						Foreground: "blue",
+						Background: "black",
 					},
 				},
 			},
@@ -163,14 +168,26 @@ var defConfig = Config{
 		{
 			Name: "resource/labels/container_name",
 			Type: TypeString,
+			Color: Color{
+				Foreground: "darkgreen",
+				Background: "black",
+			},
 		},
 		{
 			Name: "trace",
 			Type: TypeString,
+			Color: Color{
+				Foreground: "white",
+				Background: "black",
+			},
 		},
 		{
 			Name: "jsonPayload/message",
 			Type: TypeString,
+			Color: Color{
+				Foreground: "white",
+				Background: "black",
+			},
 		},
 	},
 }
