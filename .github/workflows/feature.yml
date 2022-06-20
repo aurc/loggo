@@ -30,8 +30,8 @@ jobs:
     - name: Tags
       run: |
         git fetch --prune --unshallow
-        git describe --tags
-        CURV=$(git describe --tags --abbrev=0)
+        git describe --tags `git rev-list --tags --max-count=1` 
+        CURV=$(git describe --tags `git rev-list --tags --max-count=1`)
         IFS='.' read -ra VR <<< "$CURV"
         INC=`expr ${VR[2]} + 1`
         FV="${VR[0]}.${VR[1]}.$INC"

@@ -46,7 +46,7 @@ jobs:
       - name: Tag and Deploy
         run: |
           git fetch --prune --unshallow
-          CURV=$(git describe --tags --abbrev=0)
+          CURV=$(git describe --tags `git rev-list --tags --max-count=1`)
           IFS='.' read -ra VR <<< "$CURV"
           INC=`expr ${VR[2]} + 1`
           FV="${VR[0]}.${VR[1]}.$INC"
