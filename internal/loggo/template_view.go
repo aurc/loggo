@@ -143,7 +143,7 @@ func (t *TemplateView) makeLayouts() {
 		AddItem(t.contextMenu, 30, 1, false).
 		AddItem(t.table, 0, 2, true).
 		SetBackgroundColor(color.ColorBackgroundField)
-	t.app.SetFocus(t.table)
+	go t.app.SetFocus(t.contextMenu)
 }
 
 func (t *TemplateView) makeSaveLayouts() {

@@ -37,23 +37,51 @@ Interface (TUI).
 
 ## Getting Started
 
-### macOS Systems:
-The easiest way is to utilise [Homebrew](https://brew.sh/) package management system. Once 
-installed simply issue the following command:
+### macOS/Linux with Homebrew/Linuxbrew:
+The easiest way is to utilise [Homebrew](https://brew.sh/) **(macOS)** or [LinuxBrew](https://docs.brew.sh/Homebrew-on-Linux) **(Linux)**
+package management system. Once installed simply issue the following command:
 
 ````
 brew tap aurc/loggo
 brew install aurc/loggo/loggo
 ````
 
+### All Systems
+
+### Install with Go
+Assuming you have [go](https://go.dev/) installed in your system (best choice if not homebrew) and bin packages
+are in your `PATH`, just run:
+
+````
+go install github.com/aurc/loggo@latest
+````
+
 ### Build from Source:
 Including **macOS**, build from source. 
 Pre-Reqs:
 - [Golang](https://go.dev/) v1.8+
+- Checkout the project from [https://github.com/aurc/loggo/](https://github.com/aurc/loggo/)
 
 ````
 go build -o loggo
 ````
+> Install the `loggo` binary in your system's binary bucket or add `loggo` binary to your
+path.
+
+### Download Pre-Compiled binary
+
+This option might be suitable for you if you don't have Home/Linux-Brew or golang 
+readly available for you. In this case you can download a pre-compiled exectuable binary
+for the following platforms:
+
+Latest Release [pre-build binaries here](https://github.com/aurc/loggo/releases/latest)!
+
+- Windows 11 plat (e.g. loggo_vx.y.z_linux_<plat>.tar.gz):
+- Linux (both arm64 and amd64 plat):
+  - ubuntu:  `tar.gz` file from releases (e.g. loggo_vx.y.z_linux_<plat>.tar.gz)
+  - debian:  `*.deb` file from releases
+  - redhat:  `*.rpm` file from releases
+  - alpine:  `*.apk` file from releases
 
 ## Using l'oGGo
 
@@ -130,3 +158,8 @@ prior the first release.
 - Copy single log entry to clipboard.
 - Browse/Load new log templates on the fly.
 - Create template with keys whose name contains `/` as it uses slashes to navigate to nested json branches.
+
+## Feedback
+
+Please let us know your **thoughts**, **feature requests** and **bug reports**! Use the issues report
+link here: https://github.com/aurc/loggo/issues
