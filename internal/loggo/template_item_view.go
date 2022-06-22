@@ -149,6 +149,9 @@ func (t *TemplateItemView) makeUIComponents() {
 	t.caseWhenLayout = tview.NewFlex().SetDirection(tview.FlexRow)
 	t.caseWhenLayout.SetBackgroundColor(tcell.ColorBlack)
 	t.caseWhenTable = tview.NewTable()
+
+	t.app.SetFocus(t.form)
+	t.form.SetFocus(0)
 }
 
 func (t *TemplateItemView) makeCaseWhenForm() {
