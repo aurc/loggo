@@ -41,7 +41,7 @@ func TestEqual_Apply(t *testing.T) {
 	tests := []testFilter{
 		{
 			name: "Wants exact STRING match",
-			filter: Equals(config.Key{
+			filter: Equals(&config.Key{
 				Name: "abc",
 				Type: config.TypeString,
 			}, "minion"),
@@ -51,7 +51,7 @@ func TestEqual_Apply(t *testing.T) {
 		},
 		{
 			name: "No STRING match",
-			filter: Equals(config.Key{
+			filter: Equals(&config.Key{
 				Name: "abc",
 				Type: config.TypeString,
 			}, "min"),
@@ -61,7 +61,7 @@ func TestEqual_Apply(t *testing.T) {
 		},
 		{
 			name: "Wants exact BOOL match",
-			filter: Equals(config.Key{
+			filter: Equals(&config.Key{
 				Name: "abc",
 				Type: config.TypeString,
 			}, "true"),
@@ -71,7 +71,7 @@ func TestEqual_Apply(t *testing.T) {
 		},
 		{
 			name: "No BOOL match",
-			filter: Equals(config.Key{
+			filter: Equals(&config.Key{
 				Name: "abc",
 				Type: config.TypeBool,
 			}, "true"),
@@ -81,7 +81,7 @@ func TestEqual_Apply(t *testing.T) {
 		},
 		{
 			name: "Wants BAD BOOL on value",
-			filter: Equals(config.Key{
+			filter: Equals(&config.Key{
 				Name: "abc",
 				Type: config.TypeBool,
 			}, "false"),
@@ -91,7 +91,7 @@ func TestEqual_Apply(t *testing.T) {
 		},
 		{
 			name: "Wants BAD BOOL on expression",
-			filter: Equals(config.Key{
+			filter: Equals(&config.Key{
 				Name: "abc",
 				Type: config.TypeBool,
 			}, "bananas"),
@@ -101,7 +101,7 @@ func TestEqual_Apply(t *testing.T) {
 		},
 		{
 			name: "Wants exact NUMBER match",
-			filter: Equals(config.Key{
+			filter: Equals(&config.Key{
 				Name: "abc",
 				Type: config.TypeNumber,
 			}, "0.01"),
@@ -111,7 +111,7 @@ func TestEqual_Apply(t *testing.T) {
 		},
 		{
 			name: "No NUMBER match",
-			filter: Equals(config.Key{
+			filter: Equals(&config.Key{
 				Name: "abc",
 				Type: config.TypeNumber,
 			}, "0.0109"),
@@ -121,7 +121,7 @@ func TestEqual_Apply(t *testing.T) {
 		},
 		{
 			name: "Wants BAD number on value",
-			filter: Equals(config.Key{
+			filter: Equals(&config.Key{
 				Name: "abc",
 				Type: config.TypeNumber,
 			}, "0.0109"),
@@ -131,7 +131,7 @@ func TestEqual_Apply(t *testing.T) {
 		},
 		{
 			name: "Wants BAD number on expression",
-			filter: Equals(config.Key{
+			filter: Equals(&config.Key{
 				Name: "abc",
 				Type: config.TypeNumber,
 			}, "bananas"),
@@ -141,7 +141,7 @@ func TestEqual_Apply(t *testing.T) {
 		},
 		{
 			name: "Wants exact DATE match",
-			filter: Equals(config.Key{
+			filter: Equals(&config.Key{
 				Name:   "abc",
 				Type:   config.TypeDateTime,
 				Layout: "2006-01-02T15:04:05-0700",
@@ -152,7 +152,7 @@ func TestEqual_Apply(t *testing.T) {
 		},
 		{
 			name: "No DATE match",
-			filter: Equals(config.Key{
+			filter: Equals(&config.Key{
 				Name:   "abc",
 				Type:   config.TypeDateTime,
 				Layout: "2006-01-02T15:04:05-0700",
@@ -163,7 +163,7 @@ func TestEqual_Apply(t *testing.T) {
 		},
 		{
 			name: "Wants BAD DATE value",
-			filter: Equals(config.Key{
+			filter: Equals(&config.Key{
 				Name:   "abc",
 				Type:   config.TypeDateTime,
 				Layout: "2006-01-02T15:04:05-0700",
@@ -174,7 +174,7 @@ func TestEqual_Apply(t *testing.T) {
 		},
 		{
 			name: "Wants BAD DATE expression",
-			filter: Equals(config.Key{
+			filter: Equals(&config.Key{
 				Name:   "abc",
 				Type:   config.TypeDateTime,
 				Layout: "2006-01-02T15:04:05-0700",
@@ -184,14 +184,58 @@ func TestEqual_Apply(t *testing.T) {
 			wantError:   true,
 		},
 	}
-	testFilterFunc(t, tests)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			testFilterFunc(t, test)
+		})
+	}
+}
+
+func TestMatchRegex_Apply(t *testing.T) {
+	tests := []testFilter{
+		{
+			name: "Wants exact STRING match",
+			filter: MatchesRegex(&config.Key{
+				Name: "abc",
+				Type: config.TypeString,
+			}, `\d+[a-zA-Z]+`),
+			whenValue:   "123LoGGo",
+			shouldMatch: true,
+			wantError:   false,
+		},
+		{
+			name: "No STRING match",
+			filter: MatchesRegex(&config.Key{
+				Name: "abc",
+				Type: config.TypeString,
+			}, "onion"),
+			whenValue:   "minion",
+			shouldMatch: false,
+			wantError:   false,
+		},
+		{
+			name: "BAD Regex",
+			filter: MatchesRegex(&config.Key{
+				Name: "abc",
+				Type: config.TypeString,
+			}, `\`),
+			whenValue:   "minion",
+			shouldMatch: false,
+			wantError:   true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			testFilterFunc(t, test)
+		})
+	}
 }
 
 func TestContains_Apply(t *testing.T) {
 	tests := []testFilter{
 		{
 			name: "Wants exact STRING match",
-			filter: Contains(config.Key{
+			filter: Contains(&config.Key{
 				Name: "abc",
 				Type: config.TypeString,
 			}, "io"),
@@ -201,7 +245,7 @@ func TestContains_Apply(t *testing.T) {
 		},
 		{
 			name: "No STRING match",
-			filter: Contains(config.Key{
+			filter: Contains(&config.Key{
 				Name: "abc",
 				Type: config.TypeString,
 			}, "onion"),
@@ -210,14 +254,18 @@ func TestContains_Apply(t *testing.T) {
 			wantError:   false,
 		},
 	}
-	testFilterFunc(t, tests)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			testFilterFunc(t, test)
+		})
+	}
 }
 
 func TestEqualsIgnoreCase_Apply(t *testing.T) {
 	tests := []testFilter{
 		{
 			name: "Wants exact STRING match",
-			filter: EqualIgnoreCase(config.Key{
+			filter: EqualIgnoreCase(&config.Key{
 				Name: "abc",
 				Type: config.TypeString,
 			}, "minion"),
@@ -227,7 +275,7 @@ func TestEqualsIgnoreCase_Apply(t *testing.T) {
 		},
 		{
 			name: "No STRING match",
-			filter: EqualIgnoreCase(config.Key{
+			filter: EqualIgnoreCase(&config.Key{
 				Name: "abc",
 				Type: config.TypeString,
 			}, "mInio"),
@@ -236,14 +284,18 @@ func TestEqualsIgnoreCase_Apply(t *testing.T) {
 			wantError:   false,
 		},
 	}
-	testFilterFunc(t, tests)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			testFilterFunc(t, test)
+		})
+	}
 }
 
 func TestContainsIgnoreCase_Apply(t *testing.T) {
 	tests := []testFilter{
 		{
 			name: "Wants exact STRING match",
-			filter: ContainsIgnoreCase(config.Key{
+			filter: ContainsIgnoreCase(&config.Key{
 				Name: "abc",
 				Type: config.TypeString,
 			}, "minion"),
@@ -253,7 +305,7 @@ func TestContainsIgnoreCase_Apply(t *testing.T) {
 		},
 		{
 			name: "Wants contains STRING match",
-			filter: ContainsIgnoreCase(config.Key{
+			filter: ContainsIgnoreCase(&config.Key{
 				Name: "abc",
 				Type: config.TypeString,
 			}, "mIN"),
@@ -263,7 +315,7 @@ func TestContainsIgnoreCase_Apply(t *testing.T) {
 		},
 		{
 			name: "No STRING match",
-			filter: Equals(config.Key{
+			filter: Equals(&config.Key{
 				Name: "abc",
 				Type: config.TypeString,
 			}, "m1N"),
@@ -272,14 +324,18 @@ func TestContainsIgnoreCase_Apply(t *testing.T) {
 			wantError:   false,
 		},
 	}
-	testFilterFunc(t, tests)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			testFilterFunc(t, test)
+		})
+	}
 }
 
 func TestBetween(t *testing.T) {
 	tests := []testFilter{
 		{
 			name: "Wants exact STRING match",
-			filter: Between(config.Key{
+			filter: Between(&config.Key{
 				Name: "abc",
 				Type: config.TypeString,
 			}, "minion", "zorg"),
@@ -289,7 +345,7 @@ func TestBetween(t *testing.T) {
 		},
 		{
 			name: "No STRING match",
-			filter: Between(config.Key{
+			filter: Between(&config.Key{
 				Name: "abc",
 				Type: config.TypeString,
 			}, "minion", "zorg"),
@@ -299,7 +355,7 @@ func TestBetween(t *testing.T) {
 		},
 		{
 			name: "Wants exact NUMBER match",
-			filter: Between(config.Key{
+			filter: Between(&config.Key{
 				Name: "abc",
 				Type: config.TypeNumber,
 			}, "1", "2"),
@@ -309,7 +365,7 @@ func TestBetween(t *testing.T) {
 		},
 		{
 			name: "No NUMBER match",
-			filter: Between(config.Key{
+			filter: Between(&config.Key{
 				Name: "abc",
 				Type: config.TypeNumber,
 			}, "1", "2"),
@@ -319,7 +375,7 @@ func TestBetween(t *testing.T) {
 		},
 		{
 			name: "No NUMBER match - not inclusive",
-			filter: Between(config.Key{
+			filter: Between(&config.Key{
 				Name: "abc",
 				Type: config.TypeNumber,
 			}, "1", "2"),
@@ -329,7 +385,7 @@ func TestBetween(t *testing.T) {
 		},
 		{
 			name: "Wants BAD number on value",
-			filter: Between(config.Key{
+			filter: Between(&config.Key{
 				Name: "abc",
 				Type: config.TypeNumber,
 			}, "1", "2"),
@@ -339,7 +395,7 @@ func TestBetween(t *testing.T) {
 		},
 		{
 			name: "Wants BAD number on expression",
-			filter: Between(config.Key{
+			filter: Between(&config.Key{
 				Name: "abc",
 				Type: config.TypeNumber,
 			}, "1ogg0", "3"),
@@ -349,7 +405,7 @@ func TestBetween(t *testing.T) {
 		},
 		{
 			name: "Wants BAD number on expression2",
-			filter: Between(config.Key{
+			filter: Between(&config.Key{
 				Name: "abc",
 				Type: config.TypeNumber,
 			}, "1", "ba"),
@@ -359,7 +415,7 @@ func TestBetween(t *testing.T) {
 		},
 		{
 			name: "Wants exact DATE match",
-			filter: Between(config.Key{
+			filter: Between(&config.Key{
 				Name:   "abc",
 				Type:   config.TypeDateTime,
 				Layout: "2006-01-02T15:04:05-0700",
@@ -370,7 +426,7 @@ func TestBetween(t *testing.T) {
 		},
 		{
 			name: "No DATE match",
-			filter: Between(config.Key{
+			filter: Between(&config.Key{
 				Name:   "abc",
 				Type:   config.TypeDateTime,
 				Layout: "2006-01-02T15:04:05-0700",
@@ -381,7 +437,7 @@ func TestBetween(t *testing.T) {
 		},
 		{
 			name: "Wants BAD DATE value",
-			filter: Between(config.Key{
+			filter: Between(&config.Key{
 				Name:   "abc",
 				Type:   config.TypeDateTime,
 				Layout: "2006-01-02T15:04:05-0700",
@@ -392,7 +448,7 @@ func TestBetween(t *testing.T) {
 		},
 		{
 			name: "Wants BAD DATE expression",
-			filter: Between(config.Key{
+			filter: Between(&config.Key{
 				Name:   "abc",
 				Type:   config.TypeDateTime,
 				Layout: "2006-01-02T15:04:05-0700",
@@ -403,7 +459,7 @@ func TestBetween(t *testing.T) {
 		},
 		{
 			name: "Wants BAD DATE expression2",
-			filter: Between(config.Key{
+			filter: Between(&config.Key{
 				Name:   "abc",
 				Type:   config.TypeDateTime,
 				Layout: "2006-01-02T15:04:05-0700",
@@ -413,14 +469,18 @@ func TestBetween(t *testing.T) {
 			wantError:   true,
 		},
 	}
-	testFilterFunc(t, tests)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			testFilterFunc(t, test)
+		})
+	}
 }
 
 func TestBetweenInclusive(t *testing.T) {
 	tests := []testFilter{
 		{
 			name: "Wants exact STRING match",
-			filter: BetweenInclusive(config.Key{
+			filter: BetweenInclusive(&config.Key{
 				Name: "abc",
 				Type: config.TypeString,
 			}, "minion", "zorg"),
@@ -430,7 +490,7 @@ func TestBetweenInclusive(t *testing.T) {
 		},
 		{
 			name: "No STRING match",
-			filter: BetweenInclusive(config.Key{
+			filter: BetweenInclusive(&config.Key{
 				Name: "abc",
 				Type: config.TypeString,
 			}, "minion", "zorg"),
@@ -440,7 +500,7 @@ func TestBetweenInclusive(t *testing.T) {
 		},
 		{
 			name: "Wants exact NUMBER match",
-			filter: BetweenInclusive(config.Key{
+			filter: BetweenInclusive(&config.Key{
 				Name: "abc",
 				Type: config.TypeNumber,
 			}, "1", "2"),
@@ -450,7 +510,7 @@ func TestBetweenInclusive(t *testing.T) {
 		},
 		{
 			name: "No NUMBER match",
-			filter: BetweenInclusive(config.Key{
+			filter: BetweenInclusive(&config.Key{
 				Name: "abc",
 				Type: config.TypeNumber,
 			}, "1", "2"),
@@ -460,7 +520,7 @@ func TestBetweenInclusive(t *testing.T) {
 		},
 		{
 			name: "Wants BAD number on value",
-			filter: BetweenInclusive(config.Key{
+			filter: BetweenInclusive(&config.Key{
 				Name: "abc",
 				Type: config.TypeNumber,
 			}, "1", "2"),
@@ -470,7 +530,7 @@ func TestBetweenInclusive(t *testing.T) {
 		},
 		{
 			name: "Wants BAD number on expression",
-			filter: BetweenInclusive(config.Key{
+			filter: BetweenInclusive(&config.Key{
 				Name: "abc",
 				Type: config.TypeNumber,
 			}, "1ogg0", "3"),
@@ -480,7 +540,7 @@ func TestBetweenInclusive(t *testing.T) {
 		},
 		{
 			name: "Wants BAD number on expression2",
-			filter: BetweenInclusive(config.Key{
+			filter: BetweenInclusive(&config.Key{
 				Name: "abc",
 				Type: config.TypeNumber,
 			}, "1", "ba"),
@@ -490,7 +550,7 @@ func TestBetweenInclusive(t *testing.T) {
 		},
 		{
 			name: "Wants exact DATE match",
-			filter: BetweenInclusive(config.Key{
+			filter: BetweenInclusive(&config.Key{
 				Name:   "abc",
 				Type:   config.TypeDateTime,
 				Layout: "2006-01-02T15:04:05-0700",
@@ -501,7 +561,7 @@ func TestBetweenInclusive(t *testing.T) {
 		},
 		{
 			name: "No DATE match",
-			filter: BetweenInclusive(config.Key{
+			filter: BetweenInclusive(&config.Key{
 				Name:   "abc",
 				Type:   config.TypeDateTime,
 				Layout: "2006-01-02T15:04:05-0700",
@@ -512,7 +572,7 @@ func TestBetweenInclusive(t *testing.T) {
 		},
 		{
 			name: "Wants BAD DATE value",
-			filter: BetweenInclusive(config.Key{
+			filter: BetweenInclusive(&config.Key{
 				Name:   "abc",
 				Type:   config.TypeDateTime,
 				Layout: "2006-01-02T15:04:05-0700",
@@ -523,7 +583,7 @@ func TestBetweenInclusive(t *testing.T) {
 		},
 		{
 			name: "Wants BAD DATE expression",
-			filter: BetweenInclusive(config.Key{
+			filter: BetweenInclusive(&config.Key{
 				Name:   "abc",
 				Type:   config.TypeDateTime,
 				Layout: "2006-01-02T15:04:05-0700",
@@ -534,7 +594,7 @@ func TestBetweenInclusive(t *testing.T) {
 		},
 		{
 			name: "Wants BAD DATE expression2",
-			filter: BetweenInclusive(config.Key{
+			filter: BetweenInclusive(&config.Key{
 				Name:   "abc",
 				Type:   config.TypeDateTime,
 				Layout: "2006-01-02T15:04:05-0700",
@@ -544,19 +604,475 @@ func TestBetweenInclusive(t *testing.T) {
 			wantError:   true,
 		},
 	}
-	testFilterFunc(t, tests)
-}
-
-func testFilterFunc(t *testing.T, tests []testFilter) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := test.filter.Apply(test.whenValue)
-			if test.wantError {
-				assert.NotNil(t, err)
-				assert.Error(t, err)
-			} else {
-				assert.Equal(t, test.shouldMatch, got)
-			}
+			testFilterFunc(t, test)
 		})
+	}
+}
+
+func TestLowerThan_Apply(t *testing.T) {
+	tests := []testFilter{
+		{
+			name: "Wants exact STRING match",
+			filter: LowerThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeString,
+			}, "z"),
+			whenValue:   "a",
+			shouldMatch: true,
+			wantError:   false,
+		},
+		{
+			name: "No STRING match",
+			filter: LowerThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeString,
+			}, "a"),
+			whenValue:   "z",
+			shouldMatch: false,
+			wantError:   false,
+		},
+		{
+			name: "Wants exact NUMBER match",
+			filter: LowerThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeNumber,
+			}, "0.02"),
+			whenValue:   "0.01",
+			shouldMatch: true,
+			wantError:   false,
+		},
+		{
+			name: "No NUMBER match",
+			filter: LowerThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeNumber,
+			}, "0.01"),
+			whenValue:   "0.02",
+			shouldMatch: false,
+			wantError:   false,
+		},
+		{
+			name: "Wants BAD number on value",
+			filter: LowerThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeNumber,
+			}, "0.0109"),
+			whenValue:   "bananas",
+			shouldMatch: false,
+			wantError:   true,
+		},
+		{
+			name: "Wants BAD number on expression",
+			filter: LowerThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeNumber,
+			}, "bananas"),
+			whenValue:   "10",
+			shouldMatch: false,
+			wantError:   true,
+		},
+		{
+			name: "Wants exact DATE match",
+			filter: LowerThan(&config.Key{
+				Name:   "abc",
+				Type:   config.TypeDateTime,
+				Layout: "2006-01-02T15:04:05-0700",
+			}, "2006-01-02T15:04:05-0700"),
+			whenValue:   "2006-01-02T14:04:05-0700",
+			shouldMatch: true,
+			wantError:   false,
+		},
+		{
+			name: "No DATE match",
+			filter: LowerThan(&config.Key{
+				Name:   "abc",
+				Type:   config.TypeDateTime,
+				Layout: "2006-01-02T15:04:05-0700",
+			}, "2006-01-02T14:04:05-0700"),
+			whenValue:   "2006-01-02T15:04:05-0700",
+			shouldMatch: false,
+			wantError:   false,
+		},
+		{
+			name: "Wants BAD DATE value",
+			filter: LowerThan(&config.Key{
+				Name:   "abc",
+				Type:   config.TypeDateTime,
+				Layout: "2006-01-02T15:04:05-0700",
+			}, "2006-01-02T15:04:05-0700"),
+			whenValue:   "bananas",
+			shouldMatch: false,
+			wantError:   true,
+		},
+		{
+			name: "Wants BAD DATE expression",
+			filter: LowerThan(&config.Key{
+				Name:   "abc",
+				Type:   config.TypeDateTime,
+				Layout: "2006-01-02T15:04:05-0700",
+			}, "bananas"),
+			whenValue:   "2006-01-02T15:04:05-0700",
+			shouldMatch: false,
+			wantError:   true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			testFilterFunc(t, test)
+		})
+	}
+}
+
+func TestLowerOrEqualThan_Apply(t *testing.T) {
+	tests := []testFilter{
+		{
+			name: "Wants exact STRING match",
+			filter: LowerOrEqualThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeString,
+			}, "z"),
+			whenValue:   "a",
+			shouldMatch: true,
+			wantError:   false,
+		},
+		{
+			name: "No STRING match",
+			filter: LowerOrEqualThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeString,
+			}, "a"),
+			whenValue:   "z",
+			shouldMatch: false,
+			wantError:   false,
+		},
+		{
+			name: "Wants exact NUMBER match",
+			filter: LowerOrEqualThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeNumber,
+			}, "0.02"),
+			whenValue:   "0.01",
+			shouldMatch: true,
+			wantError:   false,
+		},
+		{
+			name: "No NUMBER match",
+			filter: LowerOrEqualThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeNumber,
+			}, "0.01"),
+			whenValue:   "0.02",
+			shouldMatch: false,
+			wantError:   false,
+		},
+		{
+			name: "Wants BAD number on value",
+			filter: LowerOrEqualThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeNumber,
+			}, "0.0109"),
+			whenValue:   "bananas",
+			shouldMatch: false,
+			wantError:   true,
+		},
+		{
+			name: "Wants BAD number on expression",
+			filter: LowerOrEqualThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeNumber,
+			}, "bananas"),
+			whenValue:   "10",
+			shouldMatch: false,
+			wantError:   true,
+		},
+		{
+			name: "Wants exact DATE match",
+			filter: LowerOrEqualThan(&config.Key{
+				Name:   "abc",
+				Type:   config.TypeDateTime,
+				Layout: "2006-01-02T15:04:05-0700",
+			}, "2006-01-02T15:04:05-0700"),
+			whenValue:   "2006-01-02T14:04:05-0700",
+			shouldMatch: true,
+			wantError:   false,
+		},
+		{
+			name: "No DATE match",
+			filter: LowerOrEqualThan(&config.Key{
+				Name:   "abc",
+				Type:   config.TypeDateTime,
+				Layout: "2006-01-02T15:04:05-0700",
+			}, "2006-01-02T14:04:05-0700"),
+			whenValue:   "2006-01-02T15:04:05-0700",
+			shouldMatch: false,
+			wantError:   false,
+		},
+		{
+			name: "Wants BAD DATE value",
+			filter: LowerOrEqualThan(&config.Key{
+				Name:   "abc",
+				Type:   config.TypeDateTime,
+				Layout: "2006-01-02T15:04:05-0700",
+			}, "2006-01-02T15:04:05-0700"),
+			whenValue:   "bananas",
+			shouldMatch: false,
+			wantError:   true,
+		},
+		{
+			name: "Wants BAD DATE expression",
+			filter: LowerOrEqualThan(&config.Key{
+				Name:   "abc",
+				Type:   config.TypeDateTime,
+				Layout: "2006-01-02T15:04:05-0700",
+			}, "bananas"),
+			whenValue:   "2006-01-02T15:04:05-0700",
+			shouldMatch: false,
+			wantError:   true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			testFilterFunc(t, test)
+		})
+	}
+}
+
+func TestGreaterThan_Apply(t *testing.T) {
+	tests := []testFilter{
+		{
+			name: "Wants exact STRING match",
+			filter: GreaterThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeString,
+			}, "a"),
+			whenValue:   "z",
+			shouldMatch: true,
+			wantError:   false,
+		},
+		{
+			name: "No STRING match",
+			filter: GreaterThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeString,
+			}, "z"),
+			whenValue:   "a",
+			shouldMatch: false,
+			wantError:   false,
+		},
+		{
+			name: "Wants exact NUMBER match",
+			filter: GreaterThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeNumber,
+			}, "0.01"),
+			whenValue:   "0.02",
+			shouldMatch: true,
+			wantError:   false,
+		},
+		{
+			name: "No NUMBER match",
+			filter: GreaterThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeNumber,
+			}, "0.02"),
+			whenValue:   "0.01",
+			shouldMatch: false,
+			wantError:   false,
+		},
+		{
+			name: "Wants BAD number on value",
+			filter: GreaterThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeNumber,
+			}, "0.0109"),
+			whenValue:   "bananas",
+			shouldMatch: false,
+			wantError:   true,
+		},
+		{
+			name: "Wants BAD number on expression",
+			filter: GreaterThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeNumber,
+			}, "bananas"),
+			whenValue:   "10",
+			shouldMatch: false,
+			wantError:   true,
+		},
+		{
+			name: "Wants exact DATE match",
+			filter: GreaterThan(&config.Key{
+				Name:   "abc",
+				Type:   config.TypeDateTime,
+				Layout: "2006-01-02T15:04:05-0700",
+			}, "2006-01-02T14:04:05-0700"),
+			whenValue:   "2006-01-02T15:04:05-0700",
+			shouldMatch: true,
+			wantError:   false,
+		},
+		{
+			name: "No DATE match",
+			filter: GreaterThan(&config.Key{
+				Name:   "abc",
+				Type:   config.TypeDateTime,
+				Layout: "2006-01-02T15:04:05-0700",
+			}, "2006-01-02T15:04:05-0700"),
+			whenValue:   "2006-01-02T14:04:05-0700",
+			shouldMatch: false,
+			wantError:   false,
+		},
+		{
+			name: "Wants BAD DATE value",
+			filter: GreaterThan(&config.Key{
+				Name:   "abc",
+				Type:   config.TypeDateTime,
+				Layout: "2006-01-02T15:04:05-0700",
+			}, "2006-01-02T15:04:05-0700"),
+			whenValue:   "bananas",
+			shouldMatch: false,
+			wantError:   true,
+		},
+		{
+			name: "Wants BAD DATE expression",
+			filter: GreaterThan(&config.Key{
+				Name:   "abc",
+				Type:   config.TypeDateTime,
+				Layout: "2006-01-02T15:04:05-0700",
+			}, "bananas"),
+			whenValue:   "2006-01-02T15:04:05-0700",
+			shouldMatch: false,
+			wantError:   true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			testFilterFunc(t, test)
+		})
+	}
+}
+
+func TestGreaterOrEqualThan_Apply(t *testing.T) {
+	tests := []testFilter{
+		{
+			name: "Wants exact STRING match",
+			filter: GreaterOrEqualThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeString,
+			}, "a"),
+			whenValue:   "z",
+			shouldMatch: true,
+			wantError:   false,
+		},
+		{
+			name: "No STRING match",
+			filter: GreaterOrEqualThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeString,
+			}, "z"),
+			whenValue:   "a",
+			shouldMatch: false,
+			wantError:   false,
+		},
+		{
+			name: "Wants exact NUMBER match",
+			filter: GreaterOrEqualThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeNumber,
+			}, "0.01"),
+			whenValue:   "0.02",
+			shouldMatch: true,
+			wantError:   false,
+		},
+		{
+			name: "No NUMBER match",
+			filter: GreaterOrEqualThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeNumber,
+			}, "0.02"),
+			whenValue:   "0.01",
+			shouldMatch: false,
+			wantError:   false,
+		},
+		{
+			name: "Wants BAD number on value",
+			filter: GreaterOrEqualThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeNumber,
+			}, "0.0109"),
+			whenValue:   "bananas",
+			shouldMatch: false,
+			wantError:   true,
+		},
+		{
+			name: "Wants BAD number on expression",
+			filter: GreaterOrEqualThan(&config.Key{
+				Name: "abc",
+				Type: config.TypeNumber,
+			}, "bananas"),
+			whenValue:   "10",
+			shouldMatch: false,
+			wantError:   true,
+		},
+		{
+			name: "Wants exact DATE match",
+			filter: GreaterOrEqualThan(&config.Key{
+				Name:   "abc",
+				Type:   config.TypeDateTime,
+				Layout: "2006-01-02T15:04:05-0700",
+			}, "2006-01-02T14:04:05-0700"),
+			whenValue:   "2006-01-02T15:04:05-0700",
+			shouldMatch: true,
+			wantError:   false,
+		},
+		{
+			name: "No DATE match",
+			filter: GreaterOrEqualThan(&config.Key{
+				Name:   "abc",
+				Type:   config.TypeDateTime,
+				Layout: "2006-01-02T15:04:05-0700",
+			}, "2006-01-02T15:04:05-0700"),
+			whenValue:   "2006-01-02T14:04:05-0700",
+			shouldMatch: false,
+			wantError:   false,
+		},
+		{
+			name: "Wants BAD DATE value",
+			filter: GreaterOrEqualThan(&config.Key{
+				Name:   "abc",
+				Type:   config.TypeDateTime,
+				Layout: "2006-01-02T15:04:05-0700",
+			}, "2006-01-02T15:04:05-0700"),
+			whenValue:   "bananas",
+			shouldMatch: false,
+			wantError:   true,
+		},
+		{
+			name: "Wants BAD DATE expression",
+			filter: GreaterOrEqualThan(&config.Key{
+				Name:   "abc",
+				Type:   config.TypeDateTime,
+				Layout: "2006-01-02T15:04:05-0700",
+			}, "bananas"),
+			whenValue:   "2006-01-02T15:04:05-0700",
+			shouldMatch: false,
+			wantError:   true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			testFilterFunc(t, test)
+		})
+	}
+}
+
+func testFilterFunc(t *testing.T, test testFilter) {
+	got, err := test.filter.Apply(test.whenValue)
+	if test.wantError {
+		assert.NotNil(t, err)
+		assert.Error(t, err)
+	} else {
+		assert.Equal(t, test.shouldMatch, got)
 	}
 }

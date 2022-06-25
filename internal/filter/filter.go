@@ -33,11 +33,119 @@ import (
 
 type Filter interface {
 	Apply(value string) (bool, error)
+	Key() *config.Key
+}
+
+func Equals(key *config.Key, expression string) *equals {
+	return &equals{
+		predicate: predicate{
+			key:        key,
+			expression: expression,
+		},
+	}
+}
+
+func EqualIgnoreCase(key *config.Key, expression string) *equalsIgnoreCase {
+	return &equalsIgnoreCase{
+		predicate: predicate{
+			key:        key,
+			expression: expression,
+		},
+	}
+}
+
+func Contains(key *config.Key, expression string) *contains {
+	return &contains{
+		predicate: predicate{
+			key:        key,
+			expression: expression,
+		},
+	}
+}
+
+func ContainsIgnoreCase(key *config.Key, expression string) *containsIgnoreCase {
+	return &containsIgnoreCase{
+		predicate: predicate{
+			key:        key,
+			expression: expression,
+		},
+	}
+}
+
+func LowerThan(key *config.Key, expression string) *lowerThan {
+	return &lowerThan{
+		predicate: predicate{
+			key:        key,
+			expression: expression,
+		},
+	}
+}
+
+func GreaterThan(key *config.Key, expression string) *greaterThan {
+	return &greaterThan{
+		predicate: predicate{
+			key:        key,
+			expression: expression,
+		},
+	}
+}
+
+func LowerOrEqualThan(key *config.Key, expression string) *lowerOrEqualThan {
+	return &lowerOrEqualThan{
+		predicate: predicate{
+			key:        key,
+			expression: expression,
+		},
+	}
+}
+
+func GreaterOrEqualThan(key *config.Key, expression string) *greaterOrEqualThan {
+	return &greaterOrEqualThan{
+		predicate: predicate{
+			key:        key,
+			expression: expression,
+		},
+	}
+}
+
+func MatchesRegex(key *config.Key, expression string) *matchRegex {
+	return &matchRegex{
+		predicate: predicate{
+			key:        key,
+			expression: expression,
+		},
+	}
+}
+
+func Between(key *config.Key, expression, expression2 string) *between {
+	return &between{
+		predicate: predicate{
+			key:        key,
+			expression: expression,
+		},
+		expression2: expression2,
+	}
+}
+
+func BetweenInclusive(key *config.Key, expression, expression2 string) *betweenInclusive {
+	return &betweenInclusive{
+		between: between{
+			predicate: predicate{
+				key:        key,
+				expression: expression,
+			},
+			expression2: expression2,
+		},
+	}
 }
 
 type predicate struct {
-	key        config.Key
+	key        *config.Key
 	expression string
+}
+
+func (p *predicate) Key() *config.Key {
+	return p.key
 }
 
 type equals struct {
@@ -299,107 +407,4 @@ func (f *between) parseDateTimeAndCheck(value string, check func(value, expressi
 		}
 	}
 	return false, err
-}
-
-func Equals(key config.Key, expression string) *equals {
-	return &equals{
-		predicate: predicate{
-			key:        key,
-			expression: expression,
-		},
-	}
-}
-
-func EqualIgnoreCase(key config.Key, expression string) *equalsIgnoreCase {
-	return &equalsIgnoreCase{
-		predicate: predicate{
-			key:        key,
-			expression: expression,
-		},
-	}
-}
-
-func Contains(key config.Key, expression string) *contains {
-	return &contains{
-		predicate: predicate{
-			key:        key,
-			expression: expression,
-		},
-	}
-}
-
-func ContainsIgnoreCase(key config.Key, expression string) *containsIgnoreCase {
-	return &containsIgnoreCase{
-		predicate: predicate{
-			key:        key,
-			expression: expression,
-		},
-	}
-}
-
-func LowerThan(key config.Key, expression string) *lowerThan {
-	return &lowerThan{
-		predicate: predicate{
-			key:        key,
-			expression: expression,
-		},
-	}
-}
-
-func GreaterThan(key config.Key, expression string) *greaterThan {
-	return &greaterThan{
-		predicate: predicate{
-			key:        key,
-			expression: expression,
-		},
-	}
-}
-
-func LowerOrEqualThan(key config.Key, expression string) *lowerOrEqualThan {
-	return &lowerOrEqualThan{
-		predicate: predicate{
-			key:        key,
-			expression: expression,
-		},
-	}
-}
-
-func GreaterOrEqualThan(key config.Key, expression string) *greaterOrEqualThan {
-	return &greaterOrEqualThan{
-		predicate: predicate{
-			key:        key,
-			expression: expression,
-		},
-	}
-}
-
-func MatchesRegex(key config.Key, expression string) *matchRegex {
-	return &matchRegex{
-		predicate: predicate{
-			key:        key,
-			expression: expression,
-		},
-	}
-}
-
-func Between(key config.Key, expression, expression2 string) *between {
-	return &between{
-		predicate: predicate{
-			key:        key,
-			expression: expression,
-		},
-		expression2: expression2,
-	}
-}
-
-func BetweenInclusive(key config.Key, expression, expression2 string) *betweenInclusive {
-	return &betweenInclusive{
-		between: between{
-			predicate: predicate{
-				key:        key,
-				expression: expression,
-			},
-			expression2: expression2,
-		},
-	}
 }
