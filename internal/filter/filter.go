@@ -2,14 +2,14 @@
 Copyright © 2022 Aurelio Calegari, et al.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
+of this software AND associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
+to use, copy, modify, merge, publish, distribute, sublicense, AND/OR sell
+copies of the Software, AND to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+The above copyright notice AND this permission notice shall be included in
+all copies OR substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -34,128 +34,141 @@ import (
 type Filter interface {
 	Apply(value string) (bool, error)
 	Key() *config.Key
+	Expression() []string
+	Name() string
+}
+
+type Predicate struct {
+	key        *config.Key `json:"-" yaml:"-"`
+	name       string      `json:"key" yaml:"key"`
+	expression []string    `json:"expression" yaml:"expression"`
+}
+
+func (p *Predicate) Apply(value string) (bool, error) {
+	return true, nil
+}
+
+func (p *Predicate) Key() *config.Key {
+	return p.key
+}
+
+func (p *Predicate) Expression() []string {
+	return p.expression
+}
+
+func (p *Predicate) Name() string {
+	return p.name
 }
 
 func Equals(key *config.Key, expression string) *equals {
 	return &equals{
-		predicate: predicate{
+		Predicate: Predicate{
 			key:        key,
-			expression: expression,
+			expression: []string{expression},
 		},
 	}
 }
 
 func EqualIgnoreCase(key *config.Key, expression string) *equalsIgnoreCase {
 	return &equalsIgnoreCase{
-		predicate: predicate{
+		Predicate: Predicate{
 			key:        key,
-			expression: expression,
+			expression: []string{expression},
 		},
 	}
 }
 
 func Contains(key *config.Key, expression string) *contains {
 	return &contains{
-		predicate: predicate{
+		Predicate: Predicate{
 			key:        key,
-			expression: expression,
+			expression: []string{expression},
 		},
 	}
 }
 
 func ContainsIgnoreCase(key *config.Key, expression string) *containsIgnoreCase {
 	return &containsIgnoreCase{
-		predicate: predicate{
+		Predicate: Predicate{
 			key:        key,
-			expression: expression,
+			expression: []string{expression},
 		},
 	}
 }
 
 func LowerThan(key *config.Key, expression string) *lowerThan {
 	return &lowerThan{
-		predicate: predicate{
+		Predicate: Predicate{
 			key:        key,
-			expression: expression,
+			expression: []string{expression},
 		},
 	}
 }
 
 func GreaterThan(key *config.Key, expression string) *greaterThan {
 	return &greaterThan{
-		predicate: predicate{
+		Predicate: Predicate{
 			key:        key,
-			expression: expression,
+			expression: []string{expression},
 		},
 	}
 }
 
 func LowerOrEqualThan(key *config.Key, expression string) *lowerOrEqualThan {
 	return &lowerOrEqualThan{
-		predicate: predicate{
+		Predicate: Predicate{
 			key:        key,
-			expression: expression,
+			expression: []string{expression},
 		},
 	}
 }
 
 func GreaterOrEqualThan(key *config.Key, expression string) *greaterOrEqualThan {
 	return &greaterOrEqualThan{
-		predicate: predicate{
+		Predicate: Predicate{
 			key:        key,
-			expression: expression,
+			expression: []string{expression},
 		},
 	}
 }
 
 func MatchesRegex(key *config.Key, expression string) *matchRegex {
 	return &matchRegex{
-		predicate: predicate{
+		Predicate: Predicate{
 			key:        key,
-			expression: expression,
+			expression: []string{expression},
 		},
 	}
 }
 
 func Between(key *config.Key, expression, expression2 string) *between {
 	return &between{
-		predicate: predicate{
+		Predicate: Predicate{
 			key:        key,
-			expression: expression,
+			expression: []string{expression, expression2},
 		},
-		expression2: expression2,
 	}
 }
 
 func BetweenInclusive(key *config.Key, expression, expression2 string) *betweenInclusive {
 	return &betweenInclusive{
 		between: between{
-			predicate: predicate{
+			Predicate: Predicate{
 				key:        key,
-				expression: expression,
+				expression: []string{expression, expression2},
 			},
-			expression2: expression2,
 		},
 	}
 }
 
-type predicate struct {
-	key        *config.Key
-	expression string
-}
-
-func (p *predicate) Key() *config.Key {
-	return p.key
-}
-
 type equals struct {
-	predicate
+	Predicate
 }
 
 func (f *equals) Apply(value string) (bool, error) {
 	switch f.key.Type {
 	case config.TypeString:
-		return f.expression == value, nil
+		return f.expression[0] == value, nil
 	case config.TypeNumber:
 		return f.parseNumberAndCheck(value, func(number, expression float64) (bool, error) {
 			return number == expression, nil
@@ -173,35 +186,35 @@ func (f *equals) Apply(value string) (bool, error) {
 }
 
 type contains struct {
-	predicate
+	Predicate
 }
 
 func (f *contains) Apply(value string) (bool, error) {
-	return strings.Index(value, f.expression) != -1, nil
+	return strings.Index(value, f.expression[0]) != -1, nil
 }
 
 type equalsIgnoreCase struct {
-	predicate
+	Predicate
 }
 
 func (f *equalsIgnoreCase) Apply(value string) (bool, error) {
-	return strings.ToLower(f.expression) == strings.ToLower(value), nil
+	return strings.ToLower(f.expression[0]) == strings.ToLower(value), nil
 }
 
 type containsIgnoreCase struct {
-	predicate
+	Predicate
 }
 
 func (f *containsIgnoreCase) Apply(value string) (bool, error) {
-	return strings.Index(strings.ToLower(value), strings.ToLower(f.expression)) != -1, nil
+	return strings.Index(strings.ToLower(value), strings.ToLower(f.expression[0])) != -1, nil
 }
 
 type matchRegex struct {
-	predicate
+	Predicate
 }
 
 func (f *matchRegex) Apply(value string) (bool, error) {
-	reg, err := regexp.Compile(f.expression)
+	reg, err := regexp.Compile(f.expression[0])
 	if err != nil {
 		return false, err
 	}
@@ -209,13 +222,13 @@ func (f *matchRegex) Apply(value string) (bool, error) {
 }
 
 type lowerThan struct {
-	predicate
+	Predicate
 }
 
 func (f *lowerThan) Apply(value string) (bool, error) {
 	switch f.key.Type {
 	case config.TypeString:
-		return strings.Compare(value, f.expression) < 0, nil
+		return strings.Compare(value, f.expression[0]) < 0, nil
 	case config.TypeNumber:
 		return f.parseNumberAndCheck(value, func(number, expression float64) (bool, error) {
 			return number < expression, nil
@@ -229,13 +242,13 @@ func (f *lowerThan) Apply(value string) (bool, error) {
 }
 
 type greaterThan struct {
-	predicate
+	Predicate
 }
 
 func (f *greaterThan) Apply(value string) (bool, error) {
 	switch f.key.Type {
 	case config.TypeString:
-		return strings.Compare(value, f.expression) > 0, nil
+		return strings.Compare(value, f.expression[0]) > 0, nil
 	case config.TypeNumber:
 		return f.parseNumberAndCheck(value, func(number, expression float64) (bool, error) {
 			return number > expression, nil
@@ -249,13 +262,13 @@ func (f *greaterThan) Apply(value string) (bool, error) {
 }
 
 type lowerOrEqualThan struct {
-	predicate
+	Predicate
 }
 
 func (f *lowerOrEqualThan) Apply(value string) (bool, error) {
 	switch f.key.Type {
 	case config.TypeString:
-		return strings.Compare(value, f.expression) <= 0, nil
+		return strings.Compare(value, f.expression[0]) <= 0, nil
 	case config.TypeNumber:
 		return f.parseNumberAndCheck(value, func(number, expression float64) (bool, error) {
 			return number <= expression, nil
@@ -269,13 +282,13 @@ func (f *lowerOrEqualThan) Apply(value string) (bool, error) {
 }
 
 type greaterOrEqualThan struct {
-	predicate
+	Predicate
 }
 
 func (f *greaterOrEqualThan) Apply(value string) (bool, error) {
 	switch f.key.Type {
 	case config.TypeString:
-		return strings.Compare(value, f.expression) >= 0, nil
+		return strings.Compare(value, f.expression[0]) >= 0, nil
 	case config.TypeNumber:
 		return f.parseNumberAndCheck(value, func(number, expression float64) (bool, error) {
 			return number >= expression, nil
@@ -289,14 +302,13 @@ func (f *greaterOrEqualThan) Apply(value string) (bool, error) {
 }
 
 type between struct {
-	predicate
-	expression2 string
+	Predicate
 }
 
 func (f *between) Apply(value string) (bool, error) {
 	switch f.key.Type {
 	case config.TypeString:
-		return strings.Compare(value, f.expression) > 0 && strings.Compare(value, f.expression2) < 0, nil
+		return strings.Compare(value, f.expression[0]) > 0 && strings.Compare(value, f.expression[1]) < 0, nil
 	case config.TypeNumber:
 		return f.parseNumberAndCheck(value, func(number, expression, expression2 float64) (bool, error) {
 			return number > expression && number < expression2, nil
@@ -316,7 +328,7 @@ type betweenInclusive struct {
 func (f *betweenInclusive) Apply(value string) (bool, error) {
 	switch f.key.Type {
 	case config.TypeString:
-		return strings.Compare(value, f.expression) >= 0 && strings.Compare(value, f.expression2) <= 0, nil
+		return strings.Compare(value, f.expression[0]) >= 0 && strings.Compare(value, f.expression[1]) <= 0, nil
 	case config.TypeNumber:
 		return f.parseNumberAndCheck(value, func(number, expression, expression2 float64) (bool, error) {
 			return number >= expression && number <= expression2, nil
@@ -330,7 +342,7 @@ func (f *betweenInclusive) Apply(value string) (bool, error) {
 	return false, nil
 }
 
-func (f *predicate) parseNumberAndCheck(value string, check func(number, expression float64) (bool, error)) (bool, error) {
+func (p *Predicate) parseNumberAndCheck(value string, check func(number, expression float64) (bool, error)) (bool, error) {
 	var n, e float64
 	var err error
 	tv := strings.TrimSpace(value)
@@ -339,7 +351,7 @@ func (f *predicate) parseNumberAndCheck(value string, check func(number, express
 	}
 	n, err = strconv.ParseFloat(value, 64)
 	if err == nil {
-		e, err = strconv.ParseFloat(f.expression, 64)
+		e, err = strconv.ParseFloat(p.expression[0], 64)
 		if err == nil {
 			return check(n, e)
 		}
@@ -356,9 +368,9 @@ func (f *between) parseNumberAndCheck(value string, check func(number, expressio
 	}
 	v, err = strconv.ParseFloat(value, 64)
 	if err == nil {
-		e, err = strconv.ParseFloat(f.expression, 64)
+		e, err = strconv.ParseFloat(f.expression[0], 64)
 		if err == nil {
-			e2, err = strconv.ParseFloat(f.expression2, 64)
+			e2, err = strconv.ParseFloat(f.expression[1], 64)
 			if err == nil {
 				return check(v, e, e2)
 			}
@@ -367,12 +379,12 @@ func (f *between) parseNumberAndCheck(value string, check func(number, expressio
 	return false, err
 }
 
-func (f *predicate) parseBoolAndCheck(value string, check func(value, expression bool) (bool, error)) (bool, error) {
+func (p *Predicate) parseBoolAndCheck(value string, check func(value, expression bool) (bool, error)) (bool, error) {
 	var v, e bool
 	var err error
 	v, err = strconv.ParseBool(value)
 	if err == nil {
-		e, err = strconv.ParseBool(f.expression)
+		e, err = strconv.ParseBool(p.expression[0])
 		if err == nil {
 			return check(v, e)
 		}
@@ -380,12 +392,12 @@ func (f *predicate) parseBoolAndCheck(value string, check func(value, expression
 	return false, err
 }
 
-func (f *predicate) parseDateTimeAndCheck(value string, check func(value, expression time.Time) (bool, error)) (bool, error) {
+func (p *Predicate) parseDateTimeAndCheck(value string, check func(value, expression time.Time) (bool, error)) (bool, error) {
 	var v, e time.Time
 	var err error
-	v, err = time.Parse(f.key.Layout, value)
+	v, err = time.Parse(p.key.Layout, value)
 	if err == nil {
-		e, err = time.Parse(f.key.Layout, f.expression)
+		e, err = time.Parse(p.key.Layout, p.expression[0])
 		if err == nil {
 			return check(v, e)
 		}
@@ -398,9 +410,9 @@ func (f *between) parseDateTimeAndCheck(value string, check func(value, expressi
 	var err error
 	v, err = time.Parse(f.key.Layout, value)
 	if err == nil {
-		e, err = time.Parse(f.key.Layout, f.expression)
+		e, err = time.Parse(f.key.Layout, f.expression[0])
 		if err == nil {
-			e2, err = time.Parse(f.key.Layout, f.expression2)
+			e2, err = time.Parse(f.key.Layout, f.expression[1])
 			if err == nil {
 				return check(v, e, e2)
 			}

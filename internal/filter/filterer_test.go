@@ -2,14 +2,14 @@
 Copyright © 2022 Aurelio Calegari, et al.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
+of this software AND associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
+to use, copy, modify, merge, publish, distribute, sublicense, AND/OR sell
+copies of the Software, AND to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+The above copyright notice AND this permission notice shall be included in
+all copies OR substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -35,12 +35,12 @@ func TestFilterGroup_Resolve(t *testing.T) {
 	tests := []struct {
 		name        string
 		whenJsonRow string
-		givenFilter FilterGroup
+		givenFilter Group
 		wantsResult bool
 		wantsError  bool
 	}{
 		{
-			name: `Given ((a/b = 'x' or a/b = 'y') and (c between 1 and 3 or c > 5)) with a/b = 'y', c = 2, wants true`,
+			name: `Given ((a/b = 'x' OR a/b = 'y') AND (c between 1 AND 3 OR c > 5)) with a/b = 'y', c = 2, wants true`,
 			whenJsonRow: `
 					{
 						"a": {
@@ -70,7 +70,7 @@ func TestFilterGroup_Resolve(t *testing.T) {
 			wantsResult: true,
 		},
 		{
-			name: `Given ((a/b = 'x' or a/b = 'y') and (c between 1 and 3 or c > 5)) with a/b = 'x', c = 7, wants true`,
+			name: `Given ((a/b = 'x' OR a/b = 'y') AND (c between 1 AND 3 OR c > 5)) with a/b = 'x', c = 7, wants true`,
 			whenJsonRow: `
 					{
 						"a": {
@@ -100,7 +100,7 @@ func TestFilterGroup_Resolve(t *testing.T) {
 			wantsResult: true,
 		},
 		{
-			name: `Given ((a/b = 'x' or a/b = 'y') and (c between 1 and 3 or c > 5)) with a/b = 'n', c = 7, wants false`,
+			name: `Given ((a/b = 'x' OR a/b = 'y') AND (c between 1 AND 3 OR c > 5)) with a/b = 'n', c = 7, wants false`,
 			whenJsonRow: `
 					{
 						"a": {
@@ -130,7 +130,7 @@ func TestFilterGroup_Resolve(t *testing.T) {
 			wantsResult: false,
 		},
 		{
-			name: `Given ((a/b = 'x' or a/b = 'y') and (c between 1 and 3 or c > 5)) with a/b = 'x', c = 3, wants false`,
+			name: `Given ((a/b = 'x' OR a/b = 'y') AND (c between 1 AND 3 OR c > 5)) with a/b = 'x', c = 3, wants false`,
 			whenJsonRow: `
 					{
 						"a": {
@@ -160,7 +160,7 @@ func TestFilterGroup_Resolve(t *testing.T) {
 			wantsResult: false,
 		},
 		{
-			name: `Given ((a/b = 'x' or a/b = 'y') or (c between 1 and 3 or c > 5)) with a/b = 'x', c = 3, wants true`,
+			name: `Given ((a/b = 'x' OR a/b = 'y') OR (c between 1 AND 3 OR c > 5)) with a/b = 'x', c = 3, wants true`,
 			whenJsonRow: `
 					{
 						"a": {
@@ -190,7 +190,7 @@ func TestFilterGroup_Resolve(t *testing.T) {
 			wantsResult: true,
 		},
 		{
-			name: `Given ((a/b = 'x' or a/b = 'y') or (c between 1 and 3 and r < 5)) with a/b = 'x', c = 3, r = 5, wants true`,
+			name: `Given ((a/b = 'x' OR a/b = 'y') OR (c between 1 AND 3 AND r < 5)) with a/b = 'x', c = 3, r = 5, wants true`,
 			whenJsonRow: `
 					{
 						"a": {

@@ -2,14 +2,14 @@
 Copyright © 2022 Aurelio Calegari, et al.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
+of this software AND associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
+to use, copy, modify, merge, publish, distribute, sublicense, AND/OR sell
+copies of the Software, AND to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+The above copyright notice AND this permission notice shall be included in
+all copies OR substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -22,25 +22,40 @@ THE SOFTWARE.
 
 package filter
 
-type operator string
+type Operator string
 
 const (
-	and = operator("and")
-	or  = operator("or")
+	AND = Operator("AND")
+	OR  = Operator("OR")
 )
 
 type filterGroup struct {
-	filters  []Filter
-	groups   []FilterGroup
-	operator operator
+	filters  []Filter `json:"filters" yaml:"filters"`
+	groups   []Group  `json:"groups" yaml:"groups"`
+	operator Operator `json:"Operator" yaml:"Operator"`
 }
 
-type FilterGroup interface {
+type Group interface {
+	Filters() []Filter
+	Groups() []Group
+	Operator() Operator
 	Resolve(row map[string]interface{}) (bool, error)
 }
 
+func (f *filterGroup) Filters() []Filter {
+	return f.filters
+}
+
+func (f *filterGroup) Groups() []Group {
+	return f.groups
+}
+
+func (f *filterGroup) Operator() Operator {
+	return f.operator
+}
+
 func (f *filterGroup) Resolve(row map[string]interface{}) (bool, error) {
-	initVal := f.operator == and
+	initVal := f.operator == AND
 	if len(f.groups) > 0 {
 		for _, fg := range f.groups {
 			val, err := fg.Resolve(row)
@@ -48,9 +63,9 @@ func (f *filterGroup) Resolve(row map[string]interface{}) (bool, error) {
 				return false, err
 			}
 			switch f.operator {
-			case and:
+			case AND:
 				initVal = initVal && val
-			case or:
+			case OR:
 				initVal = initVal || val
 			}
 		}
@@ -62,9 +77,9 @@ func (f *filterGroup) Resolve(row map[string]interface{}) (bool, error) {
 				return false, err
 			}
 			switch f.operator {
-			case and:
+			case AND:
 				initVal = initVal && val
-			case or:
+			case OR:
 				initVal = initVal || val
 			}
 		}
@@ -72,30 +87,30 @@ func (f *filterGroup) Resolve(row map[string]interface{}) (bool, error) {
 	return initVal, nil
 }
 
-func And(group ...FilterGroup) *filterGroup {
+func And(group ...Group) *filterGroup {
 	return &filterGroup{
 		groups:   group,
-		operator: and,
+		operator: AND,
 	}
 }
 
-func Or(group ...FilterGroup) *filterGroup {
+func Or(group ...Group) *filterGroup {
 	return &filterGroup{
 		groups:   group,
-		operator: or,
+		operator: OR,
 	}
 }
 
 func AndFilters(filter ...Filter) *filterGroup {
 	return &filterGroup{
 		filters:  filter,
-		operator: and,
+		operator: AND,
 	}
 }
 
 func OrFilters(filter ...Filter) *filterGroup {
 	return &filterGroup{
 		filters:  filter,
-		operator: or,
+		operator: OR,
 	}
 }
