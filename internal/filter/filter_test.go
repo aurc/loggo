@@ -191,6 +191,160 @@ func TestEqual_Apply(t *testing.T) {
 	}
 }
 
+func TestNotEqual_Apply(t *testing.T) {
+	tests := []testFilter{
+		{
+			name: "Wants exact STRING match",
+			filter: NotEquals(&config.Key{
+				Name: "abc",
+				Type: config.TypeString,
+			}, "minion"),
+			whenValue:   "minion",
+			shouldMatch: false,
+			wantError:   false,
+		},
+		{
+			name: "No STRING match",
+			filter: NotEquals(&config.Key{
+				Name: "abc",
+				Type: config.TypeString,
+			}, "min"),
+			whenValue:   "minion",
+			shouldMatch: true,
+			wantError:   false,
+		},
+		{
+			name: "Wants exact BOOL match",
+			filter: NotEquals(&config.Key{
+				Name: "abc",
+				Type: config.TypeString,
+			}, "true"),
+			whenValue:   "true",
+			shouldMatch: false,
+			wantError:   false,
+		},
+		{
+			name: "No BOOL match",
+			filter: NotEquals(&config.Key{
+				Name: "abc",
+				Type: config.TypeBool,
+			}, "true"),
+			whenValue:   "bubbles",
+			shouldMatch: true,
+			wantError:   false,
+		},
+		{
+			name: "Wants BAD BOOL on value",
+			filter: Equals(&config.Key{
+				Name: "abc",
+				Type: config.TypeBool,
+			}, "false"),
+			whenValue:   "bananas",
+			shouldMatch: false,
+			wantError:   true,
+		},
+		{
+			name: "Wants BAD BOOL on expression",
+			filter: Equals(&config.Key{
+				Name: "abc",
+				Type: config.TypeBool,
+			}, "bananas"),
+			whenValue:   "false",
+			shouldMatch: false,
+			wantError:   true,
+		},
+		{
+			name: "Wants exact NUMBER match",
+			filter: NotEquals(&config.Key{
+				Name: "abc",
+				Type: config.TypeNumber,
+			}, "0.01"),
+			whenValue:   "0.01",
+			shouldMatch: false,
+			wantError:   false,
+		},
+		{
+			name: "No NUMBER match",
+			filter: NotEquals(&config.Key{
+				Name: "abc",
+				Type: config.TypeNumber,
+			}, "0.0109"),
+			whenValue:   "0.01",
+			shouldMatch: true,
+			wantError:   false,
+		},
+		{
+			name: "Wants BAD number on value",
+			filter: Equals(&config.Key{
+				Name: "abc",
+				Type: config.TypeNumber,
+			}, "0.0109"),
+			whenValue:   "bananas",
+			shouldMatch: false,
+			wantError:   true,
+		},
+		{
+			name: "Wants BAD number on expression",
+			filter: Equals(&config.Key{
+				Name: "abc",
+				Type: config.TypeNumber,
+			}, "bananas"),
+			whenValue:   "10",
+			shouldMatch: false,
+			wantError:   true,
+		},
+		{
+			name: "Wants exact DATE match",
+			filter: NotEquals(&config.Key{
+				Name:   "abc",
+				Type:   config.TypeDateTime,
+				Layout: "2006-01-02T15:04:05-0700",
+			}, "2006-01-02T15:04:05-0700"),
+			whenValue:   "2006-01-02T15:04:05-0700",
+			shouldMatch: false,
+			wantError:   false,
+		},
+		{
+			name: "No DATE match",
+			filter: NotEquals(&config.Key{
+				Name:   "abc",
+				Type:   config.TypeDateTime,
+				Layout: "2006-01-02T15:04:05-0700",
+			}, "2006-01-02T15:04:05-0710"),
+			whenValue:   "2006-01-02T15:04:05-0700",
+			shouldMatch: true,
+			wantError:   false,
+		},
+		{
+			name: "Wants BAD DATE value",
+			filter: Equals(&config.Key{
+				Name:   "abc",
+				Type:   config.TypeDateTime,
+				Layout: "2006-01-02T15:04:05-0700",
+			}, "2006-01-02T15:04:05-0700"),
+			whenValue:   "bananas",
+			shouldMatch: false,
+			wantError:   true,
+		},
+		{
+			name: "Wants BAD DATE expression",
+			filter: Equals(&config.Key{
+				Name:   "abc",
+				Type:   config.TypeDateTime,
+				Layout: "2006-01-02T15:04:05-0700",
+			}, "bananas"),
+			whenValue:   "2006-01-02T15:04:05-0700",
+			shouldMatch: false,
+			wantError:   true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			testFilterFunc(t, test)
+		})
+	}
+}
+
 func TestMatchRegex_Apply(t *testing.T) {
 	tests := []testFilter{
 		{

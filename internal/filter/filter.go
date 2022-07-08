@@ -69,6 +69,17 @@ func Equals(key *config.Key, expression string) *equals {
 	}
 }
 
+func NotEquals(key *config.Key, expression string) *notEquals {
+	return &notEquals{
+		equals: equals{
+			Predicate: Predicate{
+				key:        key,
+				expression: []string{expression},
+			},
+		},
+	}
+}
+
 func EqualIgnoreCase(key *config.Key, expression string) *equalsIgnoreCase {
 	return &equalsIgnoreCase{
 		Predicate: Predicate{
@@ -183,6 +194,15 @@ func (f *equals) Apply(value string) (bool, error) {
 		})
 	}
 	return false, nil
+}
+
+type notEquals struct {
+	equals
+}
+
+func (f *notEquals) Apply(value string) (bool, error) {
+	v, err := f.equals.Apply(value)
+	return !v, err
 }
 
 type contains struct {
