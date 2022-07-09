@@ -25,13 +25,14 @@ package loggo
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
-	"strings"
-
 	"github.com/aurc/loggo/internal/color"
 	"github.com/aurc/loggo/internal/search"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"golang.design/x/clipboard"
+	"sort"
+	"strings"
+	"time"
 )
 
 type JsonView struct {
@@ -50,6 +51,7 @@ type JsonView struct {
 	withSearchTag            string
 	wordWrap                 bool
 	showQuit                 bool
+	isCopyMode               bool
 	toggleFullScreenCallback func()
 	closeCallback            func()
 }
@@ -60,6 +62,7 @@ func NewJsonView(app Loggo, showQuit bool,
 		Flex:                     *tview.NewFlex(),
 		app:                      app,
 		indent:                   "  ",
+		isCopyMode:               true,
 		showQuit:                 showQuit,
 		toggleFullScreenCallback: toggleFullScreenCallback,
 		closeCallback:            closeCallback,
@@ -67,6 +70,16 @@ func NewJsonView(app Loggo, showQuit bool,
 	v.makeUIComponents()
 	v.makeLayouts(false)
 	v.makeContextMenu()
+
+	go func() {
+		time.Sleep(time.Second)
+		err := clipboard.Init()
+		if err != nil {
+			v.isCopyMode = false
+			v.app.ShowPopMessage(fmt.Sprintf(`Clipboard copy disabled in your system: [red]%s`, err.Error()), 3)
+		}
+	}()
+
 	return v
 }
 
@@ -83,6 +96,7 @@ func (j *JsonView) makeUIComponents() {
 		SetRegions(true).
 		SetDynamicColors(true).
 		SetWrap(j.wordWrap)
+
 	j.textView.
 		SetBackgroundColor(color.ColorBackgroundField).
 		SetBorderPadding(0, 0, 1, 1).
@@ -109,6 +123,8 @@ func (j *JsonView) makeUIComponents() {
 				}
 			}
 			switch event.Rune() {
+			case '`':
+				j.copyToClipboard()
 			case 'f', 'F':
 				if j.toggleFullScreenCallback != nil {
 					j.toggleFullScreenCallback()
@@ -207,6 +223,8 @@ func (j *JsonView) makeLayouts(search bool) {
 
 func (j *JsonView) makeContextMenu() {
 	j.contextMenu.Clear().ShowSecondaryText(false).SetBorderPadding(0, 0, 1, 1)
+	j.contextMenu.
+		ShowSecondaryText(false)
 	if j.isSearching {
 		j.contextMenu.
 			AddItem("Next Result", "", 'n', func() {
@@ -219,14 +237,17 @@ func (j *JsonView) makeContextMenu() {
 				j.clearSearch()
 			})
 	}
-	j.contextMenu.
-		ShowSecondaryText(false)
+
 	if j.toggleFullScreenCallback != nil {
 		j.contextMenu.AddItem("Toggle Full Screen", "", 'f', func() {
 			j.toggleFullScreenCallback()
 		})
 	}
+
 	j.contextMenu.
+		AddItem("Copy to Clipboard", "", '`', func() {
+			j.copyToClipboard()
+		}).
 		AddItem("Search Word", "", 's', func() {
 			j.prepareCaseInsensitiveSearch()
 		}).
@@ -243,6 +264,7 @@ func (j *JsonView) makeContextMenu() {
 			j.wordWrap = !j.wordWrap
 			j.textView.SetWrap(j.wordWrap)
 		})
+
 	if j.closeCallback != nil {
 		j.contextMenu.AddItem("Close", "", 'x', func() {
 			j.closeCallback()
@@ -253,6 +275,20 @@ func (j *JsonView) makeContextMenu() {
 			j.app.Stop()
 		})
 	}
+}
+
+func (j *JsonView) copyToClipboard() {
+	size := ""
+	l := float64(len(j.jText))
+	if l > 1000000 {
+		size = fmt.Sprintf(`[yellow::bu]%.2fMB[-::-]`, l/1000000.0)
+	} else if l > 1000 {
+		size = fmt.Sprintf(`[yellow::bu]%.2f KB[-::-]`, l/1000.0)
+	} else {
+		size = fmt.Sprintf(`[yellow::bu]%.0f bytes[-::-]`, l)
+	}
+	j.app.ShowPopMessage(fmt.Sprintf(`Copied %s to clipboard`, size), 3)
+	clipboard.Write(clipboard.FmtText, j.jText)
 }
 
 func (j *JsonView) prepareCaseInsensitiveSearch() {
@@ -283,6 +319,7 @@ func (j *JsonView) prepareRegexSearch() {
 
 func (j *JsonView) search(word string) []int {
 	j.isSearching = true
+	j.isCopyMode = false
 	j.makeContextMenu()
 	j.searchStrategy.Clear()
 	j.withSearchTag = word
@@ -317,6 +354,7 @@ func (j *JsonView) clearSearch() {
 	j.app.SetFocus(j.textView)
 	j.searchInput.SetText("")
 	j.isSearching = false
+	j.isCopyMode = true
 	j.withSearchTag = ""
 	j.setJson()
 	j.makeLayouts(false)
