@@ -24,10 +24,10 @@ package loggo
 
 import (
 	"fmt"
-
 	"github.com/aurc/loggo/internal/config"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"time"
 )
 
 type appScaffold struct {
@@ -91,6 +91,31 @@ func (a *appScaffold) StackView(p tview.Primitive) {
 func (a *appScaffold) PopView() {
 	a.pages.RemovePage(fmt.Sprintf(`_%d`, len(a.stackPages)))
 	a.stackPages = a.stackPages[:len(a.stackPages)-1]
+}
+
+func (a *appScaffold) ShowPopMessage(text string, waitSecs int64) {
+	modal := tview.NewFlex().SetDirection(tview.FlexRow)
+	modal.SetBackgroundColor(tcell.ColorDarkBlue)
+	countdownText := tview.NewTextView().SetTextAlign(tview.AlignRight)
+	mainContent := tview.NewTextView().
+		SetTextAlign(tview.AlignCenter).
+		SetWordWrap(true).
+		SetDynamicColors(true).
+		SetText(text)
+	mainContent.SetBackgroundColor(tcell.ColorDarkBlue).SetBorderPadding(0, 0, 2, 2)
+	modal.AddItem(mainContent, 0, 1, false)
+	modal.AddItem(countdownText, 1, 1, false)
+	a.ShowModal(modal, len(text)/2, 5, tcell.ColorDarkBlue)
+	countdownText.SetTextColor(tcell.ColorLightGrey).SetBackgroundColor(tcell.ColorDarkBlue)
+	go func() {
+		for i := waitSecs; i >= 0; i-- {
+			countdownText.SetText(fmt.Sprintf(`(%ds)`, i))
+			a.Draw()
+			time.Sleep(time.Second)
+		}
+		a.DismissModal()
+		a.Draw()
+	}()
 }
 
 func (a *appScaffold) ShowPrefabModal(text string, width, height int, buttons ...*tview.Button) {
