@@ -125,11 +125,15 @@ Note that you can pipe to anything that produces an output to the `stdin`.
 **Some Additional Features:**
 - Drill down onto each log entry
 ![](img/log_entry.png)
+- Copy Log-Entry to Clipboard
+  - Note: Linux requires X11 dev package. For instance, install `libx11-dev` or `xorg-dev` or `libX11-devel` to access X window system.
+  ![](img/copy_clipboard.png)
 - Configure Rendering Templates:
 ![](img/render_template.png)
 - Fine Tune how columns are displayed (Template):
-![](img/how_to_display.png)
-    Note that single Value Matches are REGEX expressions.
+    - Note that single Value Matches are REGEX expressions.
+  ![](img/how_to_display.png)
+
 
 ### `template` Command
 The template command opens up the template editor without the
@@ -155,7 +159,6 @@ Most of the items listed here are slated for development in the near future,
 prior the first release.
 - Search log entry.
 - Filter log by json key(s).
-- Copy single log entry to clipboard.
 - Browse/Load new log templates on the fly.
 - Create template with keys whose name contains `/` as it uses slashes to navigate to nested json branches.
 
