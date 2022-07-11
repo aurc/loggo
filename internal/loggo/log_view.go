@@ -83,11 +83,6 @@ func NewLogReader(app *LoggoApp, input <-chan string) *LogView {
 
 func (l *LogView) read() {
 	go func() {
-		var sampling []map[string]interface{}
-		samplingCount := 0
-		if len(l.config.LastSavedName) == 0 {
-			samplingCount = 50
-		}
 		lastUpdate := time.Now().Add(-time.Minute)
 		for {
 			t := <-l.input
@@ -99,15 +94,10 @@ func (l *LogView) read() {
 					m[config.ParseErr] = err.Error()
 					m[config.TextPayload] = t
 				}
-				if l.globalCount <= int64(samplingCount) {
-					sampling = append(sampling, m)
-					l.processSampleForConfig(sampling)
-				}
-				// TODO: Review at some stage if sampling gets to accumulate
-				//} else if len(sampling) <= samplingCount {
-				// l.processSampleForConfig(sampling)
-				//}
 				l.inSlice = append(l.inSlice, m)
+				if len(l.config.LastSavedName) == 0 {
+					l.processSampleForConfig(l.inSlice)
+				}
 				l.updateLineView()
 				now := time.Now()
 				if now.Sub(lastUpdate)*time.Millisecond > 500 && l.isFollowing {
@@ -240,6 +230,9 @@ func (l *LogView) makeUIComponents() {
 		AddItem(tview.NewTextView().
 			SetDynamicColors(true).
 			SetText("[yellow::b](↓ ↑ ← →)[-::-] Navigate"), 0, 3, false).
+		AddItem(tview.NewTextView().
+			SetDynamicColors(true).
+			SetText("[yellow::b](Alt-Click)[-::-] Text Selection"), 0, 3, false).
 		AddItem(l.textViewMenuControl(tview.NewTextView().
 			SetDynamicColors(true).SetRegions(true).
 			SetText(`[yellow::b](g) [-::u]["1"]Top[""]`), func() {
