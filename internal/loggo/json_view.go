@@ -368,7 +368,9 @@ func (j *JsonView) setJson() *JsonView {
 				sb.WriteString(" ")
 			}
 		}
-		j.textView.SetText(sb.String())
+		j.wordWrap = true
+		j.textView.SetWrap(j.wordWrap)
+		j.textView.SetText(sb.String()).SetTextColor(tcell.ColorRed)
 	} else {
 		text := &strings.Builder{}
 		text.WriteString("{" + j.newLine())

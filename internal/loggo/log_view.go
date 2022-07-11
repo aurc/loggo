@@ -168,7 +168,12 @@ func (l *LogView) makeUIComponents() {
 					l.makeLayoutsWithJsonView()
 				}, l.makeLayouts)
 			l.jsonView.SetBorder(true).SetTitle("Log Entry")
-			b, _ := json.Marshal(l.inSlice[row-1])
+			var b []byte
+			if _, ok := l.inSlice[row-1][config.ParseErr]; ok {
+				b = []byte(fmt.Sprintf(`%v`, l.inSlice[row-1][config.TextPayload]))
+			} else {
+				b, _ = json.Marshal(l.inSlice[row-1])
+			}
 			l.jsonView.SetJson(b)
 			l.makeLayoutsWithJsonView()
 		} else {
@@ -428,6 +433,12 @@ func (d *LogData) GetCell(row, column int) *tview.TableCell {
 	}
 	if k.MaxWidth > 0 {
 		tc.MaxWidth = k.MaxWidth
+	}
+
+	if k.Name == config.TextPayload {
+		if _, ok := d.logView.inSlice[row-1][config.ParseErr]; ok {
+			fgColor = tcell.ColorBlue
+		}
 	}
 
 	return tc.

@@ -34,7 +34,7 @@ import (
 
 const (
 	ParseErr    = "$_parseErr"
-	TextPayload = "Raw Log Entry"
+	TextPayload = "message"
 )
 
 type Config struct {
