@@ -115,6 +115,10 @@ loggo stream --file <my file> --template <my template yaml>
 ````
 tail -f <my file> | loggo stream
 ````
+Kubernetes example:
+````
+kubectl logs -f -n <namespace> <pod> | loggo stream
+````
 *With Template:*
 ````
 tail -f <my file> | loggo stream --template <my template yaml>
