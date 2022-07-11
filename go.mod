@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/nxadm/tail v1.4.8
 	github.com/rivo/tview v0.0.0-20220307222120-9994674d60a8
-	github.com/spf13/cobra v1.4.0
+	github.com/spf13/cobra v1.5.0
 	github.com/stretchr/testify v1.7.1
 	gopkg.in/yaml.v3 v3.0.1
 )
