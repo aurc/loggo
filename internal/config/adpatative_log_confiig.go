@@ -28,66 +28,26 @@ import (
 )
 
 func MakeConfigFromSample(sample []map[string]interface{}) *Config {
-	const cTimestamp = "timestamp"
-	const cSeverity = "severity"
 	keyMap := make(map[string]*Key)
 	for _, m := range sample {
 		for k, v := range m {
 			if _, ok := keyMap[k]; ok {
 				continue
 			}
-			if strings.Index(k, "/") != -1 || k == ParseErr || k == TextPayload {
+			if strings.Index(k, "/") != -1 || k == ParseErr {
 				continue
 			}
-			if k == cTimestamp {
-				keyMap[k] = &Key{
-					Name: k,
-					Type: TypeDateTime,
-					Color: Color{
-						Foreground: "purple",
-						Background: "black",
-					},
-				}
+			if timestamp.Contains(k) {
+				keyMap[k] = timestamp.keyConfig(k)
 				continue
-			} else if k == cSeverity {
-				keyMap[k] = &Key{
-					Name: k,
-					Type: TypeString,
-					Color: Color{
-						Foreground: "white",
-						Background: "black",
-					},
-					ColorWhen: []ColorWhen{
-						{
-							MatchValue: "(?i)error",
-							Color: Color{
-								Foreground: "red",
-								Background: "black",
-							},
-						},
-						{
-							MatchValue: "(?i)info",
-							Color: Color{
-								Foreground: "green",
-								Background: "black",
-							},
-						},
-						{
-							MatchValue: "(?i)warn",
-							Color: Color{
-								Foreground: "orange",
-								Background: "black",
-							},
-						},
-						{
-							MatchValue: "(?i)debug",
-							Color: Color{
-								Foreground: "blue",
-								Background: "black",
-							},
-						},
-					},
-				}
+			} else if logType.Contains(k) {
+				keyMap[k] = logType.keyConfig(k)
+				continue
+			} else if message.Contains(k) {
+				keyMap[k] = message.keyConfig(k)
+				continue
+			} else if errorKey.Contains(k) {
+				keyMap[k] = errorKey.keyConfig(k)
 				continue
 			}
 			if _, ok := v.(map[string]interface{}); ok {
@@ -108,15 +68,20 @@ func MakeConfigFromSample(sample []map[string]interface{}) *Config {
 	c := &Config{
 		Keys: []Key{},
 	}
-	if v, ok := keyMap[cTimestamp]; ok {
-		c.Keys = append(c.Keys, *v)
+	var orderedKeys []string
+	orderedKeys = append(orderedKeys, timestamp.Keys()...)
+	orderedKeys = append(orderedKeys, logType.Keys()...)
+	orderedKeys = append(orderedKeys, message.Keys()...)
+	orderedKeys = append(orderedKeys, errorKey.Keys()...)
+	for _, v := range orderedKeys {
+		if v, ok := keyMap[v]; ok {
+			c.Keys = append(c.Keys, *v)
+		}
 	}
-	if v, ok := keyMap[cSeverity]; ok {
-		c.Keys = append(c.Keys, *v)
-	}
+
 	var sk []string
 	for k := range keyMap {
-		if k != cTimestamp && k != cSeverity {
+		if !timestamp.Contains(k) && !message.Contains(k) && !logType.Contains(k) && !errorKey.Contains(k) {
 			sk = append(sk, k)
 		}
 	}
@@ -127,3 +92,110 @@ func MakeConfigFromSample(sample []map[string]interface{}) *Config {
 
 	return c
 }
+
+type preBakedRule struct {
+	keyMatchesAny map[string]bool
+	keyConfig     func(keyName string) *Key
+}
+
+func (p preBakedRule) Contains(key string) bool {
+	if _, ok := p.keyMatchesAny[key]; ok {
+		return ok
+	}
+	return false
+}
+
+func (p preBakedRule) Keys() []string {
+	var arr []string
+	for k := range p.keyMatchesAny {
+		arr = append(arr, k)
+	}
+	return arr
+}
+
+var (
+	timestamp = preBakedRule{
+		keyMatchesAny: map[string]bool{"timestamp": true, "time": true},
+		keyConfig: func(keyName string) *Key {
+			return &Key{
+				Name: keyName,
+				Type: TypeDateTime,
+				Color: Color{
+					Foreground: "purple",
+					Background: "black",
+				},
+			}
+		},
+	}
+	logType = preBakedRule{
+		keyMatchesAny: map[string]bool{"level": true, "severity": true},
+		keyConfig: func(keyName string) *Key {
+			return &Key{
+				Name: keyName,
+				Type: TypeString,
+				Color: Color{
+					Foreground: "white",
+					Background: "black",
+				},
+				ColorWhen: []ColorWhen{
+					{
+						MatchValue: "(?i)error",
+						Color: Color{
+							Foreground: "red",
+							Background: "black",
+						},
+					},
+					{
+						MatchValue: "(?i)info",
+						Color: Color{
+							Foreground: "green",
+							Background: "black",
+						},
+					},
+					{
+						MatchValue: "(?i)warn",
+						Color: Color{
+							Foreground: "orange",
+							Background: "black",
+						},
+					},
+					{
+						MatchValue: "(?i)debug",
+						Color: Color{
+							Foreground: "blue",
+							Background: "black",
+						},
+					},
+				},
+			}
+		},
+	}
+	message = preBakedRule{
+		keyMatchesAny: map[string]bool{"message": true},
+		keyConfig: func(keyName string) *Key {
+			return &Key{
+				Name:     keyName,
+				Type:     TypeString,
+				MaxWidth: 50,
+				Color: Color{
+					Foreground: "yellow",
+					Background: "black",
+				},
+			}
+		},
+	}
+	errorKey = preBakedRule{
+		keyMatchesAny: map[string]bool{"error": true},
+		keyConfig: func(keyName string) *Key {
+			return &Key{
+				Name:     keyName,
+				Type:     TypeString,
+				MaxWidth: 30,
+				Color: Color{
+					Foreground: "red",
+					Background: "black",
+				},
+			}
+		},
+	}
+)
