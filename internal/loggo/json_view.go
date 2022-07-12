@@ -25,14 +25,14 @@ package loggo
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
+	"strings"
+
+	"github.com/atotto/clipboard"
 	"github.com/aurc/loggo/internal/color"
 	"github.com/aurc/loggo/internal/search"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"golang.design/x/clipboard"
-	"sort"
-	"strings"
-	"time"
 )
 
 type JsonView struct {
@@ -70,15 +70,6 @@ func NewJsonView(app Loggo, showQuit bool,
 	v.makeUIComponents()
 	v.makeLayouts(false)
 	v.makeContextMenu()
-
-	go func() {
-		time.Sleep(time.Second)
-		err := clipboard.Init()
-		if err != nil {
-			v.isCopyMode = false
-			v.app.ShowPopMessage(fmt.Sprintf(`Clipboard copy disabled in your system: [red]%s`, err.Error()), 3)
-		}
-	}()
 
 	return v
 }
@@ -288,7 +279,7 @@ func (j *JsonView) copyToClipboard() {
 		size = fmt.Sprintf(`[yellow::bu]%.0f bytes[-::-]`, l)
 	}
 	j.app.ShowPopMessage(fmt.Sprintf(`Copied %s to clipboard`, size), 3)
-	clipboard.Write(clipboard.FmtText, j.jText)
+	clipboard.WriteAll(string(j.jText))
 }
 
 func (j *JsonView) prepareCaseInsensitiveSearch() {
@@ -377,7 +368,9 @@ func (j *JsonView) setJson() *JsonView {
 				sb.WriteString(" ")
 			}
 		}
-		j.textView.SetText(sb.String())
+		j.wordWrap = true
+		j.textView.SetWrap(j.wordWrap)
+		j.textView.SetText(sb.String()).SetTextColor(tcell.ColorRed)
 	} else {
 		text := &strings.Builder{}
 		text.WriteString("{" + j.newLine())

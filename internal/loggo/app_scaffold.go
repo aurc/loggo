@@ -24,10 +24,11 @@ package loggo
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/aurc/loggo/internal/config"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"time"
 )
 
 type appScaffold struct {

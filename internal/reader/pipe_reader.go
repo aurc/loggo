@@ -26,6 +26,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"time"
 )
 
 type readPipeStream struct {
@@ -49,7 +50,7 @@ func (s *readPipeStream) StreamInto(strChan chan<- string) error {
 		for !s.stop {
 			str, err := reader.ReadString('\n')
 			if err != nil {
-				panic(err)
+				time.Sleep(time.Second)
 			}
 			strChan <- str
 		}

@@ -24,11 +24,12 @@ package loggo
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/aurc/loggo/internal/char"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"strings"
-	"time"
 )
 
 type SplashScreen struct {

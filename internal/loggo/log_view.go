@@ -83,11 +83,6 @@ func NewLogReader(app *LoggoApp, input <-chan string) *LogView {
 
 func (l *LogView) read() {
 	go func() {
-		var sampling []map[string]interface{}
-		samplingCount := 0
-		if len(l.config.LastSavedName) == 0 {
-			samplingCount = 50
-		}
 		lastUpdate := time.Now().Add(-time.Minute)
 		for {
 			t := <-l.input
@@ -99,15 +94,10 @@ func (l *LogView) read() {
 					m[config.ParseErr] = err.Error()
 					m[config.TextPayload] = t
 				}
-				if l.globalCount <= int64(samplingCount) {
-					sampling = append(sampling, m)
-					l.processSampleForConfig(sampling)
-				}
-				// TODO: Review at some stage if sampling gets to accumulate
-				//} else if len(sampling) <= samplingCount {
-				// l.processSampleForConfig(sampling)
-				//}
 				l.inSlice = append(l.inSlice, m)
+				if len(l.config.LastSavedName) == 0 {
+					l.processSampleForConfig(l.inSlice)
+				}
 				l.updateLineView()
 				now := time.Now()
 				if now.Sub(lastUpdate)*time.Millisecond > 500 && l.isFollowing {
@@ -168,7 +158,12 @@ func (l *LogView) makeUIComponents() {
 					l.makeLayoutsWithJsonView()
 				}, l.makeLayouts)
 			l.jsonView.SetBorder(true).SetTitle("Log Entry")
-			b, _ := json.Marshal(l.inSlice[row-1])
+			var b []byte
+			if _, ok := l.inSlice[row-1][config.ParseErr]; ok {
+				b = []byte(fmt.Sprintf(`%v`, l.inSlice[row-1][config.TextPayload]))
+			} else {
+				b, _ = json.Marshal(l.inSlice[row-1])
+			}
 			l.jsonView.SetJson(b)
 			l.makeLayoutsWithJsonView()
 		} else {
@@ -235,6 +230,9 @@ func (l *LogView) makeUIComponents() {
 		AddItem(tview.NewTextView().
 			SetDynamicColors(true).
 			SetText("[yellow::b](↓ ↑ ← →)[-::-] Navigate"), 0, 3, false).
+		AddItem(tview.NewTextView().
+			SetDynamicColors(true).
+			SetText("[yellow::b](Alt-Click)[-::-] Text Selection"), 0, 3, false).
 		AddItem(l.textViewMenuControl(tview.NewTextView().
 			SetDynamicColors(true).SetRegions(true).
 			SetText(`[yellow::b](g) [-::u]["1"]Top[""]`), func() {
@@ -428,6 +426,12 @@ func (d *LogData) GetCell(row, column int) *tview.TableCell {
 	}
 	if k.MaxWidth > 0 {
 		tc.MaxWidth = k.MaxWidth
+	}
+
+	if k.Name == config.TextPayload {
+		if _, ok := d.logView.inSlice[row-1][config.ParseErr]; ok {
+			fgColor = tcell.ColorBlue
+		}
 	}
 
 	return tc.

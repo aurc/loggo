@@ -115,6 +115,10 @@ loggo stream --file <my file> --template <my template yaml>
 ````
 tail -f <my file> | loggo stream
 ````
+Kubernetes example:
+````
+kubectl logs -f -n <namespace> <pod> | loggo stream
+````
 *With Template:*
 ````
 tail -f <my file> | loggo stream --template <my template yaml>
@@ -128,12 +132,20 @@ Note that you can pipe to anything that produces an output to the `stdin`.
 - Copy Log-Entry to Clipboard
   - Note: Linux requires X11 dev package. For instance, install `libx11-dev` or `xorg-dev` or `libX11-devel` to access X window system.
   ![](img/copy_clipboard.png)
+- Navigate Left-Right-Up-Down on Large Grids
+  - Select a Line
+  - Use the arrow keys (`↓ ↑ ← →`)
+    ![](mov/nav_right_left.gif)
+- Select on screen text
+  - Horizontally based selection (`Alt` + Mouse `Click/Drag`)
+  - Block/Vertical based selection (`Cmd`+`Opt`+ Mouse `Click/Drag` - macOS)
+  - Copy the selected text to clipboard (`Cmd`+`C` - macOS/`Ctrl`+`C` - other systems)
+    ![](mov/selection.gif) 
 - Configure Rendering Templates:
 ![](img/render_template.png)
 - Fine Tune how columns are displayed (Template):
     - Note that single Value Matches are REGEX expressions.
   ![](img/how_to_display.png)
-
 
 ### `template` Command
 The template command opens up the template editor without the
