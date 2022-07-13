@@ -14,6 +14,7 @@ require (
 )
 
 require (
+	github.com/alecthomas/participle/v2 v2.0.0-beta.4 // indirect
 	github.com/davecgh/go-spew v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/gdamore/encoding v1.0.0 // indirect
