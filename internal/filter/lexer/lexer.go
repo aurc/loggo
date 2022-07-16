@@ -1,63 +1,86 @@
 package lexer
 
 import (
+	"strings"
+
 	"github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer"
 )
 
-type Expression struct {
-	Or []*OrCondition `@@ ( "OR" @@ )*`
-}
+type LogicalOperator int
 
-type OrCondition struct {
-	And []*Condition `@@ ( "AND" @@ )*`
-}
-
-type Condition struct {
-	Operand  string `@Ident`
-	Operator string `@( "<>" | "<=" | ">=" | "=" | "<" | ">" | "!=" )`
-	Value    *Value `@@`
-}
-
-type Value struct {
-	//Wildcard bool     `(  @"*"`
-	Number *float64 `( @Number`
-	String *string  ` | @String )`
-	//Boolean  *Boolean ` | @("TRUE" | "FALSE")`
-	//Null     bool     ` | @"NULL"`
-	//Array    *Array   ` | @@ )`
-}
-
-type Boolean bool
-
-func (b *Boolean) Capture(values []string) error {
-	*b = values[0] == "TRUE"
-	return nil
-}
-
-type Array struct {
-	Expressions []*Expression `"(" @@ ( "," @@ )* ")"`
-}
+const (
+	OpAND LogicalOperator = iota
+	OpOR
+)
 
 var (
-	cli struct {
-		SQL string `arg:"" required:"" help:"SQL to parse."`
-	}
-
 	sqlLexer = lexer.MustSimple([]lexer.SimpleRule{
-		{`Keyword`, `(?i)\b(TRUE|FALSE|NOT|BETWEEN|AND|OR|IN)\b`},
-		{`Ident`, `[a-zA-Z_][a-zA-Z0-9_]*`},
+		{`Keyword`, `(?i)\b(MATCH|CONTAINS_I|CONTAINS|BETWEEN|AND|OR|IN)\b`},
+		{`Ident`, `[a-zA-Z_][a-zA-Z0-9_./]*`},
 		{`Number`, `[-+]?\d*\.?\d+([eE][-+]?\d+)?`},
 		{`String`, `'[^']*'|"[^"]*"`},
-		{`Operators`, `<>|!=|<=|>=|[-+*/%,.()=<>]`},
+		{`Operators`, `<>|!=|<=|>=|[()=<>]`},
 		{"whitespace", `\s+`},
 	})
+
 	parser = participle.MustBuild[Expression](
 		participle.Lexer(sqlLexer),
 		participle.Unquote("String"),
 		participle.CaseInsensitive("Keyword"),
-		// participle.Elide("Comment"),
-		// Need to solve left recursion detection first, if possible.
-		// participle.UseLookahead(),
 	)
 )
+
+var operatorMap = map[string]LogicalOperator{"AND": OpAND, "OR": OpOR}
+
+func (o *LogicalOperator) Capture(s []string) error {
+	*o = operatorMap[strings.ToUpper(s[0])]
+	return nil
+}
+
+type ConditionElement struct {
+	Condition     *Condition  ` @@`
+	Subexpression *Expression `| "(" @@ ")"`
+}
+
+type Condition struct {
+	Operand  string `@Ident`
+	Operator string `@( "<>" | "<=" | ">=" | "=" | "<" | ">" | "!=" | "BETWEEN" | "CONTAINS" | "CONTAINS_I" | "MATCH" )`
+	Value    *Value `@@`
+	Value2   *Value `( "AND" @@ )*`
+}
+
+type Value struct {
+	Number *float64 `( @Number`
+	String *string  ` | @String )`
+}
+
+type OpValue struct {
+	Operator         LogicalOperator   `@("AND")`
+	ConditionElement *ConditionElement `@@`
+}
+
+type Term struct {
+	Left  *ConditionElement `@@`
+	Right []*OpValue        `@@*`
+}
+
+type OpTerm struct {
+	Operator LogicalOperator `@("OR")`
+	Term     *Term           `@@`
+}
+
+type Expression struct {
+	Left  *Term     `@@`
+	Right []*OpTerm `@@*`
+}
+
+func (o LogicalOperator) String() string {
+	switch o {
+	case OpAND:
+		return "AND"
+	case OpOR:
+		return "OR"
+	}
+	panic("unsupported operator")
+}
