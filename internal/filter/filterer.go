@@ -22,6 +22,8 @@ THE SOFTWARE.
 
 package filter
 
+import "github.com/aurc/loggo/internal/config"
+
 type Operator string
 
 const (
@@ -30,53 +32,61 @@ const (
 )
 
 type filterGroup struct {
-	filters  []Filter `json:"filters" yaml:"filters"`
-	groups   []Group  `json:"groups" yaml:"groups"`
-	operator Operator `json:"Operator" yaml:"Operator"`
+	Filters  []Filter `json:"filters,omitempty" yaml:"filters"`
+	Groups   []Group  `json:"groups,omitempty" yaml:"groups"`
+	Operator Operator `json:"Operator,omitempty" yaml:"Operator"`
 }
 
 type Group interface {
-	Filters() []Filter
-	Groups() []Group
-	Operator() Operator
-	Resolve(row map[string]interface{}) (bool, error)
+	//Filters() []Filter
+	//Groups() []Group
+	//Operator() Operator
+	Resolve(row map[string]interface{}, keys map[string]*config.Key) (bool, error)
 }
 
-func (f *filterGroup) Filters() []Filter {
-	return f.filters
-}
+//func (f *filterGroup) Filters() []Filter {
+//	return f.filters
+//}
+//
+//func (f *filterGroup) Groups() []Group {
+//	return f.groups
+//}
+//
+//func (f *filterGroup) Operator() Operator {
+//	return f.operator
+//}
 
-func (f *filterGroup) Groups() []Group {
-	return f.groups
-}
-
-func (f *filterGroup) Operator() Operator {
-	return f.operator
-}
-
-func (f *filterGroup) Resolve(row map[string]interface{}) (bool, error) {
-	initVal := f.operator == AND
-	if len(f.groups) > 0 {
-		for _, fg := range f.groups {
-			val, err := fg.Resolve(row)
+func (f *filterGroup) Resolve(row map[string]interface{}, keys map[string]*config.Key) (bool, error) {
+	initVal := f.Operator == AND
+	if len(f.Groups) > 0 {
+		for _, fg := range f.Groups {
+			val, err := fg.Resolve(row, keys)
 			if err != nil {
 				return false, err
 			}
-			switch f.operator {
+			switch f.Operator {
 			case AND:
 				initVal = initVal && val
 			case OR:
 				initVal = initVal || val
 			}
 		}
-	} else if len(f.filters) > 0 {
-		for _, fi := range f.filters {
-			k := fi.Key()
-			val, err := fi.Apply(k.ExtractValue(row))
+	} else if len(f.Filters) > 0 {
+		for _, fi := range f.Filters {
+			var k *config.Key
+			if v, ok := keys[fi.Name()]; ok {
+				k = v
+			} else {
+				k = &config.Key{
+					Name: fi.Name(),
+					Type: config.TypeString,
+				}
+			}
+			val, err := fi.Apply(k.ExtractValue(row), keys)
 			if err != nil {
 				return false, err
 			}
-			switch f.operator {
+			switch f.Operator {
 			case AND:
 				initVal = initVal && val
 			case OR:
@@ -89,28 +99,28 @@ func (f *filterGroup) Resolve(row map[string]interface{}) (bool, error) {
 
 func And(group ...Group) *filterGroup {
 	return &filterGroup{
-		groups:   group,
-		operator: AND,
+		Groups:   group,
+		Operator: AND,
 	}
 }
 
 func Or(group ...Group) *filterGroup {
 	return &filterGroup{
-		groups:   group,
-		operator: OR,
+		Groups:   group,
+		Operator: OR,
 	}
 }
 
 func AndFilters(filter ...Filter) *filterGroup {
 	return &filterGroup{
-		filters:  filter,
-		operator: AND,
+		Filters:  filter,
+		Operator: AND,
 	}
 }
 
 func OrFilters(filter ...Filter) *filterGroup {
 	return &filterGroup{
-		filters:  filter,
-		operator: OR,
+		Filters:  filter,
+		Operator: OR,
 	}
 }

@@ -36,6 +36,7 @@ func TestFilterGroup_Resolve(t *testing.T) {
 		name        string
 		whenJsonRow string
 		givenFilter Group
+		keySet      map[string]*config.Key
 		wantsResult bool
 		wantsError  bool
 	}{
@@ -48,25 +49,23 @@ func TestFilterGroup_Resolve(t *testing.T) {
 						},
 						"c": "2"
 					}`,
+			keySet: map[string]*config.Key{
+				"a/b": {
+					Name: "a/b",
+					Type: config.TypeString,
+				},
+				"c": {
+					Name: "c",
+					Type: config.TypeNumber,
+				},
+			},
 			givenFilter: And(
 				OrFilters(
-					Equals(&config.Key{
-						Name: "a/b",
-						Type: config.TypeString,
-					}, "x"),
-					Equals(&config.Key{
-						Name: "a/b",
-						Type: config.TypeString,
-					}, "y")),
+					Equals("a/b", "x"),
+					Equals("a/b", "y")),
 				OrFilters(
-					Between(&config.Key{
-						Name: "c",
-						Type: config.TypeNumber,
-					}, "1", "3"),
-					GreaterThan(&config.Key{
-						Name: "c",
-						Type: config.TypeNumber,
-					}, "5"))),
+					Between("c", "1", "3"),
+					GreaterThan("c", "5"))),
 			wantsResult: true,
 		},
 		{
@@ -78,25 +77,23 @@ func TestFilterGroup_Resolve(t *testing.T) {
 						},
 						"c": "7"
 					}`,
+			keySet: map[string]*config.Key{
+				"a/b": {
+					Name: "a/b",
+					Type: config.TypeString,
+				},
+				"c": {
+					Name: "c",
+					Type: config.TypeNumber,
+				},
+			},
 			givenFilter: And(
 				OrFilters(
-					Equals(&config.Key{
-						Name: "a/b",
-						Type: config.TypeString,
-					}, "x"),
-					Equals(&config.Key{
-						Name: "a/b",
-						Type: config.TypeString,
-					}, "y")),
+					Equals("a/b", "x"),
+					Equals("a/b", "y")),
 				OrFilters(
-					Between(&config.Key{
-						Name: "c",
-						Type: config.TypeNumber,
-					}, "1", "3"),
-					GreaterThan(&config.Key{
-						Name: "c",
-						Type: config.TypeNumber,
-					}, "5"))),
+					Between("c", "1", "3"),
+					GreaterThan("c", "5"))),
 			wantsResult: true,
 		},
 		{
@@ -108,25 +105,23 @@ func TestFilterGroup_Resolve(t *testing.T) {
 						},
 						"c": "7"
 					}`,
+			keySet: map[string]*config.Key{
+				"a/b": {
+					Name: "a/b",
+					Type: config.TypeString,
+				},
+				"c": {
+					Name: "c",
+					Type: config.TypeNumber,
+				},
+			},
 			givenFilter: And(
 				OrFilters(
-					Equals(&config.Key{
-						Name: "a/b",
-						Type: config.TypeString,
-					}, "x"),
-					Equals(&config.Key{
-						Name: "a/b",
-						Type: config.TypeString,
-					}, "y")),
+					Equals("a/b", "x"),
+					Equals("a/b", "y")),
 				OrFilters(
-					Between(&config.Key{
-						Name: "c",
-						Type: config.TypeNumber,
-					}, "1", "3"),
-					GreaterThan(&config.Key{
-						Name: "c",
-						Type: config.TypeNumber,
-					}, "5"))),
+					Between("c", "1", "3"),
+					GreaterThan("c", "5"))),
 			wantsResult: false,
 		},
 		{
@@ -138,25 +133,23 @@ func TestFilterGroup_Resolve(t *testing.T) {
 						},
 						"c": "3"
 					}`,
+			keySet: map[string]*config.Key{
+				"a/b": {
+					Name: "a/b",
+					Type: config.TypeString,
+				},
+				"c": {
+					Name: "c",
+					Type: config.TypeNumber,
+				},
+			},
 			givenFilter: And(
 				OrFilters(
-					Equals(&config.Key{
-						Name: "a/b",
-						Type: config.TypeString,
-					}, "x"),
-					Equals(&config.Key{
-						Name: "a/b",
-						Type: config.TypeString,
-					}, "y")),
+					Equals("a/b", "x"),
+					Equals("a/b", "y")),
 				OrFilters(
-					Between(&config.Key{
-						Name: "c",
-						Type: config.TypeNumber,
-					}, "1", "3"),
-					GreaterThan(&config.Key{
-						Name: "c",
-						Type: config.TypeNumber,
-					}, "5"))),
+					Between("c", "1", "3"),
+					GreaterThan("c", "5"))),
 			wantsResult: false,
 		},
 		{
@@ -168,25 +161,23 @@ func TestFilterGroup_Resolve(t *testing.T) {
 						},
 						"c": "3"
 					}`,
+			keySet: map[string]*config.Key{
+				"a/b": {
+					Name: "a/b",
+					Type: config.TypeString,
+				},
+				"c": {
+					Name: "c",
+					Type: config.TypeNumber,
+				},
+			},
 			givenFilter: Or(
 				OrFilters(
-					Equals(&config.Key{
-						Name: "a/b",
-						Type: config.TypeString,
-					}, "x"),
-					Equals(&config.Key{
-						Name: "a/b",
-						Type: config.TypeString,
-					}, "y")),
+					Equals("a/b", "x"),
+					Equals("a/b", "y")),
 				OrFilters(
-					Between(&config.Key{
-						Name: "c",
-						Type: config.TypeNumber,
-					}, "1", "3"),
-					GreaterThan(&config.Key{
-						Name: "c",
-						Type: config.TypeNumber,
-					}, "5"))),
+					Between("c", "1", "3"),
+					GreaterThan("c", "5"))),
 			wantsResult: true,
 		},
 		{
@@ -199,25 +190,27 @@ func TestFilterGroup_Resolve(t *testing.T) {
 						"c": "2",
 						"r": "4"
 					}`,
+			keySet: map[string]*config.Key{
+				"a/b": {
+					Name: "a/b",
+					Type: config.TypeString,
+				},
+				"c": {
+					Name: "c",
+					Type: config.TypeNumber,
+				},
+				"r": {
+					Name: "r",
+					Type: config.TypeNumber,
+				},
+			},
 			givenFilter: Or(
 				OrFilters(
-					Equals(&config.Key{
-						Name: "a/b",
-						Type: config.TypeString,
-					}, "x"),
-					Equals(&config.Key{
-						Name: "a/b",
-						Type: config.TypeString,
-					}, "y")),
+					Equals("a/b", "x"),
+					Equals("a/b", "y")),
 				AndFilters(
-					Between(&config.Key{
-						Name: "c",
-						Type: config.TypeNumber,
-					}, "1", "3"),
-					LowerThan(&config.Key{
-						Name: "r",
-						Type: config.TypeNumber,
-					}, "5"))),
+					Between("c", "1", "3"),
+					LowerThan("r", "5"))),
 			wantsResult: true,
 		},
 	}
@@ -226,7 +219,7 @@ func TestFilterGroup_Resolve(t *testing.T) {
 			var row map[string]interface{}
 			err := json.Unmarshal([]byte(test.whenJsonRow), &row)
 			assert.NoError(t, err)
-			result, err := test.givenFilter.Resolve(row)
+			result, err := test.givenFilter.Resolve(row, test.keySet)
 			if test.wantsError {
 				assert.NotNil(t, err)
 				assert.Error(t, err)
