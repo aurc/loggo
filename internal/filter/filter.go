@@ -35,6 +35,7 @@ type Operation string
 
 const (
 	OpEquals             = Operation("OpEquals")
+	OpEqualsIgnoreCase   = Operation("OpEqualsIgnoreCase")
 	OpNotEquals          = Operation("OpNotEquals")
 	OpEqualIgnoreCase    = Operation("OpEqualIgnoreCase")
 	OpContains           = Operation("OpContains")
@@ -55,10 +56,10 @@ type Filter interface {
 }
 
 type Predicate struct {
-	//key        *config.Key `json:"-" yaml:"-"`
 	KeyName       string    `json:"key" yaml:"key"`
 	KeyExpression []string  `json:"expression" yaml:"expression"`
 	Operation     Operation `json:"operation" yaml:"operation"`
+	Right         []Filter  `json:"right,omitempty" yaml:"right"`
 }
 
 func (p *Predicate) Apply(value string, key map[string]*config.Key) (bool, error) {
@@ -249,7 +250,29 @@ type equalsIgnoreCase struct {
 }
 
 func (f *equalsIgnoreCase) Apply(value string, key map[string]*config.Key) (bool, error) {
-	return strings.ToLower(f.KeyExpression[0]) == strings.ToLower(value), nil
+	var tp config.Type = config.TypeString
+	var k *config.Key
+	if v, ok := key[f.KeyName]; ok {
+		tp = v.Type
+		k = v
+	}
+	switch tp {
+	case config.TypeString:
+		return strings.ToLower(f.KeyExpression[0]) == strings.ToLower(value), nil
+	case config.TypeNumber:
+		return f.parseNumberAndCheck(value, func(number, expression float64) (bool, error) {
+			return number == expression, nil
+		})
+	case config.TypeBool:
+		return f.parseBoolAndCheck(value, func(value, expression bool) (bool, error) {
+			return value == expression, nil
+		})
+	case config.TypeDateTime:
+		return f.parseDateTimeAndCheck(value, k, func(value, expression time.Time) (bool, error) {
+			return value.Equal(expression), nil
+		})
+	}
+	return false, nil
 }
 
 type containsIgnoreCase struct {

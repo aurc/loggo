@@ -28,24 +28,27 @@ import (
 
 	"github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer"
+	"github.com/aurc/loggo/internal/config"
 )
 
 type LogicalOperator int
 
 const (
-	OpAND LogicalOperator = iota
-	OpOR
+	And LogicalOperator = iota
+	Or
 )
 
 var (
 	sqlLexer = lexer.MustSimple([]lexer.SimpleRule{
-		{`Keyword`, `(?i)\b(MATCH|CONTAINS_I|CONTAINS|BETWEEN|AND|OR|IN)\b`},
+		{`Keyword`, `(?i)\b(MATCH|CONTAINSIC|CONTAINS|BETWEEN|AND|OR)\b`},
 		{`Ident`, `[a-zA-Z_][a-zA-Z0-9_./]*`},
 		{`Number`, `[-+]?\d*\.?\d+([eE][-+]?\d+)?`},
 		{`String`, `'[^']*'|"[^"]*"`},
-		{`Operators`, `<>|!=|<=|>=|[()=<>]`},
+		{`Operators`, `<>|!=|<=|>=|==|[()=<>]`},
 		{"whitespace", `\s+`},
 	})
+
+	cachedDef = make(map[string]Filter)
 
 	parser = participle.MustBuild[Expression](
 		participle.Lexer(sqlLexer),
@@ -54,28 +57,54 @@ var (
 	)
 )
 
-func ParseFilterExpression(exp string) (*filterGroup, error) {
-	sel, err := parser.ParseString("", exp)
-	if err != nil {
-		return nil, err
-	}
-	fg := sel.Eval()
-	return fg, nil
+func ParseFilterExpression(exp string) (*Expression, error) {
+	return parser.ParseString("", exp)
 }
 
-var operatorMap = map[string]LogicalOperator{"AND": OpAND, "OR": OpOR}
+func cachedOperation(op Operation, key string, v ...string) Filter {
+	ck := fmt.Sprintf(`[%s:%s]:%+v`, op, key, v)
+	if v, ok := cachedDef[ck]; ok {
+		return v
+	}
+	var f Filter
+	switch op {
+	case OpNotEquals:
+		f = NotEquals(key, v[0])
+	case OpEquals:
+		f = Equals(key, v[0])
+	case OpEqualsIgnoreCase:
+		f = EqualIgnoreCase(key, v[0])
+	case OpLowerThan:
+		f = LowerThan(key, v[0])
+	case OpLowerOrEqualThan:
+		f = LowerOrEqualThan(key, v[0])
+	case OpGreaterThan:
+		f = GreaterThan(key, v[0])
+	case OpGreaterOrEqualThan:
+		f = GreaterOrEqualThan(key, v[0])
+	case OpContains:
+		f = Contains(key, v[0])
+	case OpContainsIgnoreCase:
+		f = ContainsIgnoreCase(key, v[0])
+	case OpMatchesRegex:
+		f = MatchesRegex(key, v[0])
+	case OpBetween:
+		f = BetweenInclusive(key, v[0], v[1])
+	}
+	cachedDef[ck] = f
+	return f
+}
+
+var operatorMap = map[string]LogicalOperator{"AND": And, "OR": Or}
 
 func (o *LogicalOperator) Capture(s []string) error {
 	*o = operatorMap[strings.ToUpper(s[0])]
 	return nil
 }
 
-func (c *ConditionElement) Eval() *filterGroup {
-	if c.Condition != nil {
-		return c.Condition.Eval()
-	} else {
-		return c.Subexpression.Eval()
-	}
+type Expression struct {
+	Left  *Term     `@@`
+	Right []*OpTerm `@@*`
 }
 
 type ConditionElement struct {
@@ -83,35 +112,9 @@ type ConditionElement struct {
 	Subexpression *Expression `| "(" @@ ")"`
 }
 
-func (c *Condition) Eval() *filterGroup {
-	switch strings.ToUpper(c.Operator) {
-	case "<>", "!=":
-		return AndFilters(NotEquals(c.Operand, c.Value.ToString()))
-	case "=":
-		return AndFilters(Equals(c.Operand, c.Value.ToString()))
-	case "<":
-		return AndFilters(LowerThan(c.Operand, c.Value.ToString()))
-	case "<=":
-		return AndFilters(LowerOrEqualThan(c.Operand, c.Value.ToString()))
-	case ">":
-		return AndFilters(GreaterThan(c.Operand, c.Value.ToString()))
-	case ">=":
-		return AndFilters(GreaterOrEqualThan(c.Operand, c.Value.ToString()))
-	case "CONTAINS":
-		return AndFilters(Contains(c.Operand, c.Value.ToString()))
-	case "CONTAINS_I":
-		return AndFilters(ContainsIgnoreCase(c.Operand, c.Value.ToString()))
-	case "MATCH":
-		return AndFilters(MatchesRegex(c.Operand, c.Value.ToString()))
-	case "BETWEEN":
-		return AndFilters(Between(c.Operand, c.Value.ToString(), c.Value2.ToString()))
-	}
-	return AndFilters()
-}
-
 type Condition struct {
 	Operand  string `@Ident`
-	Operator string `@( "<>" | "<=" | ">=" | "=" | "<" | ">" | "!=" | "BETWEEN" | "CONTAINS" | "CONTAINS_I" | "MATCH" )`
+	Operator string `@( "<>" | "<=" | ">=" | "=" | "==" | "<" | ">" | "!=" | "BETWEEN" | "CONTAINS" | "CONTAINSIC" | "MATCH" )`
 	Value    *Value `@@`
 	Value2   *Value `( "AND" @@ )*`
 }
@@ -139,62 +142,111 @@ type Term struct {
 	Right []*OpValue        `@@*`
 }
 
-func (t *Term) Eval() *filterGroup {
-	fg := t.Left.Eval()
-	if len(t.Right) > 0 {
-		for _, v := range t.Right {
-			switch v.Operator {
-			case OpAND:
-				fg.Groups = append(fg.Groups, And(v.ConditionElement.Eval()))
-			case OpOR:
-				fg.Groups = append(fg.Groups, Or(v.ConditionElement.Eval()))
-			}
-		}
-	}
-	return fg
-}
-
 type OpTerm struct {
 	Operator LogicalOperator `@("OR")`
 	Term     *Term           `@@`
 }
 
-func (t *OpTerm) Eval() *filterGroup {
-	fg := &filterGroup{}
-	switch t.Operator {
-	case OpAND:
-		fg.Groups = append(fg.Groups, And(t.Term.Eval()))
-	case OpOR:
-		fg.Groups = append(fg.Groups, Or(t.Term.Eval()))
-	}
-	return fg
-}
-
-type Expression struct {
-	Left  *Term     `@@`
-	Right []*OpTerm `@@*`
-}
-
-func (t *Expression) Eval() *filterGroup {
-	fg := &filterGroup{}
-	if t.Left != nil {
-		fg.Groups = append(fg.Groups, t.Left.Eval())
-	}
-	if len(t.Right) > 0 {
-		for _, v := range t.Right {
-			f := v.Eval()
-			fg.Groups = append(fg.Groups, f.Groups...)
-		}
-	}
-	return fg
-}
-
 func (o LogicalOperator) String() string {
 	switch o {
-	case OpAND:
+	case And:
 		return "AND"
-	case OpOR:
+	case Or:
 		return "OR"
 	}
 	panic("unsupported operator")
+}
+
+func (c LogicalOperator) Apply(l, r bool) bool {
+	switch c {
+	case And:
+		return l && r
+	case Or:
+		return l || r
+	}
+	return false
+}
+
+func (c *ConditionElement) Apply(row map[string]interface{}, key map[string]*config.Key) (bool, error) {
+	switch {
+	case c.Condition != nil:
+		return c.Condition.Apply(row, key)
+	default:
+		return c.Subexpression.Apply(row, key)
+	}
+}
+
+func (c *Condition) Apply(row map[string]interface{}, key map[string]*config.Key) (bool, error) {
+	var op Operation
+	switch strings.ToUpper(c.Operator) {
+	case "<>", "!=":
+		op = OpNotEquals
+	case "=":
+		op = OpEqualsIgnoreCase
+	case "==":
+		op = OpEquals
+	case "<":
+		op = OpLowerThan
+	case "<=":
+		op = OpLowerOrEqualThan
+	case ">":
+		op = OpGreaterThan
+	case ">=":
+		op = OpGreaterOrEqualThan
+	case "CONTAINS":
+		op = OpContains
+	case "CONTAINSIC":
+		op = OpContainsIgnoreCase
+	case "MATCH":
+		op = OpMatchesRegex
+	case "BETWEEN":
+		op = OpBetween
+	default:
+		return false, fmt.Errorf("unrecognised operator %s", c.Operator)
+	}
+	v2 := ""
+	if c.Value2 != nil {
+		v2 = c.Value2.ToString()
+	}
+	fi := cachedOperation(op, c.Operand, c.Value.ToString(), v2)
+	var k *config.Key
+	if v, ok := key[fi.Name()]; ok {
+		k = v
+	} else {
+		k = &config.Key{
+			Name: fi.Name(),
+			Type: config.TypeString,
+		}
+	}
+	return fi.Apply(k.ExtractValue(row), key)
+}
+
+func (c *Term) Apply(row map[string]interface{}, key map[string]*config.Key) (bool, error) {
+	lv, le := c.Left.Apply(row, key)
+	if le != nil {
+		return false, le
+	}
+	for _, r := range c.Right {
+		rv, re := r.ConditionElement.Apply(row, key)
+		if re != nil {
+			return false, re
+		}
+		lv = r.Operator.Apply(lv, rv)
+	}
+	return lv, nil
+}
+
+func (c *Expression) Apply(row map[string]interface{}, key map[string]*config.Key) (bool, error) {
+	lv, le := c.Left.Apply(row, key)
+	if le != nil {
+		return false, le
+	}
+	for _, r := range c.Right {
+		rv, re := r.Term.Apply(row, key)
+		if re != nil {
+			return false, re
+		}
+		lv = r.Operator.Apply(lv, rv)
+	}
+	return lv, nil
 }
