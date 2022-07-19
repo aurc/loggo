@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 Aurelio Calegari
+Copyright © 2022 Aurelio Calegari, et al.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -59,7 +59,7 @@ func (t *SplashScreen) makeUIComponents() {
 	t.subtitleView = tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignCenter)
 	t.subtitleView.SetText(fmt.Sprintf(`
 [white:black:b]l'oGGo[::-]: [yellow::u]Rich Terminal User Interface for following JSON logs
-[gray::-]Copyright © 2022 Aurelio Calegari
+[gray::-]Copyright © 2022 Aurelio Calegari, et al.
 [lightgray::u]https://github.com/aurc/loggo
 `)).SetBackgroundColor(tcell.ColorBlack)
 }

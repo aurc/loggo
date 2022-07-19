@@ -3,6 +3,7 @@ module github.com/aurc/loggo
 go 1.18
 
 require (
+	github.com/alecthomas/participle/v2 v2.0.0-beta.4
 	github.com/atotto/clipboard v0.1.4
 	github.com/gdamore/tcell/v2 v2.5.1
 	github.com/google/uuid v1.3.0

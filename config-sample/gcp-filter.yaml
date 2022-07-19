@@ -1,0 +1,25 @@
+filters:
+  - name: Show errors only
+    or:
+      - key: severity
+        function: regex
+        expression: (?i)error
+      - key: severity
+        function: regex
+        expression: (?i)fatal
+  - name: Critical Pinpoint
+    and:
+      - or:
+          - key: severity
+            function: regex
+            expression: (?i)error
+          - key: severity
+            function: regex
+            expression: (?i)fatal
+      - or:
+          - key: jsonPayload/message
+            function: containsIgnoreCase
+            expression: unknown
+          - key: jsonPayload/message
+            function: containsIgnoreCase
+            expression: unexpected
