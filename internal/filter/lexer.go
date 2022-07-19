@@ -68,7 +68,7 @@ func cachedOperation(op Operation, key string, v ...string) Filter {
 	}
 	var f Filter
 	switch op {
-	case OpNotEquals:
+	case OpNotEqual:
 		f = NotEquals(key, v[0])
 	case OpEquals:
 		f = Equals(key, v[0])
@@ -147,16 +147,6 @@ type OpTerm struct {
 	Term     *Term           `@@`
 }
 
-func (o LogicalOperator) String() string {
-	switch o {
-	case And:
-		return "AND"
-	case Or:
-		return "OR"
-	}
-	panic("unsupported operator")
-}
-
 func (c LogicalOperator) Apply(l, r bool) bool {
 	switch c {
 	case And:
@@ -180,7 +170,7 @@ func (c *Condition) Apply(row map[string]interface{}, key map[string]*config.Key
 	var op Operation
 	switch strings.ToUpper(c.Operator) {
 	case "<>", "!=":
-		op = OpNotEquals
+		op = OpNotEqual
 	case "=":
 		op = OpEqualsIgnoreCase
 	case "==":

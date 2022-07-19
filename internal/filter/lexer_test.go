@@ -30,7 +30,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFilterGroup_Resolve(t *testing.T) {
+func TestParseFilterExpression(t *testing.T) {
 	tests := []struct {
 		name            string
 		whenJsonRow     string
@@ -252,6 +252,37 @@ func TestFilterGroup_Resolve(t *testing.T) {
 				"s": {
 					Name: "s",
 					Type: config.TypeString,
+				},
+			},
+			wantsResult: true,
+		},
+		{
+			name: `wants true - not equals and missing key`,
+			whenJsonRow: `
+					{
+						"b": "b val",
+						"s": "some"
+					}`,
+			givenExpression: `b != "c val" and s == "some"`,
+			keySet: map[string]*config.Key{
+				"b": {
+					Name: "b",
+					Type: config.TypeString,
+				},
+			},
+			wantsResult: true,
+		},
+		{
+			name: `wants true - between if lower-greater than`,
+			whenJsonRow: `
+					{
+						"a": 2
+					}`,
+			givenExpression: `a >= 1 and a <=3`,
+			keySet: map[string]*config.Key{
+				"a": {
+					Name: "a",
+					Type: config.TypeNumber,
 				},
 			},
 			wantsResult: true,

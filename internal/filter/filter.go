@@ -36,7 +36,7 @@ type Operation string
 const (
 	OpEquals             = Operation("OpEquals")
 	OpEqualsIgnoreCase   = Operation("OpEqualsIgnoreCase")
-	OpNotEquals          = Operation("OpNotEquals")
+	OpNotEqual           = Operation("OpNotEqual")
 	OpEqualIgnoreCase    = Operation("OpEqualIgnoreCase")
 	OpContains           = Operation("OpContains")
 	OpContainsIgnoreCase = Operation("OpContainsIgnoreCase")
@@ -90,7 +90,7 @@ func NotEquals(key string, expression string) *notEquals {
 			Predicate: Predicate{
 				KeyName:       key,
 				KeyExpression: []string{expression},
-				Operation:     OpNotEquals,
+				Operation:     OpNotEqual,
 			},
 		},
 	}
