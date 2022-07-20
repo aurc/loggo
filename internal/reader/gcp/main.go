@@ -1,15 +1,16 @@
 package main
 
 import (
-	logging "cloud.google.com/go/logging/apiv2"
-	rm "cloud.google.com/go/resourcemanager/apiv3"
 	"context"
 	"encoding/json"
 	"fmt"
-	"golang.org/x/oauth2/google"
-	loggingpb "google.golang.org/genproto/googleapis/logging/v2"
 	"os/exec"
 	"time"
+
+	logging "cloud.google.com/go/logging/apiv2"
+	rm "cloud.google.com/go/resourcemanager/apiv3"
+	"golang.org/x/oauth2/google"
+	loggingpb "google.golang.org/genproto/googleapis/logging/v2"
 )
 
 var scopes = []string{"https://www.googleapis.com/auth/logging.read",
@@ -17,7 +18,7 @@ var scopes = []string{"https://www.googleapis.com/auth/logging.read",
 
 func main() {
 	ctx := context.Background()
-	rm.S()
+	rm.NewProjectsClient(ctx)
 	_, err := google.FindDefaultCredentials(ctx, scopes...)
 	if err != nil {
 		cmd := exec.Command("gcloud", "auth", "application-default", "login")
