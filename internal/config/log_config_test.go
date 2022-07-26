@@ -39,7 +39,7 @@ func TestMakeConfig(t *testing.T) {
 		{
 			name:      "No file supplied, load GCP default",
 			givenFile: "",
-			wants:     defConfig,
+			wants:     Config{},
 		},
 		{
 			name:      "Valid value supplied",
