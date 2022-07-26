@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 Aurelio Calegari
+Copyright © 2022 Aurelio Calegari, et al.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -39,7 +39,7 @@ func TestMakeConfig(t *testing.T) {
 		{
 			name:      "No file supplied, load GCP default",
 			givenFile: "",
-			wants:     defConfig,
+			wants:     Config{},
 		},
 		{
 			name:      "Valid value supplied",
