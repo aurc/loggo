@@ -96,7 +96,11 @@ func (l *LogView) read() {
 				}
 				l.inSlice = append(l.inSlice, m)
 				if len(l.config.LastSavedName) == 0 {
-					l.processSampleForConfig(l.inSlice)
+					if len(l.inSlice) > 20 {
+						l.processSampleForConfig(l.inSlice[len(l.inSlice)-20:])
+					} else {
+						l.processSampleForConfig(l.inSlice)
+					}
 				}
 				l.updateLineView()
 				now := time.Now()
@@ -114,7 +118,7 @@ func (l *LogView) processSampleForConfig(sampling []map[string]interface{}) {
 	if len(l.config.LastSavedName) > 0 || l.isTemplateViewShown() {
 		return
 	}
-	l.config = config.MakeConfigFromSample(sampling)
+	l.config = config.MakeConfigFromSample(sampling, l.config.Keys...)
 	l.app.config = l.config
 }
 

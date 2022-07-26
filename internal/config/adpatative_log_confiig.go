@@ -23,18 +23,25 @@ THE SOFTWARE.
 package config
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 )
 
-func MakeConfigFromSample(sample []map[string]interface{}) *Config {
+func MakeConfigFromSample(sample []map[string]interface{}, mergeWith ...Key) *Config {
 	keyMap := make(map[string]*Key)
+	for i := range mergeWith {
+		v := mergeWith[i]
+		if _, ok := keyMap[v.Name]; !ok {
+			keyMap[v.Name] = &v
+		}
+	}
 	for _, m := range sample {
-		for k, v := range m {
+		for _, k := range extractKeys2ndDepth(m) {
 			if _, ok := keyMap[k]; ok {
 				continue
 			}
-			if strings.Index(k, "/") != -1 || k == ParseErr {
+			if k == ParseErr {
 				continue
 			}
 			if timestamp.Contains(k) {
@@ -50,9 +57,9 @@ func MakeConfigFromSample(sample []map[string]interface{}) *Config {
 				keyMap[k] = errorKey.keyConfig(k)
 				continue
 			}
-			if _, ok := v.(map[string]interface{}); ok {
-				continue
-			}
+			//if _, ok := v.(map[string]interface{}); ok {
+			//	continue
+			//}
 			keyMap[k] = &Key{
 				Name: k,
 				Type: TypeString,
@@ -113,6 +120,28 @@ func (p preBakedRule) Keys() []string {
 	return arr
 }
 
+func extractKeys2ndDepth(m map[string]interface{}) []string {
+	keys := make([]string, 0)
+	for k, v := range m {
+		if strings.Contains(k, "/") {
+			continue
+		}
+		if vk, ok := v.(map[string]interface{}); ok &&
+			k != "http_request" &&
+			k != "labels" {
+			for k2 := range vk {
+				if strings.Contains(k2, "/") {
+					continue
+				}
+				keys = append(keys, fmt.Sprintf(`%s/%s`, k, k2))
+			}
+		} else {
+			keys = append(keys, k)
+		}
+	}
+	return keys
+}
+
 var (
 	timestamp = preBakedRule{
 		keyMatchesAny: map[string]bool{"timestamp": true, "time": true},
@@ -171,14 +200,18 @@ var (
 		},
 	}
 	message = preBakedRule{
-		keyMatchesAny: map[string]bool{"message": true},
+		keyMatchesAny: map[string]bool{
+			"message":             true,
+			"jsonPayload/message": true,
+			"http_request":        true,
+		},
 		keyConfig: func(keyName string) *Key {
 			return &Key{
 				Name:     keyName,
 				Type:     TypeString,
-				MaxWidth: 50,
+				MaxWidth: 60,
 				Color: Color{
-					Foreground: "yellow",
+					Foreground: "wheat",
 					Background: "black",
 				},
 			}

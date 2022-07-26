@@ -23,6 +23,7 @@ THE SOFTWARE.
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -56,6 +57,27 @@ func (c *Config) Save(fileName string) error {
 	}
 	c.LastSavedName = fileName
 	return nil
+}
+
+func (c *Config) KeyMap() map[string]Key {
+	nk := make(map[string]Key)
+	for _, k := range c.Keys {
+		nk[k.Name] = k
+	}
+	return nk
+}
+
+func (c *Config) Merge(c2 *Config) {
+	nk := c2.KeyMap()
+	for _, v := range c.Keys {
+		if _, ok := nk[v.Name]; ok {
+			delete(nk, v.Name)
+		}
+	}
+	for _, v := range nk {
+		v2 := v
+		c.Keys = append(c.Keys, v2)
+	}
 }
 
 type Color struct {
@@ -127,7 +149,13 @@ func (k *Key) ExtractValue(m map[string]interface{}) string {
 			return val
 		}
 		if i == len(kList)-1 {
-			return fmt.Sprintf("%v", lv)
+			if v, ok := lv.(map[string]interface{}); ok {
+				b, err := json.Marshal(v)
+				if err == nil {
+					return string(b)
+				}
+			}
+			return fmt.Sprintf("%+v", lv)
 		}
 		level = lv.(map[string]interface{})
 	}
@@ -144,7 +172,7 @@ func MakeConfig(file string) (*Config, error) {
 			return nil, err
 		}
 	} else {
-		yamlBytes = []byte(defaultConfig)
+		yamlBytes = []byte("")
 	}
 	if err := yaml.Unmarshal(yamlBytes, &config); err != nil {
 		return nil, err
@@ -221,6 +249,7 @@ const defaultConfig = `keys:
       background: black
   - name: jsonPayload/message
     type: string
+    max-width: 40
     color:
       foreground: white
       background: black`

@@ -6,17 +6,12 @@
 <p align="center">
 <img src="img/loggo_sm.png">
 </p>
-l'oGGo or Log & Go is a rich Terminal User Interface app written in [golang](https://go.dev/) that harness the
-power of your terminal to digest JSON based logs. This project is a hobby project
-and is by no means bulletproof, but should be stable enough for every-day
-troubleshooting workflows.
 
-It came to light as JSON based logs and applications slowly drifted 
-to become the de-facto standard for logging across applications and platforms. Although JSON data
-structure provided a sound and well-behaved data model, the lack of local tools
-to aid streaming & rendering for realtime troubleshooting such verbosely-rich 
-produced payloads motivated me to embark in this endevour as I was, for a little
-while, no longer able to quickly cast eyes on logs and pinpoint hotspots.
+l'oGGo or Log & Go is a rich Terminal User Interface app written in [golang](https://go.dev/) that harness the
+power of your terminal to digest log streams based on JSON based logs.
+
+This can be used against applications running locally, on a Kubernetes cluster (see [K8S Cheatsheet](#k8s)), GCP
+Stack Driver ([Google Logs](https://cloud.google.com/logging), see [GCP-Stream Command](#gcp-stream-command)) and many others.
 
 <img src="img/compare.png">
 <table>
@@ -94,8 +89,9 @@ To gain fine grained insight of each `loggo` command params, use
 the `help` command, e.g.:
 ````
 loggo help
-loggo stream help
-loggo template help
+loggo help stream
+loggo help template
+loggo help gcp-stream
 ````
 
 ### `stream` Command
@@ -115,7 +111,7 @@ loggo stream --file <my file> --template <my template yaml>
 ````
 tail -f <my file> | loggo stream
 ````
-Kubernetes example:
+Kubernetes example (See [K8S Cheatsheet](#k8s-cheatsheet))
 ````
 kubectl logs -f -n <namespace> <pod> | loggo stream
 ````
@@ -147,6 +143,79 @@ Note that you can pipe to anything that produces an output to the `stdin`.
     - Note that single Value Matches are REGEX expressions.
   ![](img/how_to_display.png)
 
+### `gcp-stream` Command 
+l`oGGo natively supports GCP Logging but in order to use this feature, there are a few caveats:
+- You have [gcloud command line SDK](https://cloud.google.com/sdk/docs/install) installed locally.
+- Your account has the required permissions to access the logging resources.
+
+
+Note: `gcp-stream` **does not** support piped commands. If you want to use piped
+commands (e.g. chaining K8S output) use the `stream` command instead.
+
+Example:
+````
+loggo gcp-stream \
+    --filter 'resource.labels.namespace_name="some-namespace" resource.labels.container_name="some-container"' \
+    --project some-project-ID \
+    --from 10m
+````
+Where:
+````
+Usage:
+  loggo gcp-stream [flags]
+
+Flags:
+  -f, --filter string        Standard GCP filters
+  -d, --from string          Start streaming from:
+                               Relative: Use format "1s", "1m", "1h" or "1d", where:
+                                         digit followed by s, m, h, d as second, minute, hour, day.
+                               Fixed:    Use date format as "yyyy-MM-ddH24:mm:ss", e.g. 2022-07-30T15:00:00
+                               Now:      Use "tail" to start from now (default "tail")
+  -h, --help                 help for gcp-stream
+      --params-list          List saved gcp connection/filtering parameters for convenient reuse.
+      --params-load string   Load the parameters for reuse. If any additional parameters are
+                             provided, it overrides the loaded parameter with the one explicitly provided.
+      --params-save string   Save the following parameters (if provided) for reuse:
+                               Project:   The GCP Project ID
+                               Template:  The rendering template to be applied.
+                               From:      When to start streaming from.
+                               Filter:    The GCP specific filter parameters.
+  -p, --project string       GCP Project ID (required)
+  -t, --template string      Rendering Template
+````
+
+For convenience, you can build a list of frequently used command parameters/flags and reuse them without
+having to rewrite lengthy list of parameters, for example:
+
+````
+loggo gcp-stream \
+    --filter 'resource.labels.namespace_name="some-namespace" resource.labels.container_name="some-container"' \
+    --project some-project-ID \
+    --from 10m
+    --template /tmp/myTemplate.yaml
+    --params-save mySavedParams1
+````
+
+Then you simply issue:
+````
+loggo gcp-stream --params-load mySavedParams1
+````
+
+If you want to review all saved params buckets, issue the following command:
+
+````
+loggo gcp-stream --params-list
+````
+
+Additionally, you might want to overwrite some parameters. The example command uses `--from 10m`, and
+say you want to `tail` instead:
+
+````
+loggo gcp-stream --params-load mySavedParams1 --from tail
+````
+
+Any additional parameter provided will overwrite the loaded params at runtime.
+
 ### `template` Command
 The template command opens up the template editor without the
 need to stream logs. This is convenient if you want to craft
@@ -164,6 +233,19 @@ loggo template
 loggo template --file <my template yaml>
 ````
 
+## K8S Cheatsheet
+
+Combined logs of all pods of an application.
+````
+kubectl -n <some-namespace> logs -f deployment/<application-name> \
+  --all-containers=true \
+  --since=10m | loggo stream
+````
+
+Logs of a pod.
+````
+kubectl logs -f -n <some-namespace> <pod-name> | loggo stream
+````
 
 ## Current Limitations
 

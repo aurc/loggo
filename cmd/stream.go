@@ -39,7 +39,7 @@ if it's reading from a file, it automatically detects file
 rotation and continue to stream. For example:
 
 	loggo stream --file <file-path>
-	loggo stream | <some arbitrary input>`,
+	<some arbitrary input> | loggo stream`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fileName := cmd.Flag("file").Value.String()
 		templateFile := cmd.Flag("template").Value.String()
