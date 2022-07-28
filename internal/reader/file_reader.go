@@ -34,8 +34,7 @@ type fileStream struct {
 	tail     *tail.Tail
 }
 
-func (s *fileStream) StreamInto(strChan chan<- string) error {
-	s.strChan = strChan
+func (s *fileStream) StreamInto() error {
 	var err error
 	s.tail, err = tail.TailFile(s.fileName, tail.Config{Follow: true})
 	if err != nil {
@@ -44,7 +43,7 @@ func (s *fileStream) StreamInto(strChan chan<- string) error {
 
 	go func() {
 		for line := range s.tail.Lines {
-			strChan <- line.Text
+			s.strChan <- line.Text
 		}
 	}()
 	return nil

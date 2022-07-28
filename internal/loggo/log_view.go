@@ -25,6 +25,7 @@ package loggo
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/aurc/loggo/internal/reader"
 	"regexp"
 	"strings"
 	"time"
@@ -38,7 +39,7 @@ import (
 type LogView struct {
 	tview.Flex
 	app                *LoggoApp
-	input              <-chan string
+	chanReader         reader.Reader
 	table              *tview.Table
 	jsonView           *JsonView
 	data               *LogData
@@ -56,16 +57,19 @@ type LogView struct {
 	isFollowing        bool
 }
 
-func NewLogReader(app *LoggoApp, input <-chan string) *LogView {
+func NewLogReader(app *LoggoApp, reader reader.Reader) *LogView {
 	lv := &LogView{
 		Flex:        *tview.NewFlex(),
 		app:         app,
 		config:      app.Config(),
-		input:       input,
+		chanReader:  reader,
 		isFollowing: true,
 	}
 	lv.makeUIComponents()
 	lv.makeLayouts()
+	reader.ErrorNotifier(func(err error) {
+		
+	})
 	lv.read()
 	go func() {
 		lv.app.ShowModal(NewSplashScreen(lv.app), 71, 16, tcell.ColorBlack)
@@ -83,31 +87,38 @@ func NewLogReader(app *LoggoApp, input <-chan string) *LogView {
 
 func (l *LogView) read() {
 	go func() {
-		lastUpdate := time.Now().Add(-time.Minute)
-		for {
-			t := <-l.input
-			if len(t) > 0 {
-				l.globalCount++
-				m := make(map[string]interface{})
-				err := json.Unmarshal([]byte(t), &m)
-				if err != nil {
-					m[config.ParseErr] = err.Error()
-					m[config.TextPayload] = t
-				}
-				l.inSlice = append(l.inSlice, m)
-				if len(l.config.LastSavedName) == 0 {
-					if len(l.inSlice) > 20 {
-						l.processSampleForConfig(l.inSlice[len(l.inSlice)-20:])
-					} else {
-						l.processSampleForConfig(l.inSlice)
+		if err := l.chanReader.StreamInto(); err != nil {
+			l.app.ShowPrefabModal(fmt.Sprintf("Unable to start stream: %v", err), 40, 10,
+				tview.NewButton("Quit").SetSelectedFunc(func() {
+					l.app.Stop()
+				}))
+		} else {
+			lastUpdate := time.Now().Add(-time.Minute)
+			for {
+				t := <-l.chanReader.ChanReader()
+				if len(t) > 0 {
+					l.globalCount++
+					m := make(map[string]interface{})
+					err := json.Unmarshal([]byte(t), &m)
+					if err != nil {
+						m[config.ParseErr] = err.Error()
+						m[config.TextPayload] = t
 					}
-				}
-				l.updateLineView()
-				now := time.Now()
-				if now.Sub(lastUpdate)*time.Millisecond > 500 && l.isFollowing {
-					lastUpdate = now
-					l.app.Draw()
-					l.table.ScrollToEnd()
+					l.inSlice = append(l.inSlice, m)
+					if len(l.config.LastSavedName) == 0 {
+						if len(l.inSlice) > 20 {
+							l.processSampleForConfig(l.inSlice[len(l.inSlice)-20:])
+						} else {
+							l.processSampleForConfig(l.inSlice)
+						}
+					}
+					l.updateLineView()
+					now := time.Now()
+					if now.Sub(lastUpdate)*time.Millisecond > 500 && l.isFollowing {
+						lastUpdate = now
+						l.app.Draw()
+						l.table.ScrollToEnd()
+					}
 				}
 			}
 		}

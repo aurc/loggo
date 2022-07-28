@@ -34,7 +34,7 @@ import (
 )
 
 func JsonGenerator(writer io.Writer) {
-	b, err := ioutil.ReadFile("testdata/test1.json")
+	b, err := ioutil.ReadFile("internal/testdata/test1.json")
 	if err != nil {
 		panic(err)
 	}

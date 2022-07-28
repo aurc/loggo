@@ -34,8 +34,7 @@ type readPipeStream struct {
 	stop bool
 }
 
-func (s *readPipeStream) StreamInto(strChan chan<- string) error {
-	s.strChan = strChan
+func (s *readPipeStream) StreamInto() error {
 	info, err := os.Stdin.Stat()
 	if err != nil {
 		panic(err)
@@ -52,7 +51,7 @@ func (s *readPipeStream) StreamInto(strChan chan<- string) error {
 			if err != nil {
 				time.Sleep(time.Second)
 			}
-			strChan <- str
+			s.strChan <- str
 		}
 	}()
 	return nil

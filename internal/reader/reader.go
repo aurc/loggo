@@ -23,23 +23,42 @@ THE SOFTWARE.
 package reader
 
 type reader struct {
-	strChan chan<- string
+	strChan chan string
+	onError func(err error)
 }
 
 // MakeReader builds a continues file/pipe streamer used to feed the logger. If
 // fileName is not provided, it will attempt to consume the input from the stdin.
-func MakeReader(fileName string) Reader {
+func MakeReader(fileName string, strChan chan string) Reader {
+	if strChan == nil {
+		strChan = make(chan string, 1)
+	}
 	if len(fileName) > 0 {
 		return &fileStream{
+			reader:   reader{strChan: strChan},
 			fileName: fileName,
 		}
 	}
-	return &readPipeStream{}
+	return &readPipeStream{
+		reader: reader{strChan: strChan},
+	}
+}
+
+func (s *reader) ChanReader() <-chan string {
+	return s.strChan
+}
+
+func (s *reader) ErrorNotifier(onError func(err error)) {
+	s.onError = onError
 }
 
 type Reader interface {
 	// StreamInto feeds the strChan channel for every streamed line.
-	StreamInto(strChan chan<- string) error
+	StreamInto() error
 	// Close finalises and invalidates this stream reader.
 	Close()
+	// ChanReader returns the outbound channel reader
+	ChanReader() <-chan string
+	// ErrorNotifier registers a callback func that's called upon fatal streaming log.
+	ErrorNotifier(onError func(err error))
 }

@@ -40,7 +40,8 @@ func TestReadPipeStream_StreamInto(t *testing.T) {
 
 		// Routine to write file lines
 		before := time.Now().UnixMilli()
-		reader := MakeReader("")
+		streamReceiver := make(chan string, 1)
+		reader := MakeReader("", streamReceiver)
 		r, w, err := os.Pipe()
 		os.Stdin = r
 		assert.NoError(t, err)
@@ -52,9 +53,8 @@ func TestReadPipeStream_StreamInto(t *testing.T) {
 			}
 			reader.Close()
 		}()
-		streamReceiver := make(chan string, 1)
 		var lines []string
-		_ = reader.StreamInto(streamReceiver)
+		_ = reader.StreamInto()
 		for {
 			line, ok := <-streamReceiver
 			if !ok {

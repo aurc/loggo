@@ -32,7 +32,7 @@ import (
 
 func main() {
 	inputChan := make(chan string, 1)
-	rd := reader.MakeReader("")
+	rd := reader.MakeReader("", inputChan)
 	oldStdIn := os.Stdin
 	defer func() {
 		os.Stdin = oldStdIn
@@ -43,7 +43,7 @@ func main() {
 		helper.JsonGenerator(w)
 	}()
 
-	_ = rd.StreamInto(inputChan)
-	app := loggo.NewLoggoApp(inputChan, "")
+	_ = rd.StreamInto()
+	app := loggo.NewLoggoApp(rd, "")
 	app.Run()
 }

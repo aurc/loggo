@@ -24,14 +24,15 @@ package loggo
 
 import (
 	"github.com/aurc/loggo/internal/config"
+	"github.com/aurc/loggo/internal/reader"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
 type LoggoApp struct {
 	appScaffold
-	input   <-chan string
-	logView *LogView
+	chanReader reader.Reader
+	logView    *LogView
 }
 
 type Loggo interface {
@@ -48,14 +49,14 @@ type Loggo interface {
 	PopView()
 }
 
-func NewLoggoApp(input <-chan string, configFile string) *LoggoApp {
+func NewLoggoApp(reader reader.Reader, configFile string) *LoggoApp {
 	app := NewApp(configFile)
 	lapp := &LoggoApp{
 		appScaffold: *app,
-		input:       input,
+		chanReader:  reader,
 	}
 
-	lapp.logView = NewLogReader(lapp, input)
+	lapp.logView = NewLogReader(lapp, reader)
 
 	lapp.pages = tview.NewPages().
 		AddPage("background", lapp.logView, true, true)

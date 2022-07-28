@@ -91,13 +91,8 @@ from a given selected project and GCP logging filters:
 			if len(projectName) == 0 {
 				log.Fatal("--project flag is required.")
 			}
-			inputChan := make(chan string, 1000)
-			reader := reader.MakeGCPReader(projectName, filter, from)
-
-			if err := reader.StreamInto(inputChan); err != nil {
-				log.Fatalf("unable to start app %v", err)
-			}
-			app := loggo.NewLoggoApp(inputChan, templateFile)
+			reader := reader.MakeGCPReader(projectName, filter, from, nil)
+			app := loggo.NewLoggoApp(reader, templateFile)
 			app.Run()
 		}
 	},
