@@ -54,8 +54,15 @@ var scopes = []string{
 	"https://www.googleapis.com/auth/cloud-platform.read-only",
 }
 
-func MakeGCPReader(project, filter, freshness string) *gcpStream {
+func MakeGCPReader(project, filter, freshness string, strChan chan string) *gcpStream {
+	if strChan == nil {
+		strChan = make(chan string, 1)
+	}
 	return &gcpStream{
+		reader: reader{
+			strChan:    strChan,
+			readerType: TypeGCP,
+		},
 		projectID: project,
 		filter:    filter,
 		freshness: freshness,
@@ -63,11 +70,11 @@ func MakeGCPReader(project, filter, freshness string) *gcpStream {
 	}
 }
 
-func (s *gcpStream) StreamInto(strChan chan<- string) error {
+func (s *gcpStream) StreamInto() error {
 	ctx := context.Background()
 	err := s.checkAuth(ctx)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	c, err := logging.NewClient(ctx)
@@ -76,34 +83,32 @@ func (s *gcpStream) StreamInto(strChan chan<- string) error {
 	}
 
 	go func() {
-		defer func() {
-			r := recover()
-			log.Fatal(r)
-		}()
 		defer c.Close()
 		if s.isTail {
-			s.streamTail(ctx, c, strChan)
+			err = s.streamTail(ctx, c)
 		} else {
-			s.streamFrom(ctx, c, strChan)
+			err = s.streamFrom(ctx, c)
 			//fallback to tail if from returns
-			s.streamTail(ctx, c, strChan)
+			if err == nil {
+				err = s.streamTail(ctx, c)
+			}
+		}
+		if err != nil {
+			if s.onError != nil {
+				s.onError(err)
+			}
 		}
 	}()
 	return nil
 }
 
-func (s *gcpStream) streamFrom(ctx context.Context, c *logging.Client, strChan chan<- string) {
+func (s *gcpStream) streamFrom(ctx context.Context, c *logging.Client) error {
 	lastTime := s.freshness
 	lastFilter := ""
 	for !s.stop {
-		//if !lastTS.IsZero()
 		filter := fmt.Sprintf(`timestamp > "%s"`, lastTime)
 		if filter == lastFilter {
-			// wait
-			_ = lastFilter
-			//t, _ := time.Parse(time.RFC3339, lastTime)
-			//filter = fmt.Sprintf(`timestamp > "%s"`, t.Add(time.Second).Format(time.RFC3339))
-			return
+			return nil
 		}
 		lastFilter = filter
 		if len(s.filter) > 0 {
@@ -120,19 +125,20 @@ func (s *gcpStream) streamFrom(ctx context.Context, c *logging.Client, strChan c
 			if iterator.Done == err {
 				break
 			} else if err != nil {
-				log.Fatal(err)
+				return err
 			}
 			var b []byte
 			b, lastTime = massageEntryLog(resp)
-			strChan <- string(b)
+			s.strChan <- string(b)
 		}
 	}
+	return nil
 }
 
-func (s *gcpStream) streamTail(ctx context.Context, c *logging.Client, strChan chan<- string) {
+func (s *gcpStream) streamTail(ctx context.Context, c *logging.Client) error {
 	stream, err := c.TailLogEntries(ctx)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer stream.CloseSend()
 
@@ -141,7 +147,7 @@ func (s *gcpStream) streamTail(ctx context.Context, c *logging.Client, strChan c
 		Filter:        s.filter,
 	}
 	if err := stream.Send(req); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	for {
@@ -150,19 +156,20 @@ func (s *gcpStream) streamTail(ctx context.Context, c *logging.Client, strChan c
 			break
 		}
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		for _, resp := range chunk.Entries {
 			if iterator.Done == err {
 				break
 			} else if err != nil {
-				log.Fatal(err)
+				return err
 			}
 			var b []byte
 			b, _ = massageEntryLog(resp)
-			strChan <- string(b)
+			s.strChan <- string(b)
 		}
 	}
+	return nil
 }
 
 func massageEntryLog(resp *loggingpb.LogEntry) ([]byte, string) {

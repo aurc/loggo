@@ -37,7 +37,7 @@ import (
 const datelayout = "2006-01-02T15:04:05-0700"
 
 func main() {
-	b, err := ioutil.ReadFile("testdata/test1.json")
+	b, err := ioutil.ReadFile("internal/testdata/test1.json")
 	if err != nil {
 		panic(err)
 	}

@@ -23,6 +23,7 @@ THE SOFTWARE.
 package filter
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -108,8 +109,13 @@ type Expression struct {
 }
 
 type ConditionElement struct {
-	Condition     *Condition  ` @@`
-	Subexpression *Expression `| "(" @@ ")"`
+	Condition     *Condition   ` @@`
+	GlobalToken   *GlobalToken `| @@ `
+	Subexpression *Expression  `| "(" @@ ")"`
+}
+
+type GlobalToken struct {
+	String *string `@String`
 }
 
 type Condition struct {
@@ -161,9 +167,20 @@ func (c *ConditionElement) Apply(row map[string]interface{}, key map[string]*con
 	switch {
 	case c.Condition != nil:
 		return c.Condition.Apply(row, key)
+	case c.GlobalToken != nil:
+		return c.GlobalToken.Apply(row)
 	default:
 		return c.Subexpression.Apply(row, key)
 	}
+}
+
+func (g *GlobalToken) Apply(row map[string]interface{}) (bool, error) {
+	b, err := json.Marshal(row)
+	if err != nil {
+		return false, err
+	}
+	str := strings.ToLower(string(b))
+	return strings.Contains(str, strings.ToLower(*g.String)), nil
 }
 
 func (c *Condition) Apply(row map[string]interface{}, key map[string]*config.Key) (bool, error) {

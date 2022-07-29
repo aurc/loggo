@@ -44,7 +44,7 @@ from a given selected project and GCP logging filters:
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		projectName := cmd.Flag("project").Value.String()
-		from := reader.ParseFrom(cmd.Flag("from").Value.String())
+		from := cmd.Flag("from").Value.String()
 		filter := cmd.Flag("filter").Value.String()
 		templateFile := cmd.Flag("template").Value.String()
 		saveParams := cmd.Flag("params-save").Value.String()
@@ -91,13 +91,8 @@ from a given selected project and GCP logging filters:
 			if len(projectName) == 0 {
 				log.Fatal("--project flag is required.")
 			}
-			inputChan := make(chan string, 1000)
-			reader := reader.MakeGCPReader(projectName, filter, from)
-
-			if err := reader.StreamInto(inputChan); err != nil {
-				log.Fatalf("unable to start app %v", err)
-			}
-			app := loggo.NewLoggoApp(inputChan, templateFile)
+			reader := reader.MakeGCPReader(projectName, filter, reader.ParseFrom(from), nil)
+			app := loggo.NewLoggoApp(reader, templateFile)
 			app.Run()
 		}
 	},

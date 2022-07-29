@@ -110,6 +110,9 @@ func Save(name string, s *SavedParams) error {
 	}
 
 	sw.Print()
+
+	fmt.Println()
+	fmt.Printf("Saved at %v", fDir)
 	return nil
 }
 
@@ -152,6 +155,9 @@ func Remove(name string) error {
 
 func List() ([]*SavedParamsWrapper, error) {
 	paramsDir, err := paramDirectory()
+	fmt.Println()
+	fmt.Println("Listing files at ", paramsDir)
+	fmt.Println()
 	if err != nil {
 		return nil, err
 	}

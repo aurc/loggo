@@ -46,7 +46,8 @@ func TestFileStream_StreamInto(t *testing.T) {
 
 		// Routine to write file lines
 		before := time.Now().UnixMilli()
-		reader := MakeReader(filePath)
+		streamReceiver := make(chan string, 1)
+		reader := MakeReader(filePath, streamReceiver)
 		go func() {
 			for i := 0; i < 10; i++ {
 				file, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, 0644)
@@ -61,9 +62,8 @@ func TestFileStream_StreamInto(t *testing.T) {
 			}
 			reader.Close()
 		}()
-		streamReceiver := make(chan string, 1)
 		var lines []string
-		_ = reader.StreamInto(streamReceiver)
+		_ = reader.StreamInto()
 		for {
 			line, ok := <-streamReceiver
 			if !ok {

@@ -43,7 +43,7 @@ func TestMakeConfig(t *testing.T) {
 		},
 		{
 			name:      "Valid value supplied",
-			givenFile: "../../config-sample/gcp.yaml",
+			givenFile: "../config-sample/gcp.yaml",
 			wants:     defConfig,
 		},
 		{
@@ -54,7 +54,7 @@ func TestMakeConfig(t *testing.T) {
 		},
 		{
 			name:       "Bad format file",
-			givenFile:  "../../testdata/test3.txt",
+			givenFile:  "../testdata/test3.txt",
 			wants:      defConfig,
 			wantsError: true,
 		},

@@ -32,7 +32,7 @@ func main() {
 	app := loggo.NewApp("")
 	view := loggo.NewJsonView(app, true, nil, nil)
 
-	b, err := os.ReadFile("testdata/test1.json")
+	b, err := os.ReadFile("internal/testdata/test1.json")
 	if err != nil {
 		panic(err)
 	}

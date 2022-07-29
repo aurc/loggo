@@ -18,11 +18,11 @@ Stack Driver ([Google Logs](https://cloud.google.com/logging), see [GCP-Stream C
 <tr>
 <td>
 <p>Without l`oGGo</p>
-<img src="mov/term.gif">
+<img src="img/mov/term.gif">
 </td>
 <td>
 <p>With l`oGGo</p>
-<img src="mov/loggo.gif">
+<img src="img/mov/loggo.gif">
 </td>
 </tr>
 </table>
@@ -131,12 +131,12 @@ Note that you can pipe to anything that produces an output to the `stdin`.
 - Navigate Left-Right-Up-Down on Large Grids
   - Select a Line
   - Use the arrow keys (`↓ ↑ ← →`)
-    ![](mov/nav_right_left.gif)
+    ![](img/mov/nav_right_left.gif)
 - Select on screen text
   - Horizontally based selection (`Alt` + Mouse `Click/Drag`)
   - Block/Vertical based selection (`Cmd`+`Opt`+ Mouse `Click/Drag` - macOS)
   - Copy the selected text to clipboard (`Cmd`+`C` - macOS/`Ctrl`+`C` - other systems)
-    ![](mov/selection.gif) 
+    ![](img/mov/selection.gif) 
 - Configure Rendering Templates:
 ![](img/render_template.png)
 - Fine Tune how columns are displayed (Template):
@@ -223,7 +223,7 @@ templates prior using the loggo command.
 
 **Blank Canvas:**
 
-![](mov/template.gif)
+![](img/mov/template.gif)
 ````
 loggo template
 ````

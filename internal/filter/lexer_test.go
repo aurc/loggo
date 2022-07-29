@@ -62,6 +62,33 @@ func TestParseFilterExpression(t *testing.T) {
 			wantsResult:     true,
 		},
 		{
+			name: `wants true - global token`,
+			whenJsonRow: `
+					{
+						"a": {
+							"b": "y",
+							"z": "Something different"
+						},
+						"c": "2"
+					}`,
+			keySet: map[string]*config.Key{
+				"a/b": {
+					Name: "a/b",
+					Type: config.TypeString,
+				},
+				"a/z": {
+					Name: "a/z",
+					Type: config.TypeString,
+				},
+				"c": {
+					Name: "c",
+					Type: config.TypeNumber,
+				},
+			},
+			givenExpression: `((a/b = "x" OR a/b = "y") AND "ME")`,
+			wantsResult:     true,
+		},
+		{
 			name: `wants true - 7 is greater than 5`,
 			whenJsonRow: `
 					{
