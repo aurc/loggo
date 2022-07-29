@@ -23,9 +23,18 @@ THE SOFTWARE.
 package reader
 
 type reader struct {
-	strChan chan string
-	onError func(err error)
+	strChan    chan string
+	readerType Type
+	onError    func(err error)
 }
+
+type Type = int64
+
+const (
+	TypeFile = Type(iota)
+	TypePipe
+	TypeGCP
+)
 
 // MakeReader builds a continues file/pipe streamer used to feed the logger. If
 // fileName is not provided, it will attempt to consume the input from the stdin.
@@ -35,12 +44,18 @@ func MakeReader(fileName string, strChan chan string) Reader {
 	}
 	if len(fileName) > 0 {
 		return &fileStream{
-			reader:   reader{strChan: strChan},
+			reader: reader{
+				strChan:    strChan,
+				readerType: TypeFile,
+			},
 			fileName: fileName,
 		}
 	}
 	return &readPipeStream{
-		reader: reader{strChan: strChan},
+		reader: reader{
+			strChan:    strChan,
+			readerType: TypePipe,
+		},
 	}
 }
 
@@ -50,6 +65,10 @@ func (s *reader) ChanReader() <-chan string {
 
 func (s *reader) ErrorNotifier(onError func(err error)) {
 	s.onError = onError
+}
+
+func (s *reader) Type() Type {
+	return s.readerType
 }
 
 type Reader interface {

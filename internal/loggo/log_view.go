@@ -68,7 +68,14 @@ func NewLogReader(app *LoggoApp, reader reader.Reader) *LogView {
 	lv.makeUIComponents()
 	lv.makeLayouts()
 	reader.ErrorNotifier(func(err error) {
-		
+		lv.app.ShowPrefabModal(fmt.Sprintf("An error occurred with the input stream: %v "+
+			"\nYou can continue browsing the buffered logs or close the app.", err), 50, 20,
+			tview.NewButton("Quit").SetSelectedFunc(func() {
+				lv.app.Stop()
+			}),
+			tview.NewButton("Continue").SetSelectedFunc(func() {
+
+			}))
 	})
 	lv.read()
 	go func() {

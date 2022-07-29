@@ -26,7 +26,6 @@ import (
 	"github.com/aurc/loggo/internal/loggo"
 	"github.com/aurc/loggo/internal/reader"
 	"github.com/spf13/cobra"
-	"log"
 )
 
 // streamCmd represents the stream command
@@ -44,10 +43,6 @@ rotation and continue to stream. For example:
 		fileName := cmd.Flag("file").Value.String()
 		templateFile := cmd.Flag("template").Value.String()
 		reader := reader.MakeReader(fileName, nil)
-
-		if err := reader.StreamInto(); err != nil {
-			log.Fatalf("unable to start app %v", err)
-		}
 		app := loggo.NewLoggoApp(reader, templateFile)
 		app.Run()
 	},

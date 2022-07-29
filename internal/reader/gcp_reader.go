@@ -60,7 +60,8 @@ func MakeGCPReader(project, filter, freshness string, strChan chan string) *gcpS
 	}
 	return &gcpStream{
 		reader: reader{
-			strChan: strChan,
+			strChan:    strChan,
+			readerType: TypeGCP,
 		},
 		projectID: project,
 		filter:    filter,
@@ -73,7 +74,7 @@ func (s *gcpStream) StreamInto() error {
 	ctx := context.Background()
 	err := s.checkAuth(ctx)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	c, err := logging.NewClient(ctx)
@@ -93,7 +94,9 @@ func (s *gcpStream) StreamInto() error {
 			}
 		}
 		if err != nil {
-
+			if s.onError != nil {
+				s.onError(err)
+			}
 		}
 	}()
 	return nil
