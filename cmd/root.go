@@ -23,6 +23,7 @@ THE SOFTWARE.
 package cmd
 
 import (
+	"github.com/aurc/loggo/internal/loggo"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -42,6 +43,7 @@ logs and a toolset to assist you tailoring the display format.`,
 // Initiate adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Initiate() {
+	loggo.BuildVersion = BuildVersion
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)

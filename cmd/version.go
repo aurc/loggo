@@ -20,13 +20,25 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-package main
+package cmd
 
-import "github.com/aurc/loggo/cmd"
+import (
+	"fmt"
+	"github.com/spf13/cobra"
+)
 
-var version string
+var BuildVersion string
 
-func main() {
-	cmd.BuildVersion = version
-	cmd.Initiate()
+// versionCmd represents the stream command
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Retrieves the build version",
+	Long:  `Retrieves the build version.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(BuildVersion)
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(versionCmd)
 }

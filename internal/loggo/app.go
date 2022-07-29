@@ -29,6 +29,8 @@ import (
 	"github.com/rivo/tview"
 )
 
+var BuildVersion string
+
 type LoggoApp struct {
 	appScaffold
 	chanReader reader.Reader
