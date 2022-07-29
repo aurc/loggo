@@ -23,21 +23,21 @@ THE SOFTWARE.
 package loggo
 
 import (
+	"fmt"
+	"github.com/aurc/loggo/internal/color"
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"strings"
 )
 
 type FilterView struct {
 	tview.Flex
-	app          Loggo
-	nameField    *tview.InputField
-	filterTree   *tview.TreeView
-	keysTable    *tview.Table
-	keyNameField *tview.InputField
-	operation    *tview.DropDown
-	value1       *tview.InputField
-	value2       *tview.InputField
-	setupPane    *tview.Flex
-	showQuit     bool
+	app             Loggo
+	expressionField *tview.InputField
+	buttonSearch    *tview.Button
+	buttonClear     *tview.Button
+	keyFinderField  *tview.InputField
+	showQuit        bool
 }
 
 func NewFilterView(app Loggo, showQuit bool) *FilterView {
@@ -48,49 +48,110 @@ func NewFilterView(app Loggo, showQuit bool) *FilterView {
 	}
 	tv.makeUIComponents()
 	tv.makeLayouts()
-	tv.makeKeysTableData()
-	tv.app.SetFocus(tv.keysTable)
 	return tv
 }
 
 func (t *FilterView) makeUIComponents() {
-	t.nameField = tview.NewInputField()
-	t.filterTree = tview.NewTreeView()
-	t.keysTable = tview.NewTable().SetSelectable(true, false)
-	t.keyNameField = tview.NewInputField()
-	t.operation = tview.NewDropDown()
-	t.value1 = tview.NewInputField()
-	t.value2 = tview.NewInputField()
+	t.expressionField = tview.NewInputField().
+		SetPlaceholder("Filter Expression...").
+		SetFieldStyle(color.FieldStyle).SetPlaceholderStyle(color.PlaceholderStyle)
+	t.expressionField.
+		SetBackgroundColor(color.ColorBackgroundField)
+
+	t.buttonSearch = tview.NewButton("Search").SetSelectedFunc(func() {
+
+	})
+	t.buttonClear = tview.NewButton("Clear").SetSelectedFunc(func() {
+		t.expressionField.SetText("")
+		t.app.SetFocus(t.expressionField)
+	})
+
+	t.keyFinderField = tview.NewInputField().SetPlaceholder("Start typing to find a key...")
+	t.keyFinderField.SetAutocompleteFunc(func(currentText string) (entries []string) {
+		matches := make([]string, 0)
+		for _, v := range t.app.Config().Keys {
+			vt := strings.ToLower(strings.TrimSpace(v.Name))
+			ct := strings.ToLower(strings.TrimSpace(currentText))
+			if strings.Contains(vt, ct) && len(ct) > 0 || ct == "*" {
+				matches = append(matches, v.Name)
+			}
+		}
+		return matches
+	})
+
+	t.keyFinderField.SetDoneFunc(func(key tcell.Key) {
+		switch key {
+		case tcell.KeyEnter, tcell.KeyTAB:
+			t.addKey()
+		case tcell.KeyEsc:
+			t.keyFinderField.SetText("")
+		}
+	})
+}
+
+func (t *FilterView) addKey() {
+	tex := t.expressionField.GetText()
+	t.expressionField.SetText(tex + " " + t.keyFinderField.GetText())
+	t.keyFinderField.SetText("")
+	t.app.SetFocus(t.expressionField)
 }
 
 func (t *FilterView) makeLayouts() {
 	t.Flex.Clear()
+	filterRow := tview.NewFlex().SetDirection(tview.FlexColumn)
+	filterField := tview.NewFlex().SetDirection(tview.FlexColumn).
+		AddItem(tview.NewTextView().SetText("🔎").SetTextAlign(tview.AlignCenter), 4, 1, true).
+		AddItem(t.expressionField, 0, 1, true)
+	filterField.SetBorder(true)
+	filterRow.
+		AddItem(filterField, 0, 1, false).
+		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
+			AddItem(tview.NewBox(), 1, 1, false).
+			AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
+				AddItem(tview.NewBox(), 1, 1, false).
+				AddItem(t.buttonSearch, 10, 1, false).
+				AddItem(tview.NewBox(), 1, 1, false).
+				AddItem(t.buttonClear, 10, 1, false), 1, 1, false).
+			AddItem(tview.NewBox(), 1, 1, false),
+			23, 1, true)
 
-	body := tview.NewFlex().SetDirection(tview.FlexRow)
-	body.SetBorder(true)
-	t.Flex.Clear().SetDirection(tview.FlexColumn).
-		AddItem(body, 0, 1, false).
-		AddItem(t.keysTable, 40, 1, true)
+	okButton := tview.NewButton("OK").SetSelectedFunc(t.addKey)
+	okButton.SetBackgroundColor(tcell.ColorGreen)
+	actionBar := tview.NewFlex().SetDirection(tview.FlexColumn)
+	actionBar.AddItem(tview.NewTextView().SetText(" 🔑 Finder:"), 12, 0, false)
+	actionBar.AddItem(t.keyFinderField, 0, 1, false).
+		AddItem(tview.NewBox(), 1, 1, false).
+		AddItem(okButton, 4, 1, false).
+		AddItem(tview.NewTextView().SetText(" |"), 2, 0, false)
+	t.addButton(actionBar, "=")
+	t.addButton(actionBar, "==")
+	t.addButton(actionBar, "!=")
+	t.addButton(actionBar, ">")
+	t.addButton(actionBar, "<")
+	t.addButton(actionBar, ">=")
+	t.addButton(actionBar, "<=")
+	actionBar.AddItem(tview.NewTextView().SetText(" |"), 2, 0, false)
+	t.addButton(actionBar, "CONTAINS")
+	t.addButton(actionBar, "BETWEEN")
+	t.addButton(actionBar, "MATCH")
+	actionBar.AddItem(tview.NewTextView().SetText(" |"), 2, 0, false)
+	t.addButton(actionBar, "AND")
+	t.addButton(actionBar, "OR")
+	actionBar.AddItem(tview.NewBox(), 24, 1, false)
 
-	t.setupPane = tview.NewFlex().SetDirection(tview.FlexRow)
-	body.Clear().
-		AddItem(t.filterTree, 0, 1, false).
-		AddItem(t.setupPane, 5, 1, false)
-	t.makeSetupPane()
+	t.Flex.Clear().SetDirection(tview.FlexRow).
+		AddItem(filterRow, 3, 1, false).
+		AddItem(actionBar, 1, 1, false)
+
 }
 
-func (t *FilterView) makeSetupPane() {
-	t.setupPane.Clear()
-}
-
-func (t *FilterView) makeKeysTableData() {
-	t.keysTable.SetCell(0, 0, tview.NewTableCell("[yellow::b]Key Name").SetSelectable(false))
-	for i, v := range t.app.Config().Keys {
-		t.keysTable.SetCell(i+1, 0, tview.NewTableCell(v.Name).SetSelectable(true))
-	}
-	t.keysTable.SetSelectionChangedFunc(func(row, column int) {
-		if row > 0 {
-
-		}
+func (t *FilterView) addButton(ab *tview.Flex, title string) {
+	b := tview.NewButton(title).SetSelectedFunc(func() {
+		t.expressionField.SetText(fmt.Sprintf(`%s %s `, t.expressionField.GetText(), title))
+		t.app.SetFocus(t.expressionField)
 	})
+	b.SetBackgroundColor(tcell.ColorGray).SetTitleColor(tcell.ColorWhite)
+	ab.
+		AddItem(tview.NewBox(), 1, 1, false).
+		AddItem(b, len(title)+2, 1, false)
 }

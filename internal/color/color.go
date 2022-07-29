@@ -35,6 +35,9 @@ var (
 	FieldStyle = tcell.StyleDefault.
 			Background(ColorBackgroundField).
 			Foreground(ColorForegroundField)
+	PlaceholderStyle = tcell.StyleDefault.
+				Background(ColorBackgroundField).
+				Foreground(tcell.ColorDarkGray)
 	SelectStyle = tcell.StyleDefault.
 			Background(ColorSelectedBackground).
 			Foreground(ColorSelectedForeground)

@@ -22,10 +22,14 @@ THE SOFTWARE.
 
 package main
 
-import "github.com/aurc/loggo/internal/loggo"
+import (
+	"github.com/aurc/loggo/internal/loggo"
+	"github.com/rivo/tview"
+)
 
 func main() {
-	app := loggo.NewApp("")
-	view := loggo.NewFilterView(app, true)
-	app.Run(view)
+	app := loggo.NewApp("internal/config-sample/gcp.yaml")
+	main := tview.NewFlex().SetDirection(tview.FlexRow)
+	main.AddItem(loggo.NewFilterView(app, true), 4, 1, true)
+	app.Run(main)
 }

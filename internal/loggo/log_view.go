@@ -48,6 +48,7 @@ type LogView struct {
 	config             *config.Config
 	navMenu            *tview.Flex
 	mainMenu           *tview.Flex
+	filterView         *FilterView
 	linesView          *tview.TextView
 	followingView      *tview.TextView
 	logFullScreen      bool
@@ -68,23 +69,20 @@ func NewLogReader(app *LoggoApp, reader reader.Reader) *LogView {
 	lv.makeUIComponents()
 	lv.makeLayouts()
 	reader.ErrorNotifier(func(err error) {
+		go func() {
+			time.Sleep(time.Second)
+			lv.app.Draw()
+		}()
 		lv.app.ShowPrefabModal(fmt.Sprintf("An error occurred with the input stream: %v "+
 			"\nYou can continue browsing the buffered logs or close the app.", err), 50, 20,
 			tview.NewButton("Quit").SetSelectedFunc(func() {
 				lv.app.Stop()
 			}),
 			tview.NewButton("Continue").SetSelectedFunc(func() {
-
+				lv.app.DismissModal()
 			}))
 	})
 	lv.read()
-	go func() {
-		lv.app.ShowModal(NewSplashScreen(lv.app), 71, 16, tcell.ColorBlack)
-		lv.app.Draw()
-		time.Sleep(4 * time.Second)
-		lv.app.DismissModal()
-		lv.app.Draw()
-	}()
 	go func() {
 		time.Sleep(10 * time.Millisecond)
 		lv.isFollowing = true
@@ -155,9 +153,11 @@ func (l *LogView) textViewMenuControl(tv *tview.TextView, onFocus func()) *tview
 		return event
 	})
 	tv.SetHighlightedFunc(func(added, removed, remaining []string) {
-		onFocus()
+		if len(removed) == 0 {
+			onFocus()
+		}
 	})
-	onFocus()
+	//onFocus()
 	return tv
 }
 
@@ -220,7 +220,14 @@ func (l *LogView) makeUIComponents() {
 
 	l.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
-		case tcell.KeyF1:
+		case tcell.KeyCtrlF:
+			return nil
+		case tcell.KeyCtrlA:
+			go func() {
+				l.showAbout()
+			}()
+			return nil
+		case tcell.KeyCtrlT:
 			l.makeLayoutsWithTemplateView()
 			return nil
 		case tcell.KeyF2:
@@ -233,63 +240,114 @@ func (l *LogView) makeUIComponents() {
 	l.linesView = tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignRight)
 	l.followingView = tview.NewTextView().
 		SetRegions(true).
-		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter)
+		SetDynamicColors(true)
 	l.followingView.SetFocusFunc(func() {
 		go l.toggledFollowing()
 	})
 	l.followingView.SetBlurFunc(func() {
 		l.followingView.Highlight("")
 	})
-	l.navMenu = tview.NewFlex().SetDirection(tview.FlexColumn)
+	l.navMenu = tview.NewFlex().SetDirection(tview.FlexRow)
 	l.navMenu.
-		SetBackgroundColor(color.ColorBackgroundField).SetTitleAlign(tview.AlignCenter)
+		SetBackgroundColor(color.ColorBackgroundField).SetBorderPadding(0, 0, 1, 0)
 
 	l.navMenu.
 		AddItem(tview.NewTextView().
 			SetDynamicColors(true).
-			SetText("[yellow::b](↲)[-::-] View"), 0, 2, false).
+			SetText("[purple]━━━━━ Navigation ━━━━━━").
+			SetTextAlign(tview.AlignCenter), 1, 2, false).
 		AddItem(tview.NewTextView().
 			SetDynamicColors(true).
-			SetText("[yellow::b](↓ ↑ ← →)[-::-] Navigate"), 0, 3, false).
+			SetText("[yellow::b] ↲      [-::-] View"), 1, 2, false).
 		AddItem(tview.NewTextView().
 			SetDynamicColors(true).
-			SetText("[yellow::b](Alt-Click)[-::-] Text Selection"), 0, 3, false).
+			SetText("[yellow::b] ↓ ↑ ← →[-::-] Navigate"), 1, 3, false).
 		AddItem(l.textViewMenuControl(tview.NewTextView().
 			SetDynamicColors(true).SetRegions(true).
-			SetText(`[yellow::b](g) [-::u]["1"]Top[""]`), func() {
+			SetText(`[yellow::b] g       [-::u]["1"]Top[""]`), func() {
 			l.isFollowing = false
 			l.table.ScrollToBeginning()
 			if len(l.inSlice) > 1 {
 				go l.table.Select(1, 0)
 			}
-		}), 0, 1, false).
+		}), 1, 1, false).
 		AddItem(l.textViewMenuControl(tview.NewTextView().
 			SetDynamicColors(true).SetRegions(true).
-			SetText(`[yellow::b](G) [-::u]["1"]Bottom[""]`), func() {
+			SetText(`[yellow::b] G       [-::u]["1"]Bottom[""]`), func() {
 			l.isFollowing = false
 			l.table.ScrollToEnd()
 			go l.table.Select(len(l.inSlice), 0)
-		}), 0, 2, false).
+		}), 1, 2, false).
 		AddItem(l.textViewMenuControl(tview.NewTextView().
 			SetDynamicColors(true).SetRegions(true).
-			SetText(`[yellow::b](^f) [-::u]["1"]Pg Up[""]`), func() {
+			SetText(`[yellow::b] ^f      [-::u]["1"]Pg Up[""]`), func() {
 			l.isFollowing = false
 			l.table.InputHandler()(tcell.NewEventKey(tcell.KeyPgUp, '0', 0), func(p tview.Primitive) {})
-		}), 0, 2, false).
+		}), 1, 2, false).
 		AddItem(l.textViewMenuControl(tview.NewTextView().
 			SetDynamicColors(true).SetRegions(true).
-			SetText(`[yellow::b](^b) [-::-]["1"]Pg Down[""]`), func() {
+			SetText(`[yellow::b] ^b      [-::u]["1"]Pg Down[""]`), func() {
 			l.isFollowing = false
 			l.table.InputHandler()(tcell.NewEventKey(tcell.KeyPgDn, '0', 0), func(p tview.Primitive) {})
-		}), 0, 2, false)
+		}), 1, 2, false).
+		AddItem(tview.NewTextView().
+			SetDynamicColors(true).
+			SetText("[purple]━━━━━━ Selection ━━━━━━").
+			SetTextAlign(tview.AlignCenter), 1, 2, false).
+		AddItem(tview.NewTextView().
+			SetDynamicColors(true).
+			SetText("[yellow::b] ⌥ 🖱    [-::-] Horizontal"), 1, 3, false).
+		AddItem(tview.NewTextView().
+			SetDynamicColors(true).
+			SetText("[yellow::b] ⌥ ⌘ 🖱  [-::-] Vertical"), 1, 3, false).
+		AddItem(tview.NewTextView().
+			SetDynamicColors(true).
+			SetText("[purple]━━━━━━━ Stream ━━━━━━━━").
+			SetTextAlign(tview.AlignCenter), 1, 2, false).
+		AddItem(l.followingView, 1, 2, false).
+		AddItem(l.textViewMenuControl(tview.NewTextView().
+			SetDynamicColors(true).SetRegions(true).
+			SetText(`[yellow::b] ^t      [-::u]["1"]Template[""]`), func() {
+			if l.isTemplateViewShown() {
+				// TODO: Find a reliable way to respond to external closure
+			} else {
+				l.makeLayoutsWithTemplateView()
+			}
+		}), 1, 2, false).
+		AddItem(l.textViewMenuControl(tview.NewTextView().
+			SetDynamicColors(true).SetRegions(true).
+			SetText(`[yellow::b] ^f      [-::u]["1"]Local Filter[""]`), func() {
+			if l.isTemplateViewShown() {
+				// TODO: Find a reliable way to respond to external closure
+			} else {
+				l.makeLayoutsWithTemplateView()
+			}
+		}), 1, 2, false).
+		AddItem(tview.NewTextView().
+			SetDynamicColors(true).
+			SetText("[purple]━━━━━ Application ━━━━━").
+			SetTextAlign(tview.AlignCenter), 1, 2, false).
+		AddItem(l.textViewMenuControl(tview.NewTextView().
+			SetDynamicColors(true).SetRegions(true).
+			SetText(`[yellow::b] ^a      [-::u]["1"]About[""]`), func() {
+			go func() {
+				l.showAbout()
+			}()
+		}), 1, 2, false).
+		AddItem(l.textViewMenuControl(tview.NewTextView().SetRegions(true).
+			SetDynamicColors(true).
+			SetText(`[yellow::b] ^c      [-::u]["1"]Quit[""]`), func() {
+			l.app.Stop()
+		}), 0, 1, false).
+		AddItem(tview.NewBox(), 0, 1, false).
+		AddItem(l.linesView, 1, 1, false)
 	l.mainMenu = tview.NewFlex().SetDirection(tview.FlexColumn)
 	l.mainMenu.
 		SetBackgroundColor(color.ColorBackgroundField).SetTitleAlign(tview.AlignCenter)
 	l.mainMenu.
 		AddItem(l.textViewMenuControl(tview.NewTextView().
 			SetDynamicColors(true).SetRegions(true).
-			SetText(`[yellow::b](F1) [-::u]["1"]Template[""]`), func() {
+			SetText(`[yellow::b](^t) [-::u]["1"]Template[""]`), func() {
 			if l.isTemplateViewShown() {
 				// TODO: Find a reliable way to respond to external closure
 			} else {
@@ -304,6 +362,25 @@ func (l *LogView) makeUIComponents() {
 		}), 0, 1, false).
 		AddItem(l.linesView, 0, 3, false)
 	l.updateLineView()
+}
+
+func (l *LogView) showAbout() {
+	l.app.ShowModal(NewSplashScreen(l.app), 71, 16, tcell.ColorBlack)
+	l.app.Draw()
+	time.Sleep(4 * time.Second)
+	l.app.DismissModal()
+	l.app.Draw()
+}
+func (l *LogView) makeLayouts() {
+	mainContent := tview.NewFlex().SetDirection(tview.FlexColumn).
+		AddItem(l.table, 0, 2, true).
+		AddItem(l.navMenu, 24, 1, false)
+	l.Flex.Clear().SetDirection(tview.FlexRow).
+		AddItem(mainContent, 0, 2, true).
+		//AddItem(l.navMenu, 1, 1, false).
+		//AddItem(l.mainMenu, 1, 1, false).
+		SetBackgroundColor(color.ColorBackgroundField)
+	l.app.SetFocus(l.table)
 }
 
 func (l *LogView) isTemplateViewShown() bool {
@@ -331,19 +408,10 @@ func (l *LogView) updateLineView() {
 					l.globalCount))
 	}
 	if l.isFollowing {
-		l.followingView.SetText(`[yellow::b](F2) [-::u]["1"]Toggle Auto-Scroll[""][::-] ([green::bi]ON[-::-])`)
+		l.followingView.SetText(`[yellow::b] F2 [green::bi]ON[-::-]   [-::u]["1"]Auto-Scroll[""][::-]`)
 	} else {
-		l.followingView.SetText(`[yellow::b](F2) [-::u]["1"]Toggle Auto-Scroll[""][::-] ([red::bi]OFF[-::-])`)
+		l.followingView.SetText(`[yellow::b] F2 [red::bi]OFF[-::-]  [-::u]["1"]Auto-Scroll[""][::-]`)
 	}
-}
-
-func (l *LogView) makeLayouts() {
-	l.Flex.Clear().SetDirection(tview.FlexRow).
-		AddItem(l.navMenu, 1, 1, false).
-		AddItem(l.table, 0, 2, true).
-		AddItem(l.mainMenu, 1, 1, false).
-		SetBackgroundColor(color.ColorBackgroundField)
-	l.app.SetFocus(l.table)
 }
 
 func (l *LogView) makeLayoutsWithJsonView() {
@@ -355,7 +423,8 @@ func (l *LogView) makeLayoutsWithJsonView() {
 		AddItem(l.jsonView, 0, 2, false).
 		AddItem(l.mainMenu, 1, 1, false)
 
-	l.app.SetFocus(l.jsonView.textView)
+	//l.app.SetFocus(l.jsonView.textView)
+	l.app.SetFocus(l.table)
 }
 
 func (l *LogView) makeLayoutsWithTemplateView() {
