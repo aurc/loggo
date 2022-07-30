@@ -24,10 +24,11 @@ package loggo
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/aurc/loggo/internal/color"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"strings"
 )
 
 type FilterView struct {
@@ -85,6 +86,15 @@ func (t *FilterView) makeUIComponents() {
 			t.addKey()
 		case tcell.KeyEsc:
 			t.keyFinderField.SetText("")
+		}
+	})
+
+	t.keyFinderField.SetBlurFunc(func() {
+		if len(t.keyFinderField.GetText()) > 0 {
+			go func() {
+				t.keyFinderField.SetText("")
+				t.keyFinderField.InputHandler()(tcell.NewEventKey(tcell.KeyEsc, '0', 0), func(p tview.Primitive) {})
+			}()
 		}
 	})
 }

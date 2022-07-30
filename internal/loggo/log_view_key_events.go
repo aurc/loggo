@@ -20,19 +20,37 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-package main
+package loggo
 
 import (
-	"github.com/aurc/loggo/internal/color"
-	"github.com/aurc/loggo/internal/loggo"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
-func main() {
-	app := loggo.NewApp("internal/config-sample/gcp.yaml")
-	main := tview.NewFlex().SetDirection(tview.FlexRow)
-	main.AddItem(loggo.NewFilterView(app, true), 4, 1, true).
-		AddItem(loggo.NewHorizontalSeparator(color.FieldStyle, loggo.LineHThick, "test", tcell.ColorYellow), 1, 2, false)
-	app.Run(main)
+func (l *LogView) keyEvents() {
+	l.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyCtrlA:
+			go func() {
+				l.showAbout()
+			}()
+			return nil
+		case tcell.KeyCtrlT:
+			l.makeLayoutsWithTemplateView()
+			return nil
+		case tcell.KeyCtrlSpace:
+			l.toggledFollowing()
+			return nil
+		}
+		prim := l.app.app.GetFocus()
+		if _, ok := prim.(*tview.InputField); ok {
+			return event
+		}
+		switch event.Rune() {
+		case ':':
+			l.toggleFilter()
+		}
+
+		return event
+	})
 }
