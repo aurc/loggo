@@ -123,6 +123,7 @@ func (a *appScaffold) ShowPrefabModal(text string, width, height int, buttons ..
 	modal := tview.NewFlex().SetDirection(tview.FlexRow)
 	modal.SetBackgroundColor(tcell.ColorDarkBlue)
 	mainContent := tview.NewTextView().
+		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
 		SetWordWrap(true).
 		SetText(text)

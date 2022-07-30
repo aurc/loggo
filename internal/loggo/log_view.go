@@ -25,7 +25,10 @@ package loggo
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
+
+	"github.com/aurc/loggo/internal/filter"
 
 	"github.com/aurc/loggo/internal/reader"
 
@@ -45,6 +48,7 @@ type LogView struct {
 	templateView       *TemplateView
 	layout             *tview.Flex
 	config             *config.Config
+	keyMap             map[string]*config.Key
 	navMenu            *tview.Flex
 	mainMenu           *tview.Flex
 	filterView         *FilterView
@@ -53,18 +57,24 @@ type LogView struct {
 	logFullScreen      bool
 	templateFullScreen bool
 	inSlice            []map[string]interface{}
+	finSlice           []map[string]interface{}
+	filterChannel      chan *filter.Expression
+	filterLock         sync.RWMutex
 	globalCount        int64
 	isFollowing        bool
 	hideFilter         bool
+	rebufferFilter     bool
 }
 
 func NewLogReader(app *LoggoApp, reader reader.Reader) *LogView {
 	lv := &LogView{
-		Flex:        *tview.NewFlex(),
-		app:         app,
-		config:      app.Config(),
-		chanReader:  reader,
-		isFollowing: true,
+		Flex:          *tview.NewFlex(),
+		app:           app,
+		config:        app.Config(),
+		chanReader:    reader,
+		filterChannel: make(chan *filter.Expression, 1),
+		filterLock:    sync.RWMutex{},
+		isFollowing:   true,
 	}
 	lv.makeUIComponents()
 	lv.makeLayouts()
@@ -82,60 +92,16 @@ func NewLogReader(app *LoggoApp, reader reader.Reader) *LogView {
 				lv.app.DismissModal()
 			}))
 	})
+
 	lv.read()
+	lv.filter()
+	lv.filterChannel <- nil
+
 	go func() {
 		time.Sleep(10 * time.Millisecond)
 		lv.isFollowing = true
 	}()
 	return lv
-}
-
-func (l *LogView) read() {
-	go func() {
-		if err := l.chanReader.StreamInto(); err != nil {
-			l.app.ShowPrefabModal(fmt.Sprintf("Unable to start stream: %v", err), 40, 10,
-				tview.NewButton("Quit").SetSelectedFunc(func() {
-					l.app.Stop()
-				}))
-		} else {
-			lastUpdate := time.Now().Add(-time.Minute)
-			for {
-				t := <-l.chanReader.ChanReader()
-				if len(t) > 0 {
-					l.globalCount++
-					m := make(map[string]interface{})
-					err := json.Unmarshal([]byte(t), &m)
-					if err != nil {
-						m[config.ParseErr] = err.Error()
-						m[config.TextPayload] = t
-					}
-					l.inSlice = append(l.inSlice, m)
-					if len(l.config.LastSavedName) == 0 {
-						if len(l.inSlice) > 20 {
-							l.processSampleForConfig(l.inSlice[len(l.inSlice)-20:])
-						} else {
-							l.processSampleForConfig(l.inSlice)
-						}
-					}
-					l.updateLineView()
-					now := time.Now()
-					if now.Sub(lastUpdate)*time.Millisecond > 500 && l.isFollowing {
-						lastUpdate = now
-						l.app.Draw()
-						l.table.ScrollToEnd()
-					}
-				}
-			}
-		}
-	}()
-}
-
-func (l *LogView) processSampleForConfig(sampling []map[string]interface{}) {
-	if len(l.config.LastSavedName) > 0 || l.isTemplateViewShown() {
-		return
-	}
-	l.config = config.MakeConfigFromSample(sampling, l.config.Keys...)
-	l.app.config = l.config
 }
 
 func (l *LogView) makeUIComponents() {
@@ -210,7 +176,10 @@ func (l *LogView) makeUIComponents() {
 	l.populateMenu()
 	l.updateLineView()
 
-	l.filterView = NewFilterView(l.app, false)
+	l.filterView = NewFilterView(l.app, func(expression *filter.Expression) {
+		l.rebufferFilter = true
+		l.filterChannel <- expression
+	})
 }
 
 func (l *LogView) toggleFilter() {

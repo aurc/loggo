@@ -26,6 +26,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/aurc/loggo/internal/filter"
+
 	"github.com/aurc/loggo/internal/color"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -38,14 +40,14 @@ type FilterView struct {
 	buttonSearch    *tview.Button
 	buttonClear     *tview.Button
 	keyFinderField  *tview.InputField
-	showQuit        bool
+	filterCallback  func(*filter.Expression)
 }
 
-func NewFilterView(app Loggo, showQuit bool) *FilterView {
+func NewFilterView(app Loggo, filterCallback func(*filter.Expression)) *FilterView {
 	tv := &FilterView{
-		Flex:     *tview.NewFlex(),
-		app:      app,
-		showQuit: showQuit,
+		Flex:           *tview.NewFlex(),
+		app:            app,
+		filterCallback: filterCallback,
 	}
 	tv.makeUIComponents()
 	tv.makeLayouts()
@@ -55,16 +57,19 @@ func NewFilterView(app Loggo, showQuit bool) *FilterView {
 func (t *FilterView) makeUIComponents() {
 	t.expressionField = tview.NewInputField().
 		SetPlaceholder("Filter Expression...").
-		SetFieldStyle(color.FieldStyle).SetPlaceholderStyle(color.PlaceholderStyle)
+		SetFieldStyle(color.FieldStyle).
+		SetPlaceholderStyle(color.PlaceholderStyle)
 	t.expressionField.
 		SetBackgroundColor(color.ColorBackgroundField)
-
 	t.buttonSearch = tview.NewButton("Search").SetSelectedFunc(func() {
-
+		t.search()
 	})
 	t.buttonClear = tview.NewButton("Clear").SetSelectedFunc(func() {
 		t.expressionField.SetText("")
 		t.app.SetFocus(t.expressionField)
+		if t.filterCallback != nil {
+			t.filterCallback(nil)
+		}
 	})
 
 	t.keyFinderField = tview.NewInputField().SetPlaceholder("Start typing to find a key...")
@@ -97,8 +102,35 @@ func (t *FilterView) makeUIComponents() {
 			}()
 		}
 	})
+
+	t.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyEnter:
+			if t.expressionField.HasFocus() {
+				t.search()
+				return nil
+			}
+		case tcell.KeyEsc:
+			if t.expressionField.HasFocus() {
+				t.app.SetFocus(t.buttonClear)
+			}
+		}
+		return event
+	})
 }
 
+func (t *FilterView) search() {
+	exp, err := filter.ParseFilterExpression(t.expressionField.GetText())
+	if err != nil {
+		t.app.ShowPrefabModal(fmt.Sprintf("[yellow::b]Invalid filter expression:[-::-]\n[::i]%v", err), 50, 10,
+			tview.NewButton("Ok").SetSelectedFunc(func() {
+				t.app.DismissModal()
+			}))
+	}
+	if t.filterCallback != nil {
+		t.filterCallback(exp)
+	}
+}
 func (t *FilterView) addKey() {
 	tex := t.expressionField.GetText()
 	t.expressionField.SetText(tex + " " + t.keyFinderField.GetText())

@@ -38,7 +38,9 @@ type LogData struct {
 }
 
 func (d *LogData) GetCell(row, column int) *tview.TableCell {
-	if row == -1 || len(d.logView.inSlice) < row-1 || column == -1 {
+	d.logView.filterLock.RLock()
+	defer d.logView.filterLock.RUnlock()
+	if row == -1 || len(d.logView.finSlice) < row-1 || column == -1 {
 		return nil
 	}
 	if column == 0 {
@@ -49,7 +51,7 @@ func (d *LogData) GetCell(row, column int) *tview.TableCell {
 				SetSelectable(false)
 			return tc
 		} else {
-			if _, ok := d.logView.inSlice[row-1][config.ParseErr]; ok {
+			if _, ok := d.logView.finSlice[row-1][config.ParseErr]; ok {
 				tc := tview.NewTableCell(" ︎  ☂   ").
 					SetTextColor(tcell.ColorBlue).
 					SetAlign(tview.AlignCenter).
@@ -83,7 +85,7 @@ func (d *LogData) GetCell(row, column int) *tview.TableCell {
 		return tc
 	}
 	// Set Body Cells
-	cellValue := k.ExtractValue(d.logView.inSlice[row-1])
+	cellValue := k.ExtractValue(d.logView.finSlice[row-1])
 	var bgColor, fgColor tcell.Color
 	if len(k.Color.Foreground) == 0 {
 		fgColor = k.Type.GetColor()
@@ -111,7 +113,7 @@ func (d *LogData) GetCell(row, column int) *tview.TableCell {
 	}
 
 	if k.Name == config.TextPayload {
-		if _, ok := d.logView.inSlice[row-1][config.ParseErr]; ok {
+		if _, ok := d.logView.finSlice[row-1][config.ParseErr]; ok {
 			fgColor = tcell.ColorBlue
 		}
 	}
@@ -123,10 +125,14 @@ func (d *LogData) GetCell(row, column int) *tview.TableCell {
 }
 
 func (d *LogData) GetRowCount() int {
-	return len(d.logView.inSlice) + 1
+	d.logView.filterLock.RLock()
+	defer d.logView.filterLock.RUnlock()
+	return len(d.logView.finSlice) + 1
 }
 
 func (d *LogData) GetColumnCount() int {
+	d.logView.filterLock.RLock()
+	defer d.logView.filterLock.RUnlock()
 	c := d.logView.config
 	return len(c.Keys) + 1
 }
