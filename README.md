@@ -88,6 +88,32 @@ Latest Release [pre-build binaries here](https://github.com/aurc/loggo/releases/
 Loggo can be used to stream parsed logs from a persisted file and from a 
 piped input and also provides a tool for creating log templates.
 
+### Some Features
+- Local Log filtering/search
+  - Main log stream remains unaffected regardless of the source (gcp, pipe, file, etc...)
+  - Display only log entries that match search/filter criteria
+  - Convenient key finder and operators for filter expression crafting
+  ![](img/loggo_filter.png)
+- Drill down onto each log entry
+  ![](img/log_entry.png)
+- Copy Log-Entry to Clipboard
+  - Note: Linux requires X11 dev package. For instance, install `libx11-dev` or `xorg-dev` or `libX11-devel` to access X window system.
+    ![](img/copy_clipboard.png)
+- Navigate Left-Right-Up-Down on Large Grids
+  - Select a Line
+  - Use the arrow keys (`↓ ↑ ← →`)
+    ![](img/mov/nav_right_left.gif)
+- Select on screen text
+  - Horizontally based selection (`Alt` + Mouse `Click/Drag`)
+  - Block/Vertical based selection (`Cmd`+`Opt`+ Mouse `Click/Drag` - macOS)
+  - Copy the selected text to clipboard (`Cmd`+`C` - macOS/`Ctrl`+`C` - other systems)
+    ![](img/mov/selection.gif)
+- Configure Rendering Templates:
+  ![](img/render_template.png)
+- Fine Tune how columns are displayed (Template):
+  - Note that single Value Matches are REGEX expressions.
+    ![](img/how_to_display.png)
+
 ### `help` Command
 
 To gain fine grained insight of each `loggo` command params, use
@@ -126,27 +152,6 @@ tail -f <my file> | loggo stream --template <my template yaml>
 ````
 
 Note that you can pipe to anything that produces an output to the `stdin`.
-
-**Some Additional Features:**
-- Drill down onto each log entry
-![](img/log_entry.png)
-- Copy Log-Entry to Clipboard
-  - Note: Linux requires X11 dev package. For instance, install `libx11-dev` or `xorg-dev` or `libX11-devel` to access X window system.
-  ![](img/copy_clipboard.png)
-- Navigate Left-Right-Up-Down on Large Grids
-  - Select a Line
-  - Use the arrow keys (`↓ ↑ ← →`)
-    ![](img/mov/nav_right_left.gif)
-- Select on screen text
-  - Horizontally based selection (`Alt` + Mouse `Click/Drag`)
-  - Block/Vertical based selection (`Cmd`+`Opt`+ Mouse `Click/Drag` - macOS)
-  - Copy the selected text to clipboard (`Cmd`+`C` - macOS/`Ctrl`+`C` - other systems)
-    ![](img/mov/selection.gif) 
-- Configure Rendering Templates:
-![](img/render_template.png)
-- Fine Tune how columns are displayed (Template):
-    - Note that single Value Matches are REGEX expressions.
-  ![](img/how_to_display.png)
 
 ### `gcp-stream` Command 
 l`oGGo natively supports GCP Logging but in order to use this feature, there are a few caveats:
