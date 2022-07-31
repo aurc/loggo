@@ -183,6 +183,7 @@ func (l *LogView) makeUIComponents() {
 	l.filterView = NewFilterView(l.app, func(expression *filter.Expression) {
 		l.rebufferFilter = true
 		l.filterChannel <- expression
+		go l.app.Draw()
 	})
 }
 
