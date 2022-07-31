@@ -27,6 +27,7 @@ import (
 	. "os"
 	"runtime"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -52,6 +53,7 @@ func Log() *log.Entry {
 		f = f[idx+1:]
 	}
 
-	return log.WithField("line", frame.Line).
-		WithField("func", f)
+	return log.WithField("timestamp", time.Now().Local().Format(time.RFC3339)).
+		WithField("func", f).
+		WithField("line", frame.Line)
 }

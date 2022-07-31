@@ -49,6 +49,13 @@ func (l *LogView) keyEvents() {
 		switch event.Rune() {
 		case ':':
 			l.toggleFilter()
+			return nil
+		}
+		if prim == l.table && l.isJsonViewShown() {
+			switch event.Rune() {
+			case 'f', '`', 's', 'r', 'g', 'G', 'w', 'x':
+				return l.jsonView.textView.GetInputCapture()(event)
+			}
 		}
 
 		return event
