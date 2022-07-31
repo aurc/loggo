@@ -96,7 +96,6 @@ func MakeConfigFromSample(sample []map[string]interface{}, mergeWith ...Key) (*C
 	for _, v := range sk {
 		c.Keys = append(c.Keys, *keyMap[v])
 	}
-
 	return c, keyMap
 }
 
@@ -117,6 +116,7 @@ func (p preBakedRule) Keys() []string {
 	for k := range p.keyMatchesAny {
 		arr = append(arr, k)
 	}
+	sort.Strings(arr)
 	return arr
 }
 
