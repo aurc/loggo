@@ -20,32 +20,44 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-package color
+package loggo
 
-import "github.com/gdamore/tcell/v2"
-
-const (
-	ColorBackgroundField    = tcell.ColorBlack
-	ColorForegroundField    = tcell.ColorWhite
-	ColorSelectedBackground = tcell.Color69
-	ColorSelectedForeground = tcell.ColorWhite
+import (
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 )
 
-var (
-	FieldStyle = tcell.StyleDefault.
-			Background(ColorBackgroundField).
-			Foreground(ColorForegroundField)
-	PlaceholderStyle = tcell.StyleDefault.
-				Background(ColorBackgroundField).
-				Foreground(tcell.ColorDarkGray)
-	SelectStyle = tcell.StyleDefault.
-			Background(ColorSelectedBackground).
-			Foreground(ColorSelectedForeground)
-)
+func (l *LogView) keyEvents() {
+	l.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyCtrlA:
+			go func() {
+				l.showAbout()
+			}()
+			return nil
+		case tcell.KeyCtrlT:
+			l.makeLayoutsWithTemplateView()
+			return nil
+		case tcell.KeyCtrlSpace:
+			l.toggledFollowing()
+			return nil
+		}
+		prim := l.app.app.GetFocus()
+		if _, ok := prim.(*tview.InputField); ok {
+			return event
+		}
+		switch event.Rune() {
+		case ':':
+			l.toggleFilter()
+			return nil
+		}
+		if prim == l.table && l.isJsonViewShown() {
+			switch event.Rune() {
+			case 'f', '`', 's', 'r', 'g', 'G', 'w', 'x':
+				return l.jsonView.textView.GetInputCapture()(event)
+			}
+		}
 
-const (
-	ClField   = "[#ffaf00::b]"
-	ClWhite   = "[#ffffff::-]"
-	ClNumeric = "[#00afff]"
-	ClString  = "[#6A9F59]"
-)
+		return event
+	})
+}

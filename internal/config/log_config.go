@@ -59,25 +59,13 @@ func (c *Config) Save(fileName string) error {
 	return nil
 }
 
-func (c *Config) KeyMap() map[string]Key {
-	nk := make(map[string]Key)
+func (c *Config) KeyMap() map[string]*Key {
+	nk := make(map[string]*Key)
 	for _, k := range c.Keys {
-		nk[k.Name] = k
+		kp := &k
+		nk[k.Name] = kp
 	}
 	return nk
-}
-
-func (c *Config) Merge(c2 *Config) {
-	nk := c2.KeyMap()
-	for _, v := range c.Keys {
-		if _, ok := nk[v.Name]; ok {
-			delete(nk, v.Name)
-		}
-	}
-	for _, v := range nk {
-		v2 := v
-		c.Keys = append(c.Keys, v2)
-	}
 }
 
 type Color struct {

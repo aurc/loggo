@@ -11,7 +11,7 @@ builds:
       - arm64
 nfpms:
   - maintainer: Aurelio Calegari (aurcbot@gmail.com)
-    description: Rich Terminal User Interface for JSON logs
+    description: Rich Terminal User Interface streaming JSON logs
     homepage: https://github.com/aurc/loggo
     license: MIT
     formats:

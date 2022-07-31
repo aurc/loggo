@@ -41,6 +41,11 @@ brew tap aurc/loggo
 brew install aurc/loggo/loggo
 ````
 
+To update:
+````
+brew upgrade aurc/loggo/loggo
+````
+
 ### All Systems
 
 ### Install with Go
@@ -251,8 +256,6 @@ kubectl logs -f -n <some-namespace> <pod-name> | loggo stream
 
 Most of the items listed here are slated for development in the near future,
 prior the first release.
-- Search log entry.
-- Filter log by json key(s).
 - Browse/Load new log templates on the fly.
 - Create template with keys whose name contains `/` as it uses slashes to navigate to nested json branches.
 

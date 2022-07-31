@@ -28,7 +28,7 @@ import (
 	"strings"
 )
 
-func MakeConfigFromSample(sample []map[string]interface{}, mergeWith ...Key) *Config {
+func MakeConfigFromSample(sample []map[string]interface{}, mergeWith ...Key) (*Config, map[string]*Key) {
 	keyMap := make(map[string]*Key)
 	for i := range mergeWith {
 		v := mergeWith[i]
@@ -96,8 +96,7 @@ func MakeConfigFromSample(sample []map[string]interface{}, mergeWith ...Key) *Co
 	for _, v := range sk {
 		c.Keys = append(c.Keys, *keyMap[v])
 	}
-
-	return c
+	return c, keyMap
 }
 
 type preBakedRule struct {
@@ -117,6 +116,7 @@ func (p preBakedRule) Keys() []string {
 	for k := range p.keyMatchesAny {
 		arr = append(arr, k)
 	}
+	sort.Strings(arr)
 	return arr
 }
 
