@@ -115,7 +115,7 @@ func (l *LogView) makeUIComponents() {
 		logView: l,
 	}
 	selection := func(row, column int) {
-		if row > 0 {
+		if row > 0 && row-1 < len(l.finSlice) {
 			l.jsonView = NewJsonView(l.app, false,
 				func() {
 					// Toggle full screen func
@@ -124,10 +124,10 @@ func (l *LogView) makeUIComponents() {
 				}, l.makeLayouts)
 			l.jsonView.SetBorder(true).SetTitle("Log Entry")
 			var b []byte
-			if _, ok := l.inSlice[row-1][config.ParseErr]; ok {
-				b = []byte(fmt.Sprintf(`%v`, l.inSlice[row-1][config.TextPayload]))
+			if _, ok := l.finSlice[row-1][config.ParseErr]; ok {
+				b = []byte(fmt.Sprintf(`%v`, l.finSlice[row-1][config.TextPayload]))
 			} else {
-				b, _ = json.Marshal(l.inSlice[row-1])
+				b, _ = json.Marshal(l.finSlice[row-1])
 			}
 			l.jsonView.SetJson(b)
 			l.makeLayoutsWithJsonView()

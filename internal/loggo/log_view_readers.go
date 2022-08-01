@@ -121,6 +121,8 @@ func (l *LogView) sampleAndCount() {
 }
 
 func (l *LogView) filterLine(e *filter.Expression, index int) error {
+	l.filterLock.Lock()
+	defer l.filterLock.Unlock()
 	row := l.inSlice[index]
 	if e == nil {
 		l.finSlice = append(l.finSlice, row)
