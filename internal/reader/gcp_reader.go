@@ -70,14 +70,20 @@ func MakeGCPReader(project, filter, freshness string, strChan chan string) *gcpS
 	}
 }
 
-func (s *gcpStream) StreamInto() error {
+func (s *gcpStream) StreamInto() (err error) {
+	defer func() {
+		r := recover()
+		if r != nil {
+			if e, ok := r.(error); ok {
+				err = e
+			} else {
+				err = fmt.Errorf("%+v", r)
+			}
+		}
+	}()
 	ctx := context.Background()
-	err := s.checkAuth(ctx)
-	if err != nil {
-		return err
-	}
-
-	c, err := logging.NewClient(ctx)
+	var c *logging.Client
+	c, err = logging.NewClient(ctx)
 	if err != nil {
 		return err
 	}
@@ -196,11 +202,11 @@ func (s *gcpStream) Close() {
 	close(s.strChan)
 }
 
-func (s *gcpStream) checkAuth(ctx context.Context) error {
+func CheckAuth(ctx context.Context, projectID string) error {
 	c, err := logging.NewClient(ctx)
 	if err == nil {
 		it := c.ListLogs(ctx, &loggingpb.ListLogsRequest{
-			ResourceNames: []string{"projects/" + s.projectID},
+			ResourceNames: []string{"projects/" + projectID},
 			PageSize:      1,
 		})
 		_, err = it.Next()

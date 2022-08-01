@@ -25,6 +25,7 @@ package loggo
 import (
 	"github.com/aurc/loggo/internal/config"
 	"github.com/aurc/loggo/internal/reader"
+	"github.com/aurc/loggo/internal/util"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -71,6 +72,7 @@ func (a *LoggoApp) Run() {
 		SetRoot(a.pages, true).
 		EnableMouse(true).
 		Run(); err != nil {
+		util.Log().Error(err)
 		panic(err)
 	}
 }

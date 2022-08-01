@@ -23,8 +23,10 @@ THE SOFTWARE.
 package cmd
 
 import (
+	"context"
 	"log"
 	"strconv"
+	"time"
 
 	"github.com/aurc/loggo/internal/loggo"
 	"github.com/aurc/loggo/internal/reader"
@@ -91,6 +93,11 @@ from a given selected project and GCP logging filters:
 			if len(projectName) == 0 {
 				log.Fatal("--project flag is required.")
 			}
+			err := reader.CheckAuth(context.Background(), projectName)
+			if err != nil {
+				log.Fatal("Unable to obtain GCP credentials. ", err)
+			}
+			time.Sleep(time.Second)
 			reader := reader.MakeGCPReader(projectName, filter, reader.ParseFrom(from), nil)
 			app := loggo.NewLoggoApp(reader, templateFile)
 			app.Run()
