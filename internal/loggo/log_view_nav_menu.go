@@ -54,11 +54,7 @@ func (l *LogView) populateMenu() {
 		AddItem(l.textViewMenuControl(tview.NewTextView().
 			SetDynamicColors(true).SetRegions(true).
 			SetText(`[yellow::b] :       [-::u]["1"]Local Filter[""]`), func() {
-			if l.isTemplateViewShown() {
-				// TODO: Find a reliable way to respond to external closure
-			} else {
-				l.makeLayoutsWithTemplateView()
-			}
+			l.toggleFilter()
 		}), 1, 2, false).
 		//////////////////////////////////////////////////////////////////
 		// Navigation Menu
