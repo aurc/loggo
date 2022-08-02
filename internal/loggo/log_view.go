@@ -158,10 +158,10 @@ func (l *LogView) makeUIComponents() {
 			r, c := l.table.GetOffset()
 			l.updateLineView()
 			l.table.SetOffset(r, c)
-			go func() {
-				selection(row, column)
-				l.app.Draw()
-			}()
+			//go func() {
+			//	selection(row, column)
+			//	l.app.Draw()
+			//}()
 		}
 	})
 

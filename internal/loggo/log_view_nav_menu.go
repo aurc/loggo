@@ -63,6 +63,9 @@ func (l *LogView) populateMenu() {
 			NewHorizontalSeparator(sepStyle, LineHThick, "Navigation", sepForeground), 1, 2, false).
 		AddItem(tview.NewTextView().
 			SetDynamicColors(true).
+			SetText("[yellow::b] ↲[-::-]       View Entry"), 1, 3, false).
+		AddItem(tview.NewTextView().
+			SetDynamicColors(true).
 			SetText("[yellow::b] ↓ ↑ ← →[-::-] Navigate"), 1, 3, false).
 		AddItem(l.textViewMenuControl(tview.NewTextView().
 			SetDynamicColors(true).SetRegions(true).
