@@ -93,10 +93,12 @@ func (l *LogView) filter() {
 					continue
 				}
 				now := time.Now()
-				if now.Sub(lastUpdate)*time.Millisecond > 500 && l.isFollowing {
+				if now.Sub(lastUpdate)*time.Millisecond > 500 {
 					lastUpdate = now
 					l.app.Draw()
-					l.table.ScrollToEnd()
+					if l.isFollowing {
+						l.table.ScrollToEnd()
+					}
 				}
 			}
 		}

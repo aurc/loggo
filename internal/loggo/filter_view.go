@@ -126,6 +126,7 @@ func (t *FilterView) search() {
 			tview.NewButton("Ok").SetSelectedFunc(func() {
 				t.app.DismissModal()
 			}))
+		return
 	}
 	if t.filterCallback != nil {
 		t.filterCallback(exp)
