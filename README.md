@@ -1,5 +1,9 @@
 # l'oGGo: Rich Terminal User Interface Logging App
-
+![release](https://img.shields.io/github/v/release/aurc/loggo)
+![release workflow](https://github.com/aurc/loggo/actions/workflows/go.yml/badge.svg)
+![license](https://img.shields.io/github/license/aurc/loggo)
+![go_version](https://img.shields.io/github/go-mod/go-version/aurc/loggo)
+![downloads](https://img.shields.io/github/downloads/aurc/loggo/total)
 ## Introduction
 
 *For the impatient, go to [Getting Started](#getting-started)*
