@@ -125,7 +125,11 @@ func (l *LogView) populateMenu() {
 		AddItem(l.linesView, 1, 1, false)
 
 	l.mainMenu = tview.NewFlex().SetDirection(tview.FlexColumn)
-	l.mainMenu.
+	l.updateBottomBarMenu()
+}
+
+func (l *LogView) updateBottomBarMenu() {
+	l.mainMenu.Clear().
 		SetBackgroundColor(color.ColorBackgroundField).SetTitleAlign(tview.AlignCenter)
 	l.mainMenu.
 		AddItem(l.textViewMenuControl(tview.NewTextView().
@@ -135,14 +139,31 @@ func (l *LogView) populateMenu() {
 				// TODO: Find a reliable way to respond to external closure
 			} else {
 				l.makeLayoutsWithTemplateView()
+				l.updateBottomBarMenu()
 			}
-		}), 0, 2, false).
-		AddItem(l.followingView, 0, 5, false).
+		}), 0, 3, false).
+		AddItem(l.followingView, 0, 5, false)
+	if l.isJsonViewShown() && !l.jsonView.HasFocus() {
+		l.mainMenu.
+			AddItem(l.textViewMenuControl(tview.NewTextView().SetRegions(true).
+				SetDynamicColors(true).
+				SetText(`[yellow::b](TAB) [-::u]["1"]Focus Log Entry[""]`), func() {
+				go l.app.SetFocus(l.jsonView.textView)
+			}), 0, 3, false)
+	} else if l.isJsonViewShown() && l.jsonView.HasFocus() {
+		l.mainMenu.
+			AddItem(l.textViewMenuControl(tview.NewTextView().SetRegions(true).
+				SetDynamicColors(true).
+				SetText(`[yellow::b](TAB) [-::u]["1"]Focus Stream Table[""]`), func() {
+				go l.app.SetFocus(l.table)
+			}), 0, 3, false)
+	}
+	l.mainMenu.
 		AddItem(l.textViewMenuControl(tview.NewTextView().SetRegions(true).
 			SetDynamicColors(true).
 			SetText(`[yellow::b](^C) [-::u]["1"]Quit[""]`), func() {
 			l.app.Stop()
-		}), 0, 1, false).
+		}), 0, 2, false).
 		AddItem(l.linesView, 0, 3, false)
 }
 

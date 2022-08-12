@@ -63,6 +63,7 @@ func NewJsonView(app Loggo, showQuit bool,
 		app:                      app,
 		indent:                   "  ",
 		isCopyMode:               true,
+		wordWrap:                 true,
 		showQuit:                 showQuit,
 		toggleFullScreenCallback: toggleFullScreenCallback,
 		closeCallback:            closeCallback,
@@ -278,8 +279,19 @@ func (j *JsonView) copyToClipboard() {
 	} else {
 		size = fmt.Sprintf(`[yellow::bu]%.0f bytes[-::-]`, l)
 	}
-	j.app.ShowPopMessage(fmt.Sprintf(`Copied %s to clipboard`, size), 3)
-	clipboard.WriteAll(string(j.jText))
+	j.app.ShowPopMessage(fmt.Sprintf(`Copied %s to clipboard`, size), 2, j.textView)
+	// Attempt formatting
+	b := j.jText
+	m := make(map[string]any)
+	err := json.Unmarshal(b, &m)
+	if err == nil {
+		b2, err := json.MarshalIndent(m, "", "  ")
+		if err == nil {
+			b = b2
+		}
+	}
+	// Paste to clipboard
+	_ = clipboard.WriteAll(string(b))
 }
 
 func (j *JsonView) prepareCaseInsensitiveSearch() {

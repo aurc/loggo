@@ -58,6 +58,6 @@ func JsonGenerator(writer io.Writer) {
 		jm["timestamp"] = time.Now().Format("2006-01-02T15:04:05-0700")
 		b, _ = json.Marshal(jm)
 		_, _ = fmt.Fprintln(writer, string(b))
-		time.Sleep(time.Millisecond * time.Duration(rand.Intn(25)))
+		time.Sleep(time.Millisecond * time.Duration(rand.Intn(800)))
 	}
 }

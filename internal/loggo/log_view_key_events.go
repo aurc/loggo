@@ -23,6 +23,8 @@ THE SOFTWARE.
 package loggo
 
 import (
+	"time"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -41,6 +43,24 @@ func (l *LogView) keyEvents() {
 		case tcell.KeyCtrlSpace:
 			l.toggledFollowing()
 			return nil
+		case tcell.KeyTAB:
+			if l.isJsonViewShown() {
+				if l.jsonView.textView.HasFocus() {
+					l.app.SetFocus(l.table)
+					go func() {
+						time.Sleep(time.Millisecond)
+						l.updateBottomBarMenu()
+					}()
+				} else {
+					l.app.SetFocus(l.jsonView.textView)
+					go func() {
+						time.Sleep(time.Millisecond)
+						l.updateBottomBarMenu()
+					}()
+				}
+				return nil
+			}
+			return event
 		}
 		prim := l.app.app.GetFocus()
 		if _, ok := prim.(*tview.InputField); ok {

@@ -131,6 +131,7 @@ func (l *LogView) makeUIComponents() {
 			}
 			l.jsonView.SetJson(b)
 			l.makeLayoutsWithJsonView()
+			l.updateBottomBarMenu()
 		} else {
 			l.makeLayouts()
 		}
@@ -158,10 +159,12 @@ func (l *LogView) makeUIComponents() {
 			r, c := l.table.GetOffset()
 			l.updateLineView()
 			l.table.SetOffset(r, c)
-			//go func() {
-			//	selection(row, column)
-			//	l.app.Draw()
-			//}()
+			if l.isJsonViewShown() {
+				go func() {
+					selection(row, column)
+					l.app.Draw()
+				}()
+			}
 		}
 	})
 
@@ -252,7 +255,18 @@ func (l *LogView) makeLayoutsWithJsonView() {
 		AddItem(l.jsonView, 0, 2, false).
 		AddItem(l.mainMenu, 1, 1, false)
 
-	//l.app.SetFocus(l.jsonView.textView)
+	l.jsonView.textView.SetFocusFunc(func() {
+		go func() {
+			time.Sleep(10 * time.Millisecond)
+			l.updateBottomBarMenu()
+		}()
+	})
+	l.jsonView.textView.SetBlurFunc(func() {
+		go func() {
+			time.Sleep(10 * time.Millisecond)
+			l.updateBottomBarMenu()
+		}()
+	})
 	l.app.SetFocus(l.table)
 }
 

@@ -43,7 +43,7 @@ type Loggo interface {
 	SetInputCapture(cap func(event *tcell.EventKey) *tcell.EventKey)
 	Stop()
 	SetFocus(primitive tview.Primitive)
-	ShowPopMessage(text string, waitSecs int64)
+	ShowPopMessage(text string, waitSecs int64, resetFocusTo tview.Primitive)
 	ShowPrefabModal(text string, width, height int, buttons ...*tview.Button)
 	ShowModal(p tview.Primitive, width, height int, bgColor tcell.Color)
 	DismissModal()

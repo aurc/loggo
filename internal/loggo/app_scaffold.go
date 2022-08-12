@@ -94,7 +94,7 @@ func (a *appScaffold) PopView() {
 	a.stackPages = a.stackPages[:len(a.stackPages)-1]
 }
 
-func (a *appScaffold) ShowPopMessage(text string, waitSecs int64) {
+func (a *appScaffold) ShowPopMessage(text string, waitSecs int64, resetFocusTo tview.Primitive) {
 	modal := tview.NewFlex().SetDirection(tview.FlexRow)
 	modal.SetBackgroundColor(tcell.ColorDarkBlue)
 	countdownText := tview.NewTextView().SetTextAlign(tview.AlignRight)
@@ -116,6 +116,9 @@ func (a *appScaffold) ShowPopMessage(text string, waitSecs int64) {
 		}
 		a.DismissModal()
 		a.Draw()
+		if resetFocusTo != nil {
+			go a.SetFocus(resetFocusTo)
+		}
 	}()
 }
 
