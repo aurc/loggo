@@ -100,6 +100,7 @@ func NewLogReader(app *LoggoApp, reader reader.Reader) *LogView {
 	go func() {
 		time.Sleep(10 * time.Millisecond)
 		lv.isFollowing = true
+		lv.app.SetFocus(lv.table)
 	}()
 	return lv
 }

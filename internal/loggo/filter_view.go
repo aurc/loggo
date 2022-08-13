@@ -24,6 +24,7 @@ package loggo
 
 import (
 	"fmt"
+	"github.com/aurc/loggo/internal/char"
 	"strings"
 
 	"github.com/aurc/loggo/internal/filter"
@@ -143,7 +144,7 @@ func (t *FilterView) makeLayouts() {
 	t.Flex.Clear()
 	filterRow := tview.NewFlex().SetDirection(tview.FlexColumn)
 	filterField := tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(tview.NewTextView().SetText("🔎").SetTextAlign(tview.AlignCenter), 4, 1, true).
+		AddItem(tview.NewTextView().SetText(char.SymSearch).SetTextAlign(tview.AlignCenter), 4, 1, true).
 		AddItem(t.expressionField, 0, 1, true)
 	filterField.SetBorder(true)
 	filterRow.
@@ -161,7 +162,7 @@ func (t *FilterView) makeLayouts() {
 	okButton := tview.NewButton("OK").SetSelectedFunc(t.addKey)
 	okButton.SetBackgroundColor(tcell.ColorGreen)
 	actionBar := tview.NewFlex().SetDirection(tview.FlexColumn)
-	actionBar.AddItem(tview.NewTextView().SetText(" 🔑 Finder:"), 12, 0, false)
+	actionBar.AddItem(tview.NewTextView().SetText(fmt.Sprintf(" %s Finder:", char.SymKey)), 12, 0, false)
 	actionBar.AddItem(t.keyFinderField, 0, 1, false).
 		AddItem(tview.NewBox(), 1, 1, false).
 		AddItem(okButton, 4, 1, false).

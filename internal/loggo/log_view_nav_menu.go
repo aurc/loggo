@@ -24,6 +24,7 @@ package loggo
 
 import (
 	"fmt"
+	"runtime"
 
 	"github.com/aurc/loggo/internal/color"
 	"github.com/gdamore/tcell/v2"
@@ -63,7 +64,7 @@ func (l *LogView) populateMenu() {
 			NewHorizontalSeparator(sepStyle, LineHThick, "Navigation", sepForeground), 1, 2, false).
 		AddItem(tview.NewTextView().
 			SetDynamicColors(true).
-			SetText("[yellow::b] ↲[-::-]       View Entry"), 1, 3, false).
+			SetText("[yellow::b] Enter[-::-]   View Entry"), 1, 3, false).
 		AddItem(tview.NewTextView().
 			SetDynamicColors(true).
 			SetText("[yellow::b] ↓ ↑ ← →[-::-] Navigate"), 1, 3, false).
@@ -94,20 +95,24 @@ func (l *LogView) populateMenu() {
 			SetText(`[yellow::b] ^f      [-::u]["1"]Pg Down[""]`), func() {
 			l.isFollowing = false
 			l.table.InputHandler()(tcell.NewEventKey(tcell.KeyPgDn, '0', 0), func(p tview.Primitive) {})
-		}), 1, 2, false).
-		//////////////////////////////////////////////////////////////////
-		// Selection Menu
-		//////////////////////////////////////////////////////////////////
-		AddItem(NewHorizontalSeparator(sepStyle, LineHThick, "Selection", sepForeground), 1, 2, false).
-		AddItem(tview.NewTextView().
-			SetDynamicColors(true).
-			SetText("[yellow::b] ⌥ 🖱    [-::-] Horizontal"), 1, 3, false).
-		AddItem(tview.NewTextView().
-			SetDynamicColors(true).
-			SetText("[yellow::b] ⌥ ⌘ 🖱  [-::-] Vertical"), 1, 3, false).
-		//////////////////////////////////////////////////////////////////
-		// Application Menu
-		//////////////////////////////////////////////////////////////////
+		}), 1, 2, false)
+	//////////////////////////////////////////////////////////////////
+	// Selection Menu
+	//////////////////////////////////////////////////////////////////
+	if runtime.GOOS != "windows" {
+		l.navMenu.
+			AddItem(NewHorizontalSeparator(sepStyle, LineHThick, "Selection", sepForeground), 1, 2, false).
+			AddItem(tview.NewTextView().
+				SetDynamicColors(true).
+				SetText("[yellow::b] ⌥ 🖱    [-::-] Horizontal"), 1, 3, false).
+			AddItem(tview.NewTextView().
+				SetDynamicColors(true).
+				SetText("[yellow::b] ⌥ ⌘ 🖱  [-::-] Vertical"), 1, 3, false)
+	}
+	//////////////////////////////////////////////////////////////////
+	// Application Menu
+	//////////////////////////////////////////////////////////////////
+	l.navMenu.
 		AddItem(NewHorizontalSeparator(sepStyle, LineHThick, "Application", sepForeground), 1, 2, false).
 		AddItem(l.textViewMenuControl(tview.NewTextView().
 			SetDynamicColors(true).SetRegions(true).

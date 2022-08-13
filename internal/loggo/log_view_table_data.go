@@ -45,22 +45,22 @@ func (d *LogData) GetCell(row, column int) *tview.TableCell {
 	}
 	if column == 0 {
 		if row == 0 {
-			tc := tview.NewTableCell("[yellow] ☀[white] / [blue]☂ ").
+			tc := tview.NewTableCell("[yellow] Line # ").
 				SetAlign(tview.AlignCenter).
 				SetBackgroundColor(tcell.ColorBlack).
 				SetSelectable(false)
 			return tc
 		} else {
 			if _, ok := d.logView.finSlice[row-1][config.ParseErr]; ok {
-				tc := tview.NewTableCell(" ︎  ☂   ").
-					SetTextColor(tcell.ColorBlue).
-					SetAlign(tview.AlignCenter).
+				tc := tview.NewTableCell(fmt.Sprintf("%d ", row)).
+					SetTextColor(tcell.ColorRed).
+					SetAlign(tview.AlignRight).
 					SetBackgroundColor(tcell.ColorBlack)
 				return tc
 			} else {
-				tc := tview.NewTableCell("   ︎☀  ︎ ").
+				tc := tview.NewTableCell(fmt.Sprintf("%d ", row)).
 					SetTextColor(tcell.ColorYellow).
-					SetAlign(tview.AlignCenter).
+					SetAlign(tview.AlignRight).
 					SetBackgroundColor(tcell.ColorBlack)
 				return tc
 			}
