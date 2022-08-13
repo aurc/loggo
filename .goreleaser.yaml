@@ -11,7 +11,7 @@ builds:
       - arm64
 nfpms:
   - maintainer: Aurelio Calegari (aurcbot@gmail.com)
-    description: Rich Terminal User Interface streaming JSON logs
+    description: Rich Terminal User Interface streaming structured logs
     homepage: https://github.com/aurc/loggo
     license: MIT
     formats:
@@ -52,11 +52,11 @@ brews:
 
     # Your app's homepage.
     # Default is empty.
-    homepage: "https://github.com/aurc/homebrew-loggo"
+    homepage: "https://github.com/aurc/loggo"
 
     # Template of your app's description.
     # Default is empty.
-    description: "Rich Terminal User Interface for JSON logs"
+    description: "Rich Terminal User Interface for streaming structured logs"
 
     # SPDX identifier of your app's license.
     # Default is empty.

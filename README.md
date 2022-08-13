@@ -80,8 +80,19 @@ for the following platforms:
 
 Latest Release [pre-build binaries here](https://github.com/aurc/loggo/releases/latest)!
 
-- Windows 11 plat (e.g. loggo_vx.y.z_linux_<plat>.tar.gz):
-- Linux (both arm64 and amd64 plat):
+- **Windows 11**:
+    
+   Download a `tar.gz` file from [pre-build binaries](https://github.com/aurc/loggo/releases/latest) that match your platform:
+   - Most of PCs will be `amd64`, so file format will be like `loggo_x.y.z_windows_amd64.tar.gz`. Note: *If you own a Surface Pro, or
+virtualised windows on a Mac M series, you'll probably want to grab the `arm64` version.*
+   - Open a terminal window (`cmd.exe`) and issue the following command in the folder you downloaded the file:
+     ````
+     tar -xvzf loggo_x.y.z_windows_amd64.tar.gz
+     ````
+   - A file `loggo.exe` will be extracted to the current folder.
+   - You can place this file in a directory that's on your %PATH% so the command `loggo` is accessible from anywhere.
+   - 
+- **Linux** (both arm64 and amd64 plat):
   - ubuntu:  `tar.gz` file from releases (e.g. loggo_vx.y.z_linux_<plat>.tar.gz)
   - debian:  `*.deb` file from releases
   - redhat:  `*.rpm` file from releases
