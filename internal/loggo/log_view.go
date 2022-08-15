@@ -142,6 +142,12 @@ func (l *LogView) makeUIComponents() {
 		SetFixed(1, 1).
 		SetSeparator(tview.Borders.Vertical).
 		SetContent(l.data)
+	l.table.
+		SetFocusFunc(func() {
+			if l.isJsonViewShown() {
+				l.updateBottomBarMenu()
+			}
+		})
 	l.table.SetSelectedFunc(selection).
 		SetBackgroundColor(color.ColorBackgroundField)
 	l.table.SetSelectionChangedFunc(func(row, column int) {
@@ -260,12 +266,7 @@ func (l *LogView) makeLayoutsWithJsonView() {
 		go func() {
 			time.Sleep(10 * time.Millisecond)
 			l.updateBottomBarMenu()
-		}()
-	})
-	l.jsonView.textView.SetBlurFunc(func() {
-		go func() {
-			time.Sleep(10 * time.Millisecond)
-			l.updateBottomBarMenu()
+			l.app.Draw()
 		}()
 	})
 	l.app.SetFocus(l.table)

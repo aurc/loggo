@@ -36,7 +36,7 @@ type fileStream struct {
 
 func (s *fileStream) StreamInto() error {
 	var err error
-	s.tail, err = tail.TailFile(s.fileName, tail.Config{Follow: true})
+	s.tail, err = tail.TailFile(s.fileName, tail.Config{Follow: true, Poll: true})
 	if err != nil {
 		return err
 	}
