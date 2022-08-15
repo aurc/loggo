@@ -50,6 +50,9 @@ func MakeConfigFromSample(sample []map[string]interface{}, mergeWith ...Key) (*C
 			} else if logType.Contains(k) {
 				keyMap[k] = logType.keyConfig(k)
 				continue
+			} else if traceId.Contains(k) {
+				keyMap[k] = traceId.keyConfig(k)
+				continue
 			} else if message.Contains(k) {
 				keyMap[k] = message.keyConfig(k)
 				continue
@@ -78,6 +81,7 @@ func MakeConfigFromSample(sample []map[string]interface{}, mergeWith ...Key) (*C
 	var orderedKeys []string
 	orderedKeys = append(orderedKeys, timestamp.Keys()...)
 	orderedKeys = append(orderedKeys, logType.Keys()...)
+	orderedKeys = append(orderedKeys, traceId.Keys()...)
 	orderedKeys = append(orderedKeys, message.Keys()...)
 	orderedKeys = append(orderedKeys, errorKey.Keys()...)
 	for _, v := range orderedKeys {
@@ -88,7 +92,7 @@ func MakeConfigFromSample(sample []map[string]interface{}, mergeWith ...Key) (*C
 
 	var sk []string
 	for k := range keyMap {
-		if !timestamp.Contains(k) && !message.Contains(k) && !logType.Contains(k) && !errorKey.Contains(k) {
+		if !timestamp.Contains(k) && !message.Contains(k) && !traceId.Contains(k) && !logType.Contains(k) && !errorKey.Contains(k) {
 			sk = append(sk, k)
 		}
 	}
@@ -151,6 +155,20 @@ var (
 				Type: TypeDateTime,
 				Color: Color{
 					Foreground: "purple",
+					Background: "black",
+				},
+			}
+		},
+	}
+	traceId = preBakedRule{
+		keyMatchesAny: map[string]bool{"traceId": true},
+		keyConfig: func(keyName string) *Key {
+			return &Key{
+				Name:     keyName,
+				Type:     TypeDateTime,
+				MaxWidth: 32,
+				Color: Color{
+					Foreground: "olive",
 					Background: "black",
 				},
 			}
