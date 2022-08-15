@@ -20,13 +20,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-package main
+package gcp
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -35,7 +34,6 @@ import (
 	"time"
 
 	"github.com/aurc/loggo/internal/char"
-
 	"github.com/aurc/loggo/internal/util"
 )
 
@@ -51,11 +49,11 @@ const (
 	DefaultCredentialsDefaultClientSecret = "d-FL95Q19q7MQmFpd7hHD0Ty"
 )
 
-func main() {
-	DoOAuthAsync(DefaultCredentialsDefaultClientId, DefaultCredentialsDefaultClientSecret)
+func OAuth() {
+	doOAuthAsync(DefaultCredentialsDefaultClientId, DefaultCredentialsDefaultClientSecret)
 }
 
-func DoOAuthAsync(clientId, clientSecret string) {
+func doOAuthAsync(clientId, clientSecret string) {
 	// Generates state and PKCE values.
 	state, _ := CreateCodeVerifier()
 	codeVerifier, _ := CreateCodeVerifier()
@@ -63,7 +61,7 @@ func DoOAuthAsync(clientId, clientSecret string) {
 	// Creates a redirect URI using an available port on the loopback address.
 	listener, err := net.Listen("tcp", ":0")
 	if err != nil {
-		log.Fatal(err)
+		util.Log().Fatal(err)
 	}
 	tcp := listener.Addr().(*net.TCPAddr)
 
@@ -97,20 +95,19 @@ func DoOAuthAsync(clientId, clientSecret string) {
 	go func() {
 		err = util.OpenBrowser(authorizationRequest)
 		if err != nil {
-			log.Fatal(err)
+			util.Log().Fatal(err)
 		}
-		fmt.Println(authorizationRequest)
+
 	}()
 
 	go func() {
 		err = http.Serve(listener, c)
 		if err != nil {
-			log.Fatal(err)
+			util.Log().Fatal(err)
 		}
 	}()
 
 	code := <-c.code
-	fmt.Println(code)
 	a := exchangeCodeForTokensAsync(code, codeVerifier.String(), redirectUri, clientId, clientSecret)
 	a.Save()
 }
@@ -132,7 +129,7 @@ func exchangeCodeForTokensAsync(code, codeVerifier, redirectUri, clientId, clien
 
 	req, err := http.NewRequest(http.MethodPost, tokenRequestUri, strings.NewReader(encodedData))
 	if err != nil {
-		log.Fatal(err)
+		util.Log().Fatal(err)
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Content-Length", strconv.Itoa(len(encodedData)))
@@ -140,12 +137,12 @@ func exchangeCodeForTokensAsync(code, codeVerifier, redirectUri, clientId, clien
 	client := &http.Client{}
 	response, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		util.Log().Fatal(err)
 	}
 	body := bytes.NewBufferString("")
 	_, err = body.ReadFrom(response.Body)
 	if err != nil {
-		log.Fatal(err)
+		util.Log().Fatal(err)
 	}
 	m := make(map[string]string)
 	_ = json.Unmarshal(body.Bytes(), &m)
@@ -165,12 +162,15 @@ type callbackHandler struct {
 func (c *callbackHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	time.Sleep(time.Second)
 	vals := req.URL.Query()
-	failed := false
 
+	if strings.Contains(req.RequestURI, "favicon") {
+		resp.WriteHeader(404)
+		return
+	}
 	if vals.Has("error") {
-		failed = true
 		_, _ = resp.Write([]byte(fmt.Sprintf(`<html><body style="text-align: center;font-family: Courier;"><h1>Authentication Failed!<h1><h2>%s</h2><span style="padding: 20px;background-color: #b4b2b2">%s</span></body></html>`,
 			"OAuth authorization error:", vals.Get("error"))))
+		util.Log().Fatal("OAuth authorization error:", vals.Get("error"))
 	}
 
 	// extracts the code
@@ -180,26 +180,25 @@ func (c *callbackHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request)
 		code = vals.Get("code")
 		incomingState = vals.Get("state")
 	} else {
-		failed = true
 		_, _ = resp.Write([]byte(fmt.Sprintf(`<html><body style="text-align: center;font-family: Courier;"><h1>Authentication Failed!<h1><h2>%s</h2><span style="padding: 20px;background-color: #b4b2b2">%s</span></body></html>`,
 			"Malformed authorization response:", req.URL.RawQuery)))
+		util.Log().Fatal("Malformed authorization response:", req.URL.RawQuery)
 	}
 
 	// Compares the receieved state to the expected value, to ensure that
 	// this app made the request which resulted in authorization.
 	if c.state != incomingState {
-		failed = true
 		_, _ = resp.Write([]byte(fmt.Sprintf(`<html><body style="text-align: center;font-family: Courier;"><h1>Authentication Failed!<h1><h2>%s</h2><span style="padding: 20px;background-color: #b4b2b2">%s</span></body></html>`,
 			"Received request with invalid state:", incomingState)))
+		util.Log().Fatal("Received request with invalid state:", incomingState)
 	}
 	c.code <- code
-	if !failed {
-		builder := strings.Builder{}
-		builder.WriteString(`<html><head><meta http-equiv='refresh' content='10;url=https://cloud.google.com/sdk/auth_success'></head>`)
-		builder.WriteString(`<style>.bgCol {background-color: #1a1a1a;color: #2f2e2e;}.fgCol {color: #4bcece;}</style>`)
-		builder.WriteString(`<body style="font-family: Courier; background-color: black;color: white;text-align: center"><br><h1>You can close your browser window now!</h1><h3>GCP Authentication Complete</h3><br><h2>`)
-		builder.WriteString(char.NewCanvas().WithWord(char.LoggoLogo...).PrintCanvasAsHtml())
-		builder.WriteString(`</h2><br><span style="font-weight: bold;color: white">l'oGGo:</span> <span style="color:yellow"><u>Rich Terminal User Interface for following JSON logs</u></span><br><span style="color: gray">Copyright &copy; 2022 Aurelio Calegari, et al.</span><br><a href="https://github.com/aurc/loggo">https://github.com/aurc/loggo</a></body></html>`)
-		_, _ = resp.Write([]byte(builder.String()))
-	}
+
+	builder := strings.Builder{}
+	builder.WriteString(`<html><head><meta http-equiv='refresh' content='10;url=https://cloud.google.com/sdk/auth_success'></head>`)
+	builder.WriteString(`<style>.bgCol {background-color: #1a1a1a;color: #2f2e2e;}.fgCol {color: #4bcece;}</style>`)
+	builder.WriteString(`<body style="font-family: Courier; background-color: black;color: white;text-align: center"><br><h1>You can close your browser window now!</h1><h3>GCP Authentication Complete</h3><br><h2>`)
+	builder.WriteString(char.NewCanvas().WithWord(char.LoggoLogo...).PrintCanvasAsHtml())
+	builder.WriteString(`</h2><br><span style="font-weight: bold;color: white">l'oGGo:</span> <span style="color:yellow"><u>Rich Terminal User Interface for following JSON logs</u></span><br><span style="color: gray">Copyright &copy; 2022 Aurelio Calegari, et al.</span><br><a href="https://github.com/aurc/loggo">https://github.com/aurc/loggo</a></body></html>`)
+	_, _ = resp.Write([]byte(builder.String()))
 }

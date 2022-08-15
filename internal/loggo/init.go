@@ -36,6 +36,8 @@ const (
 	logsPath   = "logs"
 )
 
+var LogFile string
+
 func init() {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -47,5 +49,6 @@ func init() {
 	if err := os.MkdirAll(paramsDir, os.ModePerm); err != nil {
 		panic(err)
 	}
-	util.InitializeLogging(path.Join(paramsDir, file))
+	LogFile = path.Join(paramsDir, file)
+	util.InitializeLogging(LogFile)
 }

@@ -20,50 +20,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-package gcp
+package util
 
 import (
-	"encoding/json"
-	"os"
-	"path"
+	"os/exec"
+	"runtime"
 )
 
-type Auth struct {
-	ClientId     string `json:"client_id"`
-	ClientSecret string `json:"client_secret"`
-	RefreshToken string `json:"refresh_token"`
-	Type         string `json:"type"`
-}
+func OpenLoggoDebug(file string) error {
+	var cmd string
+	var args []string
 
-func AuthDir() string {
-	hd, _ := os.UserHomeDir()
-	dir := path.Join(hd, ".loggo", "auth")
-	return dir
-}
-
-func AuthFile() string {
-	return path.Join(AuthDir(), "gcp.json")
-}
-
-func Delete() {
-	_ = os.Remove(AuthFile())
-}
-
-func (a *Auth) Save() error {
-	if err := os.MkdirAll(AuthDir(), os.ModePerm); err != nil {
-		return err
+	switch runtime.GOOS {
+	case "windows":
+		cmd = "cmd"
+		args = []string{"/c", "start"}
+	case "darwin":
+		cmd = "open -a Terminal"
+	default: // "linux", "freebsd", "openbsd", "netbsd"
+		cmd = "xdg-open"
 	}
-	b, err := json.MarshalIndent(a, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	file, err := os.Create(AuthFile())
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	_, err = file.Write(b)
-	return err
+	args = append(args, "loggo", "stream", "--file", file)
+	return exec.Command(cmd, args...).Start()
 }

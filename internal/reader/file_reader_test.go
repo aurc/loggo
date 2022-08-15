@@ -58,7 +58,7 @@ func TestFileStream_StreamInto(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NoError(t, file.Sync())
 				assert.NoError(t, file.Close())
-				time.Sleep(100 * time.Millisecond)
+				time.Sleep(300 * time.Millisecond)
 			}
 			reader.Close()
 		}()

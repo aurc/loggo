@@ -27,12 +27,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
-	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/aurc/loggo/internal/util"
+
+	"google.golang.org/api/option"
+
+	"github.com/aurc/loggo/internal/gcp"
 
 	logging "cloud.google.com/go/logging/apiv2"
 	"github.com/rivo/tview"
@@ -83,7 +87,7 @@ func (s *gcpStream) StreamInto() (err error) {
 	}()
 	ctx := context.Background()
 	var c *logging.Client
-	c, err = logging.NewClient(ctx)
+	c, err = logging.NewClient(ctx, option.WithCredentialsFile(gcp.AuthFile()))
 	if err != nil {
 		return err
 	}
@@ -203,7 +207,7 @@ func (s *gcpStream) Close() {
 }
 
 func CheckAuth(ctx context.Context, projectID string) error {
-	c, err := logging.NewClient(ctx)
+	c, err := logging.NewClient(ctx, option.WithCredentialsFile(gcp.AuthFile()))
 	if err == nil {
 		it := c.ListLogs(ctx, &loggingpb.ListLogsRequest{
 			ResourceNames: []string{"projects/" + projectID},
@@ -216,11 +220,9 @@ func CheckAuth(ctx context.Context, projectID string) error {
 		modal := tview.NewModal().
 			SetText("Authenticating with gcloud... \nRedirecting to your browser.")
 		go func() {
-			cmd := exec.Command("gcloud", "auth", "application-default", "login")
-			if err := cmd.Run(); err != nil {
-				log.Fatal(err)
-			}
-			app.Stop()
+			defer app.Stop()
+			gcp.OAuth()
+
 		}()
 		if err := app.SetRoot(modal, false).EnableMouse(true).Run(); err != nil {
 			panic(err)
@@ -256,11 +258,12 @@ func ParseFrom(str string) string {
 	} else if regD.Match([]byte(str)) {
 		t, err := time.Parse(`2006-01-02T15:04:05`, str)
 		if err != nil {
-			log.Fatal("Invalid parameter for 'from' flag - bad format: ", err)
+
+			util.Log().Fatal("Invalid parameter for 'from' flag - bad format: ", err)
 		}
 		return t.Format(time.RFC3339)
 	} else {
-		log.Fatal("Invalid parameter for 'from' flag.")
+		util.Log().Fatal("Invalid parameter for 'from' flag.")
 	}
 	return ""
 }
