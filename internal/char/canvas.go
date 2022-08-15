@@ -23,6 +23,9 @@ THE SOFTWARE.
 package char
 
 import (
+	"bufio"
+	"bytes"
+	"fmt"
 	"strings"
 )
 
@@ -129,6 +132,45 @@ func (c *Canvas) PrintCanvas() [][]rune {
 		currWidth = currWidth + w.Next
 	}
 	return bc
+}
+
+func (c *Canvas) PrintCanvasAsHtml() string {
+	str := c.PrintCanvasAsString()
+	buf := bytes.NewBufferString(str)
+	reader := bufio.NewReader(buf)
+	builder := strings.Builder{}
+	convMap := map[rune]string{
+		'▓': "&blk34;",
+		'░': "&blk14;",
+		'╬': "&boxVH;",
+		'╦': "&boxHD;",
+		'╩': "&boxHU;",
+		'╠': "&boxVR;",
+		'╣': "&boxVL;",
+		'╔': "&boxDR;",
+		'╗': "&boxDL;",
+		'╚': "&boxUR;",
+		'╝': "&boxUL;",
+	}
+	paintChar := '▓'
+	shade := '░'
+	for {
+		str, err := reader.ReadString('\n')
+		if err == nil {
+			for _, char := range str {
+				switch char {
+				case paintChar, shade:
+					builder.WriteString(fmt.Sprintf(`<span class="fgCol">%s</span>`, convMap[char]))
+				default:
+					builder.WriteString(fmt.Sprintf(`<span class="bgCol">%s</span>`, convMap[char]))
+				}
+			}
+			builder.WriteString("<br>\n")
+		} else {
+			break
+		}
+	}
+	return builder.String()
 }
 
 func (c *Canvas) PrintCanvasAsString() string {

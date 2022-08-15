@@ -24,8 +24,9 @@ package char
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCanvas_BlankCanvas(t *testing.T) {
@@ -151,4 +152,10 @@ func TestCanvas_BlankCanvasAsString(t *testing.T) {
 			assert.Equal(t, test.wants, str)
 		})
 	}
+}
+
+func TestCanvas_PrintCanvasAsHtml(t *testing.T) {
+	c := NewCanvas().WithWord(LoggoLogo...)
+	str := c.PrintCanvasAsHtml()
+	fmt.Println(str)
 }
