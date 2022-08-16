@@ -29,6 +29,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aurc/loggo/internal/char"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -38,9 +39,8 @@ func InitializeLogging(logFile string) {
 		fmt.Println("Could Not Open Log File : " + err.Error())
 	}
 	log.SetOutput(file)
-
-	//log.SetFormatter(&log.TextFormatter{})
 	log.SetFormatter(&log.JSONFormatter{})
+	Log().Info("l'oggo Init!\n" + char.NewCanvas().WithWord(char.LoggoLogo...).PrintCanvasAsString())
 }
 
 func Log() *log.Entry {

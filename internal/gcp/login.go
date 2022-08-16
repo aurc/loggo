@@ -124,7 +124,6 @@ func exchangeCodeForTokensAsync(code, codeVerifier, redirectUri, clientId, clien
 	data.Set("client_secret", clientSecret)
 	data.Set("scope", "")
 	data.Set("grant_type", "authorization_code")
-	fmt.Println(data.Encode())
 	encodedData := data.Encode()
 
 	req, err := http.NewRequest(http.MethodPost, tokenRequestUri, strings.NewReader(encodedData))

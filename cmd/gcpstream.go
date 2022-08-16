@@ -61,11 +61,6 @@ from a given selected project and GCP logging filters:
 		if auth {
 			gcp.Delete()
 		}
-		isDebug, _ := strconv.ParseBool(cmd.Flag("debug").Value.String())
-		if isDebug {
-			err := util.OpenLoggoDebug(loggo.LogFile)
-			util.Log().Error(err)
-		}
 		if len(saveParams) > 0 {
 			if err := reader.Save(saveParams,
 				&reader.SavedParams{
@@ -154,6 +149,4 @@ provided, it overrides the loaded parameter with the one explicitly provided.`)
 	gcpStreamCmd.Flags().
 		BoolP("force-auth", "", false,
 			"Force re-authentication even if you may have a valid authentication file.")
-	gcpStreamCmd.Flags().
-		BoolP("debug", "", false, "Open a new l`oggo terminal stream its own logs")
 }

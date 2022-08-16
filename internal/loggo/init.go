@@ -23,10 +23,8 @@ THE SOFTWARE.
 package loggo
 
 import (
-	"fmt"
 	"os"
 	"path"
-	"time"
 
 	"github.com/aurc/loggo/internal/util"
 )
@@ -34,21 +32,26 @@ import (
 const (
 	parentPath = ".loggo"
 	logsPath   = "logs"
+	currentLog = "latest.log"
 )
 
-var LogFile string
+var LatestLog string
 
 func init() {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
 	}
-	now := time.Now().Local().Format("2006.01.02T15.04.05")
-	file := fmt.Sprintf("%s.log", now)
+	//now := time.Now().Local().Format("2006.01.02T15.04.05")
+	//file := fmt.Sprintf("%s.log", now)
 	paramsDir := path.Join(home, parentPath, logsPath)
+
 	if err := os.MkdirAll(paramsDir, os.ModePerm); err != nil {
 		panic(err)
 	}
-	LogFile = path.Join(paramsDir, file)
-	util.InitializeLogging(LogFile)
+	//prev := path.Join(paramsDir, file)
+	LatestLog = path.Join(paramsDir, currentLog)
+	//os.Rename(LatestLog, prev)
+
+	util.InitializeLogging(LatestLog)
 }
