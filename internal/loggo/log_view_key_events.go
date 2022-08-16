@@ -31,6 +31,9 @@ import (
 
 func (l *LogView) keyEvents() {
 	l.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if l.app.inputCapture != nil {
+			return l.app.inputCapture(event)
+		}
 		switch event.Key() {
 		case tcell.KeyCtrlA:
 			go func() {

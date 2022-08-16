@@ -44,9 +44,9 @@ type Loggo interface {
 	Stop()
 	SetFocus(primitive tview.Primitive)
 	ShowPopMessage(text string, waitSecs int64, resetFocusTo tview.Primitive)
-	ShowPrefabModal(text string, width, height int, buttons ...*tview.Button)
-	ShowModal(p tview.Primitive, width, height int, bgColor tcell.Color)
-	DismissModal()
+	ShowPrefabModal(text string, width, height int, capture inputCapture, buttons ...*tview.Button)
+	ShowModal(p tview.Primitive, width, height int, bgColor tcell.Color, capture inputCapture)
+	DismissModal(resetFocusTo tview.Primitive)
 	Config() *config.Config
 	StackView(p tview.Primitive)
 	PopView()

@@ -32,12 +32,15 @@ import (
 )
 
 type appScaffold struct {
-	app        *tview.Application
-	config     *config.Config
-	pages      *tview.Pages
-	modal      *tview.Flex
-	stackPages []tview.Primitive
+	app          *tview.Application
+	config       *config.Config
+	pages        *tview.Pages
+	modal        *tview.Flex
+	stackPages   []tview.Primitive
+	inputCapture inputCapture
 }
+
+type inputCapture func(event *tcell.EventKey) *tcell.EventKey
 
 type App interface {
 	Stop()
@@ -106,7 +109,7 @@ func (a *appScaffold) ShowPopMessage(text string, waitSecs int64, resetFocusTo t
 	mainContent.SetBackgroundColor(tcell.ColorDarkBlue).SetBorderPadding(0, 0, 2, 2)
 	modal.AddItem(mainContent, 0, 1, false)
 	modal.AddItem(countdownText, 1, 1, false)
-	a.ShowModal(modal, len(text)/2, 5, tcell.ColorDarkBlue)
+	a.ShowModal(modal, len(text)/2, 5, tcell.ColorDarkBlue, nil)
 	countdownText.SetTextColor(tcell.ColorLightGrey).SetBackgroundColor(tcell.ColorDarkBlue)
 	go func() {
 		for i := waitSecs; i >= 0; i-- {
@@ -114,15 +117,12 @@ func (a *appScaffold) ShowPopMessage(text string, waitSecs int64, resetFocusTo t
 			a.Draw()
 			time.Sleep(time.Second)
 		}
-		a.DismissModal()
+		a.DismissModal(resetFocusTo)
 		a.Draw()
-		if resetFocusTo != nil {
-			go a.SetFocus(resetFocusTo)
-		}
 	}()
 }
 
-func (a *appScaffold) ShowPrefabModal(text string, width, height int, buttons ...*tview.Button) {
+func (a *appScaffold) ShowPrefabModal(text string, width, height int, cap inputCapture, buttons ...*tview.Button) {
 	modal := tview.NewFlex().SetDirection(tview.FlexRow)
 	modal.SetBackgroundColor(tcell.ColorDarkBlue)
 	mainContent := tview.NewTextView().
@@ -143,10 +143,11 @@ func (a *appScaffold) ShowPrefabModal(text string, width, height int, buttons ..
 
 	modal.AddItem(mainContent, 0, 1, false)
 	modal.AddItem(buts, 1, 1, false)
-	a.ShowModal(modal, width, height, tcell.ColorDarkBlue)
+	a.ShowModal(modal, width, height, tcell.ColorDarkBlue, cap)
 }
 
-func (a *appScaffold) ShowModal(p tview.Primitive, width, height int, bgColor tcell.Color) {
+func (a *appScaffold) ShowModal(p tview.Primitive, width, height int, bgColor tcell.Color, cap inputCapture) {
+	a.inputCapture = cap
 	modContainer := tview.NewFlex().AddItem(p, 0, 1, false)
 	modContainer.SetBorder(true).SetBackgroundColor(bgColor)
 	a.modal = tview.NewFlex().
@@ -159,8 +160,12 @@ func (a *appScaffold) ShowModal(p tview.Primitive, width, height int, bgColor tc
 	a.pages.AddPage("modal", a.modal, true, true)
 }
 
-func (a *appScaffold) DismissModal() {
+func (a *appScaffold) DismissModal(resetFocusTo tview.Primitive) {
+	a.inputCapture = nil
 	a.pages.RemovePage("modal")
+	if resetFocusTo != nil {
+		go a.SetFocus(resetFocusTo)
+	}
 }
 
 func (a *appScaffold) Run(p tview.Primitive) {

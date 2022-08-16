@@ -74,6 +74,7 @@ func NewLogReader(app *LoggoApp, reader reader.Reader) *LogView {
 		chanReader:    reader,
 		filterChannel: make(chan *filter.Expression, 1),
 		filterLock:    sync.RWMutex{},
+		hideFilter:    true,
 		isFollowing:   true,
 	}
 	lv.makeUIComponents()
@@ -85,20 +86,27 @@ func NewLogReader(app *LoggoApp, reader reader.Reader) *LogView {
 		}()
 		lv.app.ShowPrefabModal(fmt.Sprintf("An error occurred with the input stream: %v "+
 			"\nYou can continue browsing the buffered logs or close the app.", err), 50, 20,
-			tview.NewButton("Quit").SetSelectedFunc(func() {
+			func(event *tcell.EventKey) *tcell.EventKey {
+				switch event.Rune() {
+				case 'q', 'Q':
+					lv.app.Stop()
+					return nil
+				case 'c', 'C':
+					lv.app.DismissModal(lv.table)
+					return nil
+				}
+				return event
+			},
+			tview.NewButton("[darkred::bu]Q[-::-]uit").SetSelectedFunc(func() {
 				lv.app.Stop()
 			}),
-			tview.NewButton("Continue").SetSelectedFunc(func() {
-				lv.app.DismissModal()
+			tview.NewButton("[darkred::bu]C[-::-]ancel").SetSelectedFunc(func() {
+				lv.app.DismissModal(lv.table)
 			}))
 	})
 
 	go func() {
-		lv.app.ShowModal(NewSplashScreen(lv.app), 71, 16, tcell.ColorBlack)
-		lv.app.Draw()
-		time.Sleep(2 * time.Second)
-		lv.app.DismissModal()
-		lv.app.Draw()
+
 	}()
 
 	lv.read()
@@ -106,6 +114,12 @@ func NewLogReader(app *LoggoApp, reader reader.Reader) *LogView {
 	lv.filterChannel <- nil
 
 	go func() {
+		lv.app.ShowModal(NewSplashScreen(lv.app), 71, 16, tcell.ColorBlack, nil)
+		lv.app.Draw()
+		time.Sleep(2 * time.Second)
+		lv.app.DismissModal(lv.table)
+		lv.app.Draw()
+
 		time.Sleep(10 * time.Millisecond)
 		lv.isFollowing = true
 		lv.app.SetFocus(lv.table)
@@ -238,10 +252,10 @@ func (l *LogView) makeLayouts() {
 }
 
 func (l *LogView) showAbout() {
-	l.app.ShowModal(NewSplashScreen(l.app), 71, 16, tcell.ColorBlack)
+	l.app.ShowModal(NewSplashScreen(l.app), 71, 16, tcell.ColorBlack, nil)
 	l.app.Draw()
 	time.Sleep(4 * time.Second)
-	l.app.DismissModal()
+	l.app.DismissModal(l.table)
 	l.app.Draw()
 }
 

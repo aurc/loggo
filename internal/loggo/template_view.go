@@ -239,14 +239,40 @@ func (t *TemplateView) save(fileName string) {
 	if err := t.config.Save(fileName); err != nil {
 		t.app.ShowPrefabModal(
 			fmt.Sprintf(`Failed to save! Error: %v`, err), 40, 10,
-			tview.NewButton("Ok").SetSelectedFunc(func() {
-				t.app.DismissModal()
+			func(event *tcell.EventKey) *tcell.EventKey {
+				switch event.Key() {
+				case tcell.KeyEnter, tcell.KeyEsc:
+					t.app.DismissModal(t.table)
+					return nil
+				}
+				switch event.Rune() {
+				case 'C', 'c':
+					t.app.DismissModal(t.table)
+					return nil
+				}
+				return event
+			},
+			tview.NewButton("[darkred::bu]C[-::-]ancel").SetSelectedFunc(func() {
+				t.app.DismissModal(t.table)
 			}))
 	} else {
 		t.app.ShowPrefabModal(
 			fmt.Sprintf(`File %v saved successfully!`, fileName), 40, 10,
-			tview.NewButton("Ok").SetSelectedFunc(func() {
-				t.app.DismissModal()
+			func(event *tcell.EventKey) *tcell.EventKey {
+				switch event.Key() {
+				case tcell.KeyEnter, tcell.KeyEsc:
+					t.app.DismissModal(t.table)
+					return nil
+				}
+				switch event.Rune() {
+				case 'O', 'o':
+					t.app.DismissModal(t.table)
+					return nil
+				}
+				return event
+			},
+			tview.NewButton("[darkred::bu]O[-::-]k").SetSelectedFunc(func() {
+				t.app.DismissModal(t.table)
 			}))
 	}
 }
@@ -325,24 +351,44 @@ func (t *TemplateView) moveDown() {
 
 func (t *TemplateView) confirmDelete() {
 	t.app.ShowPrefabModal("Are you sure you want to remove this entry", 40, 10,
-		tview.NewButton("Delete").
+		func(event *tcell.EventKey) *tcell.EventKey {
+			switch event.Key() {
+			case tcell.KeyEnter, tcell.KeyEsc:
+				t.app.DismissModal(t.contextMenu)
+				return nil
+			}
+			switch event.Rune() {
+			case 'D', 'd':
+				t.delete()
+				return nil
+			case 'C', 'c':
+				t.app.DismissModal(t.contextMenu)
+				return nil
+			}
+			return event
+		},
+		tview.NewButton("[darkred::bu]D[-::-]elete").
 			SetSelectedFunc(func() {
-				var newKeys []config.Key
-				r, _ := t.table.GetSelection()
-				for i, k := range t.config.Keys {
-					if i != r-1 {
-						newKeys = append(newKeys, k)
-					}
-				}
-				t.config.Keys = newKeys
-				t.makeLayouts()
-				t.app.DismissModal()
+				t.delete()
 			}),
-		tview.NewButton("Cancel").
+		tview.NewButton("[darkred::bu]C[-::-]ancel").
 			SetSelectedFunc(func() {
-				t.app.DismissModal()
+				t.app.DismissModal(t.contextMenu)
 			}),
 	)
+}
+
+func (t *TemplateView) delete() {
+	var newKeys []config.Key
+	r, _ := t.table.GetSelection()
+	for i, k := range t.config.Keys {
+		if i != r-1 {
+			newKeys = append(newKeys, k)
+		}
+	}
+	t.config.Keys = newKeys
+	t.makeLayouts()
+	t.app.DismissModal(t.contextMenu)
 }
 
 type TemplateData struct {

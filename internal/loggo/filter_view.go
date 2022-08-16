@@ -24,8 +24,9 @@ package loggo
 
 import (
 	"fmt"
-	"github.com/aurc/loggo/internal/char"
 	"strings"
+
+	"github.com/aurc/loggo/internal/char"
 
 	"github.com/aurc/loggo/internal/filter"
 
@@ -124,8 +125,21 @@ func (t *FilterView) search() {
 	exp, err := filter.ParseFilterExpression(t.expressionField.GetText())
 	if err != nil {
 		t.app.ShowPrefabModal(fmt.Sprintf("[yellow::b]Invalid filter expression:[-::-]\n[::i]%v", err), 50, 10,
-			tview.NewButton("Ok").SetSelectedFunc(func() {
-				t.app.DismissModal()
+			func(event *tcell.EventKey) *tcell.EventKey {
+				switch event.Key() {
+				case tcell.KeyEnter, tcell.KeyEsc:
+					t.app.DismissModal(t.expressionField)
+					return nil
+				}
+				switch event.Rune() {
+				case 'C', 'c':
+					t.app.DismissModal(t.expressionField)
+					return nil
+				}
+				return event
+			},
+			tview.NewButton("[darkred::bu]C[-::-]ancel").SetSelectedFunc(func() {
+				t.app.DismissModal(t.expressionField)
 			}))
 		return
 	}
