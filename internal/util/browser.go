@@ -25,6 +25,7 @@ package util
 import (
 	"os/exec"
 	"runtime"
+	"strings"
 )
 
 func OpenBrowser(url string) error {
@@ -41,5 +42,6 @@ func OpenBrowser(url string) error {
 		cmd = "xdg-open"
 	}
 	args = append(args, url)
+	Log().WithField("code", cmd+" "+strings.Join(args, " ")).Info("Issue browser command.")
 	return exec.Command(cmd, args...).Start()
 }

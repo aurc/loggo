@@ -66,6 +66,7 @@ func doOAuthAsync(clientId, clientSecret string) {
 	tcp := listener.Addr().(*net.TCPAddr)
 
 	redirectUri := fmt.Sprintf("http://%s:%d/", "127.0.0.1", tcp.Port)
+	util.Log().WithField("code", redirectUri).Info("Preparing redirect url")
 
 	scopes := []string{
 		"openid",
@@ -92,6 +93,8 @@ func doOAuthAsync(clientId, clientSecret string) {
 		code:  make(chan string, 1),
 	}
 
+	util.Log().WithField("code", authorizationRequest).Info("Assembled authorisation request.")
+
 	go func() {
 		err = util.OpenBrowser(authorizationRequest)
 		if err != nil {
@@ -101,6 +104,7 @@ func doOAuthAsync(clientId, clientSecret string) {
 	}()
 
 	go func() {
+		util.Log().Infof("Start redirect listener at port %d", tcp.Port)
 		err = http.Serve(listener, c)
 		if err != nil {
 			util.Log().Fatal(err)
@@ -108,6 +112,7 @@ func doOAuthAsync(clientId, clientSecret string) {
 	}()
 
 	code := <-c.code
+	util.Log().WithField("code", code).Info("Received Auth code.")
 	a := exchangeCodeForTokensAsync(code, codeVerifier.String(), redirectUri, clientId, clientSecret)
 	a.Save()
 }
@@ -126,6 +131,8 @@ func exchangeCodeForTokensAsync(code, codeVerifier, redirectUri, clientId, clien
 	data.Set("grant_type", "authorization_code")
 	encodedData := data.Encode()
 
+	util.Log().WithField("code", tokenRequestUri).WithField("data", encodedData).Info("Requesting token exchange.")
+
 	req, err := http.NewRequest(http.MethodPost, tokenRequestUri, strings.NewReader(encodedData))
 	if err != nil {
 		util.Log().Fatal(err)
@@ -143,6 +150,9 @@ func exchangeCodeForTokensAsync(code, codeVerifier, redirectUri, clientId, clien
 	if err != nil {
 		util.Log().Fatal(err)
 	}
+
+	util.Log().WithField("code", body.String()).Info("Received token response.")
+
 	m := make(map[string]string)
 	_ = json.Unmarshal(body.Bytes(), &m)
 	return &Auth{
@@ -161,6 +171,8 @@ type callbackHandler struct {
 func (c *callbackHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	time.Sleep(time.Second)
 	vals := req.URL.Query()
+
+	util.Log().WithField("code", req.URL.RawQuery).Info("Received request from browser")
 
 	if strings.Contains(req.RequestURI, "favicon") {
 		resp.WriteHeader(404)
