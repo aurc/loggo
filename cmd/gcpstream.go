@@ -24,9 +24,12 @@ package cmd
 
 import (
 	"context"
-	"log"
 	"strconv"
 	"time"
+
+	"github.com/aurc/loggo/internal/util"
+
+	"github.com/aurc/loggo/internal/gcp"
 
 	"github.com/aurc/loggo/internal/loggo"
 	"github.com/aurc/loggo/internal/reader"
@@ -40,9 +43,10 @@ var gcpStreamCmd = &cobra.Command{
 	Long: `Continuously stream Google Cloud Platform log entries
 from a given selected project and GCP logging filters:
 
-	loggo gcp-stream --project myGCPProject123 --from 1m \
-            --filter 'resource.labels.namespace_name="awesome-sit" AND resource.labels.container_name="some"' \
-            --template 
+	loggo gcp-stream \ 
+            --project myGCPProject123 \
+            --from 1m \
+            --filter 'resource.labels.namespace_name="awesome-sit" AND resource.labels.container_name="some"' 
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		projectName := cmd.Flag("project").Value.String()
@@ -53,6 +57,10 @@ from a given selected project and GCP logging filters:
 		listParams := cmd.Flag("params-list").Value.String()
 		lp, _ := strconv.ParseBool(listParams)
 		loadParams := cmd.Flag("params-load").Value.String()
+		auth, _ := strconv.ParseBool(cmd.Flag("force-auth").Value.String())
+		if auth {
+			gcp.Delete()
+		}
 		if len(saveParams) > 0 {
 			if err := reader.Save(saveParams,
 				&reader.SavedParams{
@@ -61,12 +69,12 @@ from a given selected project and GCP logging filters:
 					Project:  projectName,
 					Template: templateFile,
 				}); err != nil {
-				log.Fatal(err)
+				util.Log().Fatal(err)
 			}
 		} else if lp {
 			l, err := reader.List()
 			if err != nil {
-				log.Fatal(err)
+				util.Log().Fatal(err)
 			}
 			for _, v := range l {
 				v.Print()
@@ -75,7 +83,7 @@ from a given selected project and GCP logging filters:
 			if len(loadParams) > 0 {
 				p, err := reader.Load(loadParams)
 				if err != nil {
-					log.Fatal(err)
+					util.Log().Fatal(err)
 				}
 				if len(templateFile) == 0 && len(p.Template) > 0 {
 					templateFile = p.Template
@@ -91,11 +99,11 @@ from a given selected project and GCP logging filters:
 				}
 			}
 			if len(projectName) == 0 {
-				log.Fatal("--project flag is required.")
+				util.Log().Fatal("--project flag is required.")
 			}
 			err := reader.CheckAuth(context.Background(), projectName)
 			if err != nil {
-				log.Fatal("Unable to obtain GCP credentials. ", err)
+				util.Log().Fatal("Unable to obtain GCP credentials. ", err)
 			}
 			time.Sleep(time.Second)
 			reader := reader.MakeGCPReader(projectName, filter, reader.ParseFrom(from), nil)
@@ -138,4 +146,7 @@ provided, it overrides the loaded parameter with the one explicitly provided.`)
 		BoolP("params-list", "", false,
 			"List saved gcp connection/filtering parameters for convenient reuse.")
 	gcpStreamCmd.MarkFlagsMutuallyExclusive("params-save", "params-load", "params-list")
+	gcpStreamCmd.Flags().
+		BoolP("force-auth", "", false,
+			"Force re-authentication even if you may have a valid authentication file.")
 }

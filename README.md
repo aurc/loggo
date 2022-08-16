@@ -170,8 +170,7 @@ Note that you can pipe to anything that produces an output to the `stdin`.
 
 ### `gcp-stream` Command 
 l`oGGo natively supports GCP Logging but in order to use this feature, there are a few caveats:
-- You have [gcloud command line SDK](https://cloud.google.com/sdk/docs/install) installed locally.
-- Your account has the required permissions to access the logging resources.
+- Your personal account has the required permissions to access the logging resources.
 
 
 Note: `gcp-stream` **does not** support piped commands. If you want to use piped
@@ -191,6 +190,7 @@ Usage:
 
 Flags:
   -f, --filter string        Standard GCP filters
+      --force-auth           Force re-authentication even if you may have a valid authentication file.
   -d, --from string          Start streaming from:
                                Relative: Use format "1s", "1m", "1h" or "1d", where:
                                          digit followed by s, m, h, d as second, minute, hour, day.
@@ -198,7 +198,7 @@ Flags:
                                Now:      Use "tail" to start from now (default "tail")
   -h, --help                 help for gcp-stream
       --params-list          List saved gcp connection/filtering parameters for convenient reuse.
-      --params-load string   Load the parameters for reuse. If any additional parameters are
+      --params-load string   Load the parameters for reuse. If any additional parameters are 
                              provided, it overrides the loaded parameter with the one explicitly provided.
       --params-save string   Save the following parameters (if provided) for reuse:
                                Project:   The GCP Project ID

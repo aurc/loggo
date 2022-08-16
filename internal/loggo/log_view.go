@@ -93,6 +93,14 @@ func NewLogReader(app *LoggoApp, reader reader.Reader) *LogView {
 			}))
 	})
 
+	go func() {
+		lv.app.ShowModal(NewSplashScreen(lv.app), 71, 16, tcell.ColorBlack)
+		lv.app.Draw()
+		time.Sleep(2 * time.Second)
+		lv.app.DismissModal()
+		lv.app.Draw()
+	}()
+
 	lv.read()
 	lv.filter()
 	lv.filterChannel <- nil

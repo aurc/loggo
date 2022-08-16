@@ -25,8 +25,8 @@ package cmd
 import (
 	"github.com/aurc/loggo/internal/config"
 	"github.com/aurc/loggo/internal/loggo"
+	"github.com/aurc/loggo/internal/util"
 	"github.com/spf13/cobra"
-	"log"
 )
 
 // templateCmd represents the template command
@@ -61,7 +61,7 @@ To start from an example template:
 			cfg, err = config.MakeConfig(templateFile)
 		}
 		if err != nil {
-			log.Fatalln("Unable to start app: ", err)
+			util.Log().Fatal("Unable to start app: ", err)
 		}
 		app := loggo.NewAppWithConfig(cfg)
 		view := loggo.NewTemplateView(app, true, nil, nil)
