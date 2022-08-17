@@ -42,11 +42,11 @@ func JsonGenerator(writer io.Writer) {
 	_ = json.Unmarshal(b, &jm)
 	i := 0
 	for {
-		if i != 0 && i%(rand.Intn(27)+1) == 0 {
-			_, _ = fmt.Fprintln(writer, "bad json")
-			i++
-			continue
-		}
+		//if i != 0 && i%(rand.Intn(27)+1) == 0 {
+		//	_, _ = fmt.Fprintln(writer, "bad json")
+		//	i++
+		//	continue
+		//}
 		i++
 		uid1 := uuid.New().String()
 		uid2 := uuid.New().String()
@@ -59,5 +59,9 @@ func JsonGenerator(writer io.Writer) {
 		b, _ = json.Marshal(jm)
 		_, _ = fmt.Fprintln(writer, string(b))
 		time.Sleep(time.Millisecond * time.Duration(rand.Intn(800)))
+		if i%(rand.Intn(5)+1) == 0 {
+			time.Sleep(time.Second * time.Duration(rand.Intn(5)))
+		}
+
 	}
 }

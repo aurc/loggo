@@ -64,6 +64,8 @@ type LogView struct {
 	isFollowing        bool
 	hideFilter         bool
 	rebufferFilter     bool
+	selectionEnabled   bool
+	mouseSel           *tview.TextView
 }
 
 func NewLogReader(app *LoggoApp, reader reader.Reader) *LogView {
@@ -237,7 +239,7 @@ func (l *LogView) toggleFilter() {
 func (l *LogView) makeLayouts() {
 	mainContent := tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(l.table, 0, 2, true).
-		AddItem(l.navMenu, 24, 1, false)
+		AddItem(l.navMenu, 26, 1, false)
 
 	l.Flex.Clear().SetDirection(tview.FlexRow)
 	if !l.hideFilter {

@@ -35,6 +35,9 @@ func (l *LogView) keyEvents() {
 			return l.app.inputCapture(event)
 		}
 		switch event.Key() {
+		case tcell.KeyCtrlN:
+			l.toggleSelectionMouse()
+			return nil
 		case tcell.KeyCtrlA:
 			go func() {
 				l.showAbout()

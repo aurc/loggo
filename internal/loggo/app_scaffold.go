@@ -109,7 +109,7 @@ func (a *appScaffold) ShowPopMessage(text string, waitSecs int64, resetFocusTo t
 	mainContent.SetBackgroundColor(tcell.ColorDarkBlue).SetBorderPadding(0, 0, 2, 2)
 	modal.AddItem(mainContent, 0, 1, false)
 	modal.AddItem(countdownText, 1, 1, false)
-	a.ShowModal(modal, len(text)/2, 5, tcell.ColorDarkBlue, nil)
+	a.ShowModal(modal, int(float64(len(text))/1.3), 5, tcell.ColorDarkBlue, nil)
 	countdownText.SetTextColor(tcell.ColorLightGrey).SetBackgroundColor(tcell.ColorDarkBlue)
 	go func() {
 		for i := waitSecs; i >= 0; i-- {
