@@ -189,23 +189,30 @@ Usage:
   loggo gcp-stream [flags]
 
 Flags:
+  -p, --project string       GCP Project ID (required)
+  
+  ------------------- Optional Below ------------------
+  
   -f, --filter string        Standard GCP filters
-      --force-auth           Force re-authentication even if you may have a valid authentication file.
+      --force-auth           Only effective if combined with gcloud flag. Force re-authentication even
+                             if you may have a valid authentication file.
   -d, --from string          Start streaming from:
                                Relative: Use format "1s", "1m", "1h" or "1d", where:
                                          digit followed by s, m, h, d as second, minute, hour, day.
                                Fixed:    Use date format as "yyyy-MM-ddH24:mm:ss", e.g. 2022-07-30T15:00:00
                                Now:      Use "tail" to start from now (default "tail")
+      --gcloud-auth          Use the existing GCloud CLI infrastructure installed on your system for GCP
+                             authentication. You must have gcloud CLI installed and configured. If this
+                             flag is not passed, it uses l'oggo native connector.
   -h, --help                 help for gcp-stream
       --params-list          List saved gcp connection/filtering parameters for convenient reuse.
-      --params-load string   Load the parameters for reuse. If any additional parameters are 
+      --params-load string   Load the parameters for reuse. If any additional parameters are
                              provided, it overrides the loaded parameter with the one explicitly provided.
       --params-save string   Save the following parameters (if provided) for reuse:
                                Project:   The GCP Project ID
                                Template:  The rendering template to be applied.
                                From:      When to start streaming from.
                                Filter:    The GCP specific filter parameters.
-  -p, --project string       GCP Project ID (required)
   -t, --template string      Rendering Template
 ````
 

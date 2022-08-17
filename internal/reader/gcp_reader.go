@@ -27,14 +27,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/aurc/loggo/internal/util"
-
-	"google.golang.org/api/option"
 
 	"github.com/aurc/loggo/internal/gcp"
 
@@ -87,7 +86,7 @@ func (s *gcpStream) StreamInto() (err error) {
 	}()
 	ctx := context.Background()
 	var c *logging.Client
-	c, err = logging.NewClient(ctx, option.WithCredentialsFile(gcp.AuthFile()))
+	c, err = gcp.LoggingClient(ctx)
 	if err != nil {
 		return err
 	}
@@ -207,7 +206,7 @@ func (s *gcpStream) Close() {
 }
 
 func CheckAuth(ctx context.Context, projectID string) error {
-	c, err := logging.NewClient(ctx, option.WithCredentialsFile(gcp.AuthFile()))
+	c, err := gcp.LoggingClient(ctx)
 	if err == nil {
 		it := c.ListLogs(ctx, &loggingpb.ListLogsRequest{
 			ResourceNames: []string{"projects/" + projectID},
@@ -221,7 +220,14 @@ func CheckAuth(ctx context.Context, projectID string) error {
 			SetText("Authenticating with gcloud... \nRedirecting to your browser.")
 		go func() {
 			defer app.Stop()
-			gcp.OAuth()
+			if !gcp.IsGCloud {
+				gcp.OAuth()
+			} else {
+				cmd := exec.Command("gcloud", "auth", "application-default", "login")
+				if err := cmd.Run(); err != nil {
+					util.Log().Fatal(err)
+				}
+			}
 
 		}()
 		if err := app.SetRoot(modal, false).EnableMouse(true).Run(); err != nil {

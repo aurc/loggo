@@ -49,6 +49,7 @@ from a given selected project and GCP logging filters:
             --filter 'resource.labels.namespace_name="awesome-sit" AND resource.labels.container_name="some"' 
 `,
 	Run: func(cmd *cobra.Command, args []string) {
+		util.Log().WithField("code", cmd.Flags()).Info("GCP Stream Params")
 		projectName := cmd.Flag("project").Value.String()
 		from := cmd.Flag("from").Value.String()
 		filter := cmd.Flag("filter").Value.String()
@@ -57,8 +58,9 @@ from a given selected project and GCP logging filters:
 		listParams := cmd.Flag("params-list").Value.String()
 		lp, _ := strconv.ParseBool(listParams)
 		loadParams := cmd.Flag("params-load").Value.String()
+		gcp.IsGCloud, _ = strconv.ParseBool(cmd.Flag("gcloud-auth").Value.String())
 		auth, _ := strconv.ParseBool(cmd.Flag("force-auth").Value.String())
-		if auth {
+		if auth && gcp.IsGCloud {
 			gcp.Delete()
 		}
 		if len(saveParams) > 0 {
@@ -148,5 +150,11 @@ provided, it overrides the loaded parameter with the one explicitly provided.`)
 	gcpStreamCmd.MarkFlagsMutuallyExclusive("params-save", "params-load", "params-list")
 	gcpStreamCmd.Flags().
 		BoolP("force-auth", "", false,
-			"Force re-authentication even if you may have a valid authentication file.")
+			`Only effective if combined with gcloud flag. Force re-authentication even
+if you may have a valid authentication file.`)
+	gcpStreamCmd.Flags().
+		BoolP("gcloud-auth", "", false,
+			`Use the existing GCloud CLI infrastructure installed on your system for GCP
+authentication. You must have gcloud CLI installed and configured. If this 
+flag is not passed, it use l'oggo native connector.`)
 }

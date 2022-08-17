@@ -23,10 +23,16 @@ THE SOFTWARE.
 package gcp
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path"
+
+	logging "cloud.google.com/go/logging/apiv2"
+	"google.golang.org/api/option"
 )
+
+var IsGCloud = false
 
 type Auth struct {
 	ClientId     string `json:"client_id"`
@@ -35,22 +41,30 @@ type Auth struct {
 	Type         string `json:"type"`
 }
 
-func AuthDir() string {
+func LoggingClient(ctx context.Context) (*logging.Client, error) {
+	if !IsGCloud {
+		return logging.NewClient(ctx, option.WithCredentialsFile(authFile()))
+	} else {
+		return logging.NewClient(ctx)
+	}
+}
+
+func authDir() string {
 	hd, _ := os.UserHomeDir()
 	dir := path.Join(hd, ".loggo", "auth")
 	return dir
 }
 
-func AuthFile() string {
-	return path.Join(AuthDir(), "gcp.json")
+func authFile() string {
+	return path.Join(authDir(), "gcp.json")
 }
 
 func Delete() {
-	_ = os.Remove(AuthFile())
+	_ = os.Remove(authFile())
 }
 
 func (a *Auth) Save() error {
-	if err := os.MkdirAll(AuthDir(), os.ModePerm); err != nil {
+	if err := os.MkdirAll(authDir(), os.ModePerm); err != nil {
 		return err
 	}
 	b, err := json.MarshalIndent(a, "", "  ")
@@ -58,7 +72,7 @@ func (a *Auth) Save() error {
 		return err
 	}
 
-	file, err := os.Create(AuthFile())
+	file, err := os.Create(authFile())
 	if err != nil {
 		return err
 	}

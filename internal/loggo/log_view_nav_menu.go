@@ -34,7 +34,7 @@ import (
 func (l *LogView) populateMenu() {
 	l.navMenu = tview.NewFlex().SetDirection(tview.FlexRow)
 	l.navMenu.
-		SetBackgroundColor(color.ColorBackgroundField).SetBorderPadding(0, 0, 1, 0)
+		SetBackgroundColor(color.ColorBackgroundField).SetBorderPadding(0, 0, 0, 0)
 	sepForeground := tview.Styles.ContrastBackgroundColor
 	sepStyle := tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(sepForeground)
 	l.navMenu.
@@ -125,7 +125,8 @@ func (l *LogView) populateMenu() {
 			SetDynamicColors(true).
 			SetText(`[yellow::b] ^c      [-::u]["1"]Quit[""]`), func() {
 			l.app.Stop()
-		}), 0, 1, false).
+		}), 1, 1, false).
+		AddItem(NewHorizontalSeparator(sepStyle, LineHThick, "", sepForeground), 1, 2, false).
 		AddItem(tview.NewBox(), 0, 1, false).
 		AddItem(l.linesView, 1, 1, false)
 
@@ -210,8 +211,8 @@ func (l *LogView) updateLineView() {
 					l.globalCount))
 	}
 	if l.isFollowing {
-		l.followingView.SetText(`[yellow::b] ^Space  [-::u]["1"]Stream[::-] [green::bi]ON[-::-][""]`)
+		l.followingView.SetText(`[yellow::b] ^Space  [-::u]["1"]Auto-Scroll[::-] [green::bi]ON[-::-][""]`)
 	} else {
-		l.followingView.SetText(`[yellow::b] ^Space  [-::u]["1"]Stream[::-] [red::bi]OFF[-::-][""]`)
+		l.followingView.SetText(`[yellow::b] ^Space  [-::u]["1"]Auto-Scroll[::-] [red::bi]OFF[-::-][""]`)
 	}
 }
