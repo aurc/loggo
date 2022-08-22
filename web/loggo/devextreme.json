@@ -1,0 +1,34 @@
+{
+  "applicationEngine": "angular",
+  "build": {
+    "commands": [
+      {
+        "command": "build-theme",
+        "options": {
+          "inputFile": "src/themes/metadata.base.json",
+          "outputFile": "src/themes/generated/theme.base.css"
+        }
+      },      {
+        "command": "build-theme",
+        "options": {
+          "inputFile": "src/themes/metadata.additional.json",
+          "outputFile": "src/themes/generated/theme.additional.css"
+        }
+      },
+      {
+        "command": "export-theme-vars",
+        "options": {
+          "inputFile": "src/themes/metadata.base.json",
+          "outputFile": "src/themes/generated/variables.base.scss"
+        }
+      },
+      {
+        "command": "export-theme-vars",
+        "options": {
+          "inputFile": "src/themes/metadata.additional.json",
+          "outputFile": "src/themes/generated/variables.additional.scss"
+        }
+      }
+    ]
+  }
+}

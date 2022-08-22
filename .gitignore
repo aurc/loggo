@@ -6,7 +6,7 @@
 *.dylib
 main
 .idea
-loggo
+
 internal/testdata/log.txt
 dist/
 # Test binary, built with `go test -c`

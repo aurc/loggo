@@ -1,0 +1,63 @@
+/*
+Copyright © 2022 Aurelio Calegari, et al.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
+syntax = "proto3";
+
+import "google/protobuf/struct.proto";
+
+option go_package = "protobuf/pb";
+
+package loggo;
+
+message LogEntryResponse {
+  reserved 1 to 2;
+  int64 position = 3;
+  google.protobuf.Struct entry = 4;
+}
+
+message LogEntryRequest {
+  optional int64 from_position = 1;
+}
+
+message Template {
+  optional string name = 1;
+  repeated Key keys = 2;
+}
+
+message Color {
+  string foreground = 1;
+  string background = 2;
+}
+
+message Key {
+  string name = 1;
+  string type = 2;
+  optional string layout = 3;
+  Color color = 4;
+  uint32 max_width = 5;
+  repeated ColorWhen color_when = 6;
+}
+
+message ColorWhen {
+  string match_value = 1;
+  Color color = 2;
+}

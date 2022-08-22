@@ -1,0 +1,11 @@
+@import "../../../../themes/generated/variables.base.scss";
+
+:host {
+  display: block;
+  color: rgba($base-text-color, alpha($base-text-color) * 0.7);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  padding-top: 0px;
+  position: fixed;
+  bottom: 12px;
+  padding-bottom: 5px;
+}

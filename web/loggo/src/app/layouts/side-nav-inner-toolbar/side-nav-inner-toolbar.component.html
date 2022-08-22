@@ -1,0 +1,54 @@
+<dx-drawer
+  class="drawer"
+  position="before"
+  [closeOnOutsideClick]="shaderEnabled"
+  [openedStateMode]="menuMode"
+  [revealMode]="menuRevealMode"
+  [minSize]="minMenuSize"
+  [shading]="shaderEnabled"
+  [(opened)]="menuOpened">
+
+  <app-side-navigation-menu
+    [compactMode]="!menuOpened"
+    [selectedItem]="selectedRoute"
+    class="dx-swatch-additional"
+    *dxTemplate="let dataMenu of 'panel'"
+    (selectedItemChanged)="navigationChanged($event)"
+    (openMenu)="navigationClick()">
+      <dx-toolbar id="navigation-header">
+        <dxi-item
+          *ngIf="minMenuSize !== 0"
+          location="before"
+          cssClass="menu-button"
+          widget="dxButton"
+          [options]="{
+            icon: 'menu',
+            stylingMode: 'text',
+            onClick: toggleMenu
+          }">
+        </dxi-item>
+        <dxi-item
+          location="before"
+          cssClass="header-title"
+          [text]="title">
+        </dxi-item>
+      </dx-toolbar>
+  </app-side-navigation-menu>
+
+  <div class="container">
+    <app-header
+      [menuToggleEnabled]="minMenuSize === 0"
+      (menuToggle)="menuOpened = !menuOpened;">
+    </app-header>
+
+    <dx-scroll-view class="layout-body with-footer">
+      <div class="content">
+        <ng-content></ng-content>
+      </div>
+
+      <div class="content-block">
+        <ng-content select="app-footer"></ng-content>
+      </div>
+    </dx-scroll-view>
+  </div>
+</dx-drawer>

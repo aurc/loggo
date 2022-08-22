@@ -1,0 +1,13 @@
+<div>
+  <dx-data-grid
+    id="gridContainer"
+    [height]="'calc(100vh - 100px)'"
+    [dataSource]="dataSource"
+    [columns]="['position', 'payload']"
+    [showBorders]="true"
+    [repaintChangesOnly]="true"
+  >
+    <dxo-load-panel [enabled]="false"></dxo-load-panel>
+    <dxo-scrolling mode="infinite"></dxo-scrolling>
+  </dx-data-grid>
+</div>

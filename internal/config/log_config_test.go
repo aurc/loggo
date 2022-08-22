@@ -24,6 +24,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -114,6 +115,11 @@ func TestKey_ExtractValue(t *testing.T) {
 			assert.Equal(t, test.wantValue, val)
 		})
 	}
+}
+
+func TestGetBackgroundColorName(t *testing.T) {
+	b, _ := json.MarshalIndent(defConfig, "", "  ")
+	fmt.Println(string(b))
 }
 
 var defConfig = Config{

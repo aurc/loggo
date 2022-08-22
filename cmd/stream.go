@@ -23,6 +23,10 @@ THE SOFTWARE.
 package cmd
 
 import (
+	"strconv"
+
+	"github.com/aurc/loggo/internal/server"
+
 	"github.com/aurc/loggo/internal/loggo"
 	"github.com/aurc/loggo/internal/reader"
 	"github.com/spf13/cobra"
@@ -42,9 +46,21 @@ rotation and continue to stream. For example:
 	Run: func(cmd *cobra.Command, args []string) {
 		fileName := cmd.Flag("file").Value.String()
 		templateFile := cmd.Flag("template").Value.String()
+		web, _ := strconv.ParseBool(cmd.Flag("web").Value.String())
+		port, _ := strconv.ParseInt(cmd.Flag("port").Value.String(), 10, 64)
 		reader := reader.MakeReader(fileName, nil)
-		app := loggo.NewLoggoApp(reader, templateFile)
-		app.Run()
+		if web {
+			if err := server.Run(&server.Settings{
+				Reader: reader,
+				Config: nil,
+				Port:   port,
+			}); err != nil {
+				panic(err)
+			}
+		} else {
+			app := loggo.NewLoggoApp(reader, templateFile)
+			app.Run()
+		}
 	},
 }
 
@@ -54,4 +70,8 @@ func init() {
 		StringP("file", "f", "", "Input Log File")
 	streamCmd.Flags().
 		StringP("template", "t", "", "Rendering Template")
+	streamCmd.Flags().
+		BoolP("web", "w", false, "Start l`oGGo app in headless form to serve a web based terminal")
+	streamCmd.Flags().
+		Int64P("port", "p", 8181, "If web flag enabled, defines the preferred port to serve.")
 }

@@ -105,10 +105,10 @@ type ColorWhen struct {
 type Key struct {
 	Name      string      `json:"name" yaml:"name"`
 	Type      Type        `json:"type" yaml:"type"`
-	Layout    string      `json:"layout,omitempty" yaml:"layout,omitempty"`
-	Color     Color       `json:"color,omitempty" yaml:"color,omitempty"`
-	MaxWidth  int         `json:"max-width,omitempty" yaml:"max-width"`
-	ColorWhen []ColorWhen `json:"color-when,omitempty" yaml:"color-when,omitempty"`
+	Layout    string      `json:"layout" yaml:"layout,omitempty"`
+	Color     Color       `json:"color" yaml:"color,omitempty"`
+	MaxWidth  int         `json:"max-width" yaml:"max-width"`
+	ColorWhen []ColorWhen `json:"color-when" yaml:"color-when,omitempty"`
 }
 
 func GetForegroundColorName(colorable func() *Color, colorIfNone string) string {

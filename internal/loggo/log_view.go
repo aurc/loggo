@@ -107,10 +107,6 @@ func NewLogReader(app *LoggoApp, reader reader.Reader) *LogView {
 			}))
 	})
 
-	go func() {
-
-	}()
-
 	lv.read()
 	lv.filter()
 	lv.filterChannel <- nil
