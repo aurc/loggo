@@ -149,6 +149,7 @@ func (c *ColorPickerButton) GetFieldWidth() int {
 }
 
 func (c *ColorPickerButton) GetFieldHeight() int {
+	// TODO: Review implementation
 	return c.input.GetFieldHeight()
 }
 
