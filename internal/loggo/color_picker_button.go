@@ -148,7 +148,16 @@ func (c *ColorPickerButton) GetFieldWidth() int {
 	return c.fieldWidth
 }
 
+func (c *ColorPickerButton) GetFieldHeight() int {
+	return c.input.GetFieldHeight()
+}
+
 func (c *ColorPickerButton) SetFinishedFunc(handler func(key tcell.Key)) tview.FormItem {
 	c.input.SetFinishedFunc(handler)
+	return c
+}
+
+func (c *ColorPickerButton) SetDisabled(disabled bool) tview.FormItem {
+	c.button.SetDisabled(disabled)
 	return c
 }
