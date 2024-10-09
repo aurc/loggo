@@ -27,7 +27,7 @@ brews:
     # Default is 6 for all artifacts or each id if there a multiple versions.
     goarm: 6
 
-    tap:
+    repository:
       owner: aurc
       name: homebrew-loggo
       branch: main
@@ -45,7 +45,7 @@ brews:
 
     # Folder inside the repository to put the formula.
     # Default is the root folder.
-    folder: Formula
+    directory: Formula
 
     # Caveats for the user of your binary.
     # Default is empty.
