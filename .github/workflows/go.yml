@@ -73,6 +73,6 @@ jobs:
         with:
           distribution: goreleaser
           version: latest
-          args: release --rm-dist
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.HOMEBREW_LOGGO_GITHUB_TOKEN }}
