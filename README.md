@@ -52,6 +52,14 @@ brew upgrade aurc/loggo/loggo
 
 ### All Systems
 
+### Install with X-CMD
+
+If you are an [x-cmd](https://x-cmd.com) user, you can use the following command to quickly find and execute the appropriate loggo installation command for your system:
+
+````
+x install loggo
+````
+
 ### Install with Go
 Assuming you have [go](https://go.dev/) installed in your system (best choice if not homebrew) and bin packages
 are in your `PATH`, just run:
