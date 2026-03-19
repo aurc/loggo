@@ -156,17 +156,17 @@ func (t *SplashScreen) PrintCanvasAsColorString(foreground, shade rune, foregrou
 			switch t.canvas[row][col] {
 			case foreground:
 				if prev != fg {
-					sb.WriteString(fmt.Sprintf(foregroundColor))
+					sb.WriteString(foregroundColor)
 					prev = fg
 				}
 			case shade:
 				if prev != sh {
-					sb.WriteString(fmt.Sprintf(shadeColor))
+					sb.WriteString(shadeColor)
 					prev = sh
 				}
 			default:
 				if prev != bg {
-					sb.WriteString(fmt.Sprintf(backgroundColor))
+					sb.WriteString(backgroundColor)
 					prev = bg
 				}
 			}
