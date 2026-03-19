@@ -365,7 +365,7 @@ func (j *JsonView) clearSearch() {
 }
 
 func (j *JsonView) setJson() *JsonView {
-	jMap := make(map[string]interface{})
+	jMap := make(map[string]any)
 	if err := json.Unmarshal(j.jText, &jMap); err != nil {
 		tex := string(j.jText)
 		sb := strings.Builder{}
@@ -403,7 +403,7 @@ func (j *JsonView) setJson() *JsonView {
 	return j
 }
 
-func (j *JsonView) processNode(k, v interface{}, indent string, text *strings.Builder, last bool) {
+func (j *JsonView) processNode(k, v any, indent string, text *strings.Builder, last bool) {
 	word := j.captureWordSection(k, j.withSearchTag)
 	if word != "" {
 		k = word
@@ -417,9 +417,9 @@ func (j *JsonView) processNode(k, v interface{}, indent string, text *strings.Bu
 		j.processNumeric(text, v, "")
 	case string:
 		j.processString(text, v, "")
-	case map[string]interface{}:
+	case map[string]any:
 		j.processObject(text, v, j.indent+indent)
-	case []interface{}:
+	case []any:
 		j.processArray(text, tp, j.indent+indent)
 	}
 	if !last {
@@ -427,7 +427,7 @@ func (j *JsonView) processNode(k, v interface{}, indent string, text *strings.Bu
 	}
 }
 
-func (j *JsonView) processArray(text *strings.Builder, tp []interface{}, indent string) {
+func (j *JsonView) processArray(text *strings.Builder, tp []any, indent string) {
 	text.WriteString("[" + j.newLine())
 	kc := len(tp)
 	i := 0
@@ -439,11 +439,11 @@ func (j *JsonView) processArray(text *strings.Builder, tp []interface{}, indent 
 	text.WriteString(j.computeIndent(indent[len(j.indent):]) + "]")
 }
 
-func (j *JsonView) processObject(text *strings.Builder, val interface{}, indent string) {
+func (j *JsonView) processObject(text *strings.Builder, val any, indent string) {
 	text.WriteString(color.ClString)
 	text.WriteString(fmt.Sprintf(`[white::]{%s`, j.newLine()))
 
-	vmap := val.(map[string]interface{})
+	vmap := val.(map[string]any)
 	kc := len(vmap)
 	i := 0
 
@@ -457,7 +457,7 @@ func (j *JsonView) processObject(text *strings.Builder, val interface{}, indent 
 	text.WriteString(indent[len(j.indent):] + `}`)
 }
 
-func (j *JsonView) processString(text *strings.Builder, v interface{}, indent string) {
+func (j *JsonView) processString(text *strings.Builder, v any, indent string) {
 	val := fmt.Sprintf(`%v`, v)
 	//val = strings.ReplaceAll(val, "\"", "\\\"")
 	//val = strings.ReplaceAll(val, "\n", "\\n")
@@ -469,7 +469,7 @@ func (j *JsonView) processString(text *strings.Builder, v interface{}, indent st
 	text.WriteString(color.ClWhite)
 }
 
-func (j *JsonView) processNumeric(text *strings.Builder, v interface{}, indent string) {
+func (j *JsonView) processNumeric(text *strings.Builder, v any, indent string) {
 	if word := j.captureWordSection(v, j.withSearchTag); len(word) > 0 {
 		v = word
 	}
@@ -478,7 +478,7 @@ func (j *JsonView) processNumeric(text *strings.Builder, v interface{}, indent s
 	text.WriteString(color.ClWhite)
 }
 
-func (j *JsonView) processArrayItem(v interface{}, indent string, text *strings.Builder, last bool) {
+func (j *JsonView) processArrayItem(v any, indent string, text *strings.Builder, last bool) {
 	switch tp := v.(type) {
 	case int,
 		float64,
@@ -486,9 +486,9 @@ func (j *JsonView) processArrayItem(v interface{}, indent string, text *strings.
 		j.processNumeric(text, v, indent)
 	case string:
 		j.processString(text, v, indent)
-	case map[string]interface{}:
+	case map[string]any:
 		j.processObject(text, v, indent)
-	case []interface{}:
+	case []any:
 		j.processArray(text, tp, indent)
 	}
 	if !last {
@@ -496,7 +496,7 @@ func (j *JsonView) processArrayItem(v interface{}, indent string, text *strings.
 	}
 }
 
-func (j *JsonView) extractKeys(m map[string]interface{}) []string {
+func (j *JsonView) extractKeys(m map[string]any) []string {
 	var keys []string
 	for k := range m {
 		keys = append(keys, k)
@@ -520,7 +520,7 @@ func (j *JsonView) newLine() string {
 	return ""
 }
 
-func (j *JsonView) captureWordSection(text interface{}, withTag string) string {
+func (j *JsonView) captureWordSection(text any, withTag string) string {
 	val := fmt.Sprintf("%v", text)
 	tagged := len(withTag) > 0
 	sel := ""

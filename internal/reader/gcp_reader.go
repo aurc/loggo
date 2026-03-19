@@ -185,14 +185,14 @@ func massageEntryLog(resp *loggingpb.LogEntry) ([]byte, string) {
 	lastTime := resp.GetTimestamp().AsTime().Local().Format(time.RFC3339)
 	severity := resp.GetSeverity().String()
 	b, _ := json.Marshal(resp)
-	m := make(map[string]interface{})
+	m := make(map[string]any)
 	_ = json.Unmarshal(b, &m)
 	m["severity"] = severity
 	m["timestamp"] = lastTime
 	if resp.GetJsonPayload() != nil {
-		m["jsonPayload"] = m["Payload"].(map[string]interface{})["JsonPayload"]
+		m["jsonPayload"] = m["Payload"].(map[string]any)["JsonPayload"]
 	} else if len(resp.GetTextPayload()) > 0 {
-		m["textPayload"] = m["Payload"].(map[string]interface{})["TextPayload"]
+		m["textPayload"] = m["Payload"].(map[string]any)["TextPayload"]
 	}
 	delete(m, "Payload")
 	delete(m, "receive_timestamp")

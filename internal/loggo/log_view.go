@@ -56,8 +56,8 @@ type LogView struct {
 	followingView      *tview.TextView
 	logFullScreen      bool
 	templateFullScreen bool
-	inSlice            []map[string]interface{}
-	finSlice           []map[string]interface{}
+	inSlice            []map[string]any
+	finSlice           []map[string]any
 	filterChannel      chan *filter.Expression
 	filterLock         sync.RWMutex
 	globalCount        int64

@@ -40,7 +40,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	jm := make(map[string]interface{})
+	jm := make(map[string]any)
 	_ = json.Unmarshal(b, &jm)
 
 	for {
