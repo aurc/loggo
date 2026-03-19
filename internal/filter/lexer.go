@@ -41,12 +41,12 @@ const (
 
 var (
 	sqlLexer = lexer.MustSimple([]lexer.SimpleRule{
-		{`Keyword`, `(?i)\b(MATCH|CONTAINSIC|CONTAINS|BETWEEN|AND|OR)\b`},
-		{`Ident`, `[a-zA-Z_][a-zA-Z0-9_./]*`},
-		{`Number`, `[-+]?\d*\.?\d+([eE][-+]?\d+)?`},
-		{`String`, `'[^']*'|"[^"]*"`},
-		{`Operators`, `<>|!=|<=|>=|==|[()=<>]`},
-		{"whitespace", `\s+`},
+		{Name: `Keyword`, Pattern: `(?i)\b(MATCH|CONTAINSIC|CONTAINS|BETWEEN|AND|OR)\b`},
+		{Name: `Ident`, Pattern: `[a-zA-Z_][a-zA-Z0-9_./]*`},
+		{Name: `Number`, Pattern: `[-+]?\d*\.?\d+([eE][-+]?\d+)?`},
+		{Name: `String`, Pattern: `'[^']*'|"[^"]*"`},
+		{Name: `Operators`, Pattern: `<>|!=|<=|>=|==|[()=<>]`},
+		{Name: "whitespace", Pattern: `\s+`},
 	})
 
 	cachedDef = make(map[string]Filter)
