@@ -26,15 +26,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 func JsonGenerator(writer io.Writer) {
-	b, err := ioutil.ReadFile("internal/testdata/test1.json")
+	b, err := os.ReadFile("internal/testdata/test1.json")
 	if err != nil {
 		panic(err)
 	}

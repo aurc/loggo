@@ -25,7 +25,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"time"
@@ -37,7 +36,7 @@ import (
 const datelayout = "2006-01-02T15:04:05-0700"
 
 func main() {
-	b, err := ioutil.ReadFile("internal/testdata/test1.json")
+	b, err := os.ReadFile("internal/testdata/test1.json")
 	if err != nil {
 		panic(err)
 	}

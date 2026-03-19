@@ -24,7 +24,6 @@ package reader
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"sort"
@@ -161,7 +160,7 @@ func List() ([]*SavedParamsWrapper, error) {
 	if err != nil {
 		return nil, err
 	}
-	files, err := ioutil.ReadDir(paramsDir)
+	files, err := os.ReadDir(paramsDir)
 	if err != nil {
 		return nil, err
 	}
