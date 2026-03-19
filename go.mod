@@ -1,6 +1,6 @@
 module github.com/aurc/loggo
 
-go 1.23
+go 1.26
 
 require (
 	cloud.google.com/go/logging v1.11.0
