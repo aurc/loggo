@@ -38,7 +38,7 @@ func JsonGenerator(writer io.Writer) {
 	if err != nil {
 		panic(err)
 	}
-	jm := make(map[string]interface{})
+	jm := make(map[string]any)
 	_ = json.Unmarshal(b, &jm)
 	i := 0
 	for {

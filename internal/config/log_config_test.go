@@ -107,7 +107,7 @@ func TestKey_ExtractValue(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			m := make(map[string]interface{})
+			m := make(map[string]any)
 			err := json.Unmarshal(test.givenJson, &m)
 			assert.NoError(t, err)
 			val := test.givenKey.ExtractValue(m)

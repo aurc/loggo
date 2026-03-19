@@ -127,7 +127,7 @@ func GetBackgroundColorName(colorable func() *Color, colorIfNone string) string 
 	return k.Background
 }
 
-func (k *Key) ExtractValue(m map[string]interface{}) string {
+func (k *Key) ExtractValue(m map[string]any) string {
 	kList := strings.Split(k.Name, "/")
 	var val string
 	level := m
@@ -137,7 +137,7 @@ func (k *Key) ExtractValue(m map[string]interface{}) string {
 			return val
 		}
 		if i == len(kList)-1 {
-			if v, ok := lv.(map[string]interface{}); ok {
+			if v, ok := lv.(map[string]any); ok {
 				b, err := json.Marshal(v)
 				if err == nil {
 					return string(b)
@@ -145,7 +145,7 @@ func (k *Key) ExtractValue(m map[string]interface{}) string {
 			}
 			return fmt.Sprintf("%+v", lv)
 		}
-		level = lv.(map[string]interface{})
+		level = lv.(map[string]any)
 	}
 	return val
 }

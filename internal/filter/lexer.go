@@ -163,7 +163,7 @@ func (c LogicalOperator) Apply(l, r bool) bool {
 	return false
 }
 
-func (c *ConditionElement) Apply(row map[string]interface{}, key map[string]*config.Key) (bool, error) {
+func (c *ConditionElement) Apply(row map[string]any, key map[string]*config.Key) (bool, error) {
 	switch {
 	case c.Condition != nil:
 		return c.Condition.Apply(row, key)
@@ -174,7 +174,7 @@ func (c *ConditionElement) Apply(row map[string]interface{}, key map[string]*con
 	}
 }
 
-func (g *GlobalToken) Apply(row map[string]interface{}) (bool, error) {
+func (g *GlobalToken) Apply(row map[string]any) (bool, error) {
 	b, err := json.Marshal(row)
 	if err != nil {
 		return false, err
@@ -183,7 +183,7 @@ func (g *GlobalToken) Apply(row map[string]interface{}) (bool, error) {
 	return strings.Contains(str, strings.ToLower(*g.String)), nil
 }
 
-func (c *Condition) Apply(row map[string]interface{}, key map[string]*config.Key) (bool, error) {
+func (c *Condition) Apply(row map[string]any, key map[string]*config.Key) (bool, error) {
 	var op Operation
 	switch strings.ToUpper(c.Operator) {
 	case "<>", "!=":
@@ -228,7 +228,7 @@ func (c *Condition) Apply(row map[string]interface{}, key map[string]*config.Key
 	return fi.Apply(k.ExtractValue(row), key)
 }
 
-func (c *Term) Apply(row map[string]interface{}, key map[string]*config.Key) (bool, error) {
+func (c *Term) Apply(row map[string]any, key map[string]*config.Key) (bool, error) {
 	lv, le := c.Left.Apply(row, key)
 	if le != nil {
 		return false, le
@@ -243,7 +243,7 @@ func (c *Term) Apply(row map[string]interface{}, key map[string]*config.Key) (bo
 	return lv, nil
 }
 
-func (c *Expression) Apply(row map[string]interface{}, key map[string]*config.Key) (bool, error) {
+func (c *Expression) Apply(row map[string]any, key map[string]*config.Key) (bool, error) {
 	lv, le := c.Left.Apply(row, key)
 	if le != nil {
 		return false, le

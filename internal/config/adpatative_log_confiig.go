@@ -28,7 +28,7 @@ import (
 	"strings"
 )
 
-func MakeConfigFromSample(sample []map[string]interface{}, mergeWith ...Key) (*Config, map[string]*Key) {
+func MakeConfigFromSample(sample []map[string]any, mergeWith ...Key) (*Config, map[string]*Key) {
 	keyMap := make(map[string]*Key)
 	for i := range mergeWith {
 		v := mergeWith[i]
@@ -60,7 +60,7 @@ func MakeConfigFromSample(sample []map[string]interface{}, mergeWith ...Key) (*C
 				keyMap[k] = errorKey.keyConfig(k)
 				continue
 			}
-			//if _, ok := v.(map[string]interface{}); ok {
+			//if _, ok := v.(map[string]any); ok {
 			//	continue
 			//}
 			keyMap[k] = &Key{
@@ -124,13 +124,13 @@ func (p preBakedRule) Keys() []string {
 	return arr
 }
 
-func extractKeys2ndDepth(m map[string]interface{}) []string {
+func extractKeys2ndDepth(m map[string]any) []string {
 	keys := make([]string, 0)
 	for k, v := range m {
 		if strings.Contains(k, "/") {
 			continue
 		}
-		if vk, ok := v.(map[string]interface{}); ok &&
+		if vk, ok := v.(map[string]any); ok &&
 			k != "http_request" &&
 			k != "labels" {
 			for k2 := range vk {

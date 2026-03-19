@@ -62,7 +62,7 @@ func (l *LogView) read() {
 			for {
 				t := <-l.chanReader.ChanReader()
 				if len(t) > 0 {
-					m := make(map[string]interface{})
+					m := make(map[string]any)
 					err := json.Unmarshal([]byte(t), &m)
 					if err != nil {
 						m[config.ParseErr] = err.Error()
@@ -75,7 +75,7 @@ func (l *LogView) read() {
 	}()
 }
 
-func (l *LogView) processSampleForConfig(sampling []map[string]interface{}) {
+func (l *LogView) processSampleForConfig(sampling []map[string]any) {
 	if len(l.config.LastSavedName) > 0 || l.isTemplateViewShown() {
 		return
 	}

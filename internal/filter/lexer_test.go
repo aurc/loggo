@@ -317,7 +317,7 @@ func TestParseFilterExpression(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			var row map[string]interface{}
+			var row map[string]any
 			err := json.Unmarshal([]byte(test.whenJsonRow), &row)
 			assert.NoError(t, err)
 			exp, err := ParseFilterExpression(test.givenExpression)
